@@ -296,7 +296,7 @@
 <body>
 
 <h1>RnA M2 Virtual Off-Site</h1>
-<p class="subtitle">April 2025 &mdash; Draft Schedule (v1) <span id="live-clock" style="margin-left:1rem;font-size:0.8rem;color:#c0392b;font-weight:600;"></span></p>
+<p class="subtitle">April 13–16, 2026 &mdash; Draft Schedule (v1) <span id="live-clock" style="margin-left:1rem;font-size:0.8rem;color:#c0392b;font-weight:600;"></span></p>
 
 <div class="legend">
   <div class="legend-item"><div class="legend-swatch" style="background:#c0392b"></div> Critical</div>
@@ -564,12 +564,24 @@
     return { day, hour: parseInt(timeParts[0], 10), minute: parseInt(timeParts[1], 10) };
   }
 
+  // Actual off-site dates (month is 0-indexed)
+  const EVENT_DATES = {
+    'Monday': new Date(2026, 3, 13),
+    'Tuesday': new Date(2026, 3, 14),
+    'Wednesday': new Date(2026, 3, 15),
+    'Thursday': new Date(2026, 3, 16),
+  };
+
   function getNow() {
     const fake = getFakeTime();
     if (fake) return fake;
     const now = new Date();
     const etStr = now.toLocaleString('en-US', { timeZone: 'America/New_York' });
     const et = new Date(etStr);
+    // Only activate if today is on or after the first event date
+    const today = new Date(et.getFullYear(), et.getMonth(), et.getDate());
+    const firstDay = EVENT_DATES['Monday'];
+    if (today < firstDay) return null;
     return {
       day: DAY_NAMES[et.getDay()],
       hour: et.getHours(),
@@ -658,6 +670,7 @@
 
   function update() {
     const now = getNow();
+    if (!now) return; // Before the off-site — show clean schedule
     const nowMin = now.hour * 60 + now.minute;
     const section = findDaySection(now.day);
 
