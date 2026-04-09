@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RnA M2 Virtual Off-Site Schedule</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f6f8;
+    color: #1a1a1a;
+    padding: 2rem;
+  }
+  h1 {
+    font-size: 1.6rem;
+    margin-bottom: 0.25rem;
+  }
+  .subtitle {
+    color: #555;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
+  }
+  .day-section {
+    margin-bottom: 2.5rem;
+  }
+  .day-header {
+    font-size: 1.15rem;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    background: #2c3e50;
+    color: #fff;
+    border-radius: 6px 6px 0 0;
+  }
+  .day-header .day-theme {
+    font-weight: 400;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-left: 0.75rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 0 0 6px 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    table-layout: fixed;
+  }
+  th {
+    background: #eaecf0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+    color: #555;
+  }
+  td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    font-size: 0.9rem;
+  }
+  .col-time { width: 130px; }
+  .col-cet { width: 110px; }
+  .col-session { }
+  .col-people { width: 260px; }
+
+  .time-cell {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    color: #333;
+  }
+  .cet-cell {
+    font-size: 0.8rem;
+    color: #777;
+    white-space: nowrap;
+  }
+
+  /* Priority colors */
+  .p-critical {
+    border-left: 4px solid #c0392b;
+    background: #fdf2f2;
+  }
+  .p-important {
+    border-left: 4px solid #e67e22;
+    background: #fef9f2;
+  }
+  .p-should {
+    border-left: 4px solid #2980b9;
+    background: #f2f7fb;
+  }
+  .p-if-possible {
+    border-left: 4px solid #7f8c8d;
+    background: #f8f9f9;
+  }
+  .p-break {
+    background: #f9fafb;
+    border-left: 4px solid transparent;
+  }
+
+  .session-name {
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+  }
+  .session-duration {
+    font-size: 0.75rem;
+    color: #888;
+  }
+  .session-priority {
+    display: inline-block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .badge-critical { background: #c0392b; color: #fff; }
+  .badge-important { background: #e67e22; color: #fff; }
+  .badge-should { background: #2980b9; color: #fff; }
+  .badge-if-possible { background: #7f8c8d; color: #fff; }
+
+  .people-cell {
+    font-size: 0.8rem;
+    color: #555;
+    line-height: 1.4;
+  }
+  .people-cell .optional {
+    color: #999;
+    font-style: italic;
+  }
+
+  .break-row td {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    color: #aaa;
+    font-style: italic;
+    background: #fafbfc;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .parallel-container {
+    display: flex;
+    gap: 0;
+  }
+  .parallel-track {
+    flex: 1;
+    border-right: 1px solid #e0e0e0;
+    padding: 0.5rem 0.75rem;
+  }
+  .parallel-track:last-child {
+    border-right: none;
+  }
+  .parallel-track .track-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #999;
+    margin-bottom: 0.3rem;
+  }
+
+  .eu-window-marker {
+    display: inline-block;
+    font-size: 0.65rem;
+    background: #27ae60;
+    color: #fff;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+    font-weight: 600;
+  }
+
+  .divider-row td {
+    padding: 0.15rem 0.75rem;
+    background: #eaecf0;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+  }
+
+  .note {
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 0.5rem;
+    padding: 0 1rem;
+    line-height: 1.5;
+  }
+
+  @media print {
+    body { padding: 0.5rem; background: #fff; }
+    .day-section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>RnA M2 Virtual Off-Site</h1>
+<p class="subtitle">April 2025 &mdash; Draft Schedule (v1)</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-swatch" style="background:#c0392b"></div> Critical</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#e67e22"></div> Important</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#2980b9"></div> Should Discuss</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#7f8c8d"></div> If Possible</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#27ae60"></div> EU-friendly window</div>
+</div>
+
+<!-- ============ MONDAY ============ -->
+<div class="day-section">
+  <div class="day-header">Monday <span class="day-theme">Big Picture + UX</span></div>
+  <table>
+    <colgroup>
+      <col class="col-time">
+      <col class="col-cet">
+      <col class="col-session">
+      <col class="col-people">
+    </colgroup>
+    <thead>
+      <tr><th>ET</th><th>CET</th><th>Session</th><th>Attendees</th></tr>
+    </thead>
+    <tbody>
+      <!-- Pre-session -->
+      <tr class="p-should">
+        <td class="time-cell">8:00 &ndash; 8:30</td>
+        <td class="cet-cell">2:00 &ndash; 2:30 PM</td>
+        <td>
+          <div class="session-name">Performance &amp; scale testing plan <span class="session-priority badge-should">Should Discuss</span> <span class="eu-window-marker">EU</span></div>
+          <div class="session-duration">30 min &middot; Pre-session</div>
+        </td>
+        <td class="people-cell">Mike C <em>or</em> Christos (lead) + EU attendees</td>
+      </tr>
+      <tr class="break-row"><td colspan="4">30 min buffer</td></tr>
+
+      <!-- EU window divider -->
+      <tr class="divider-row"><td colspan="4">EU-friendly window (9:00 AM &ndash; 1:00 PM ET)</td></tr>
+
+      <tr class="p-critical">
+        <td class="time-cell">9:00 &ndash; 10:30</td>
+        <td class="cet-cell">3:00 &ndash; 4:30 PM</td>
+        <td>
+          <div class="session-name">M2 workstreams and epics review <span class="session-priority badge-critical">Critical</span></div>
+          <div class="session-duration">90 min</div>
+        </td>
+        <td class="people-cell"><strong>ALL</strong></td>
+      </tr>
+      <tr class="break-row"><td colspan="4">15 min break</td></tr>
+
+      <!-- Parallel block -->
+      <tr class="p-critical">
+        <td class="time-cell" rowspan="1">10:45 &ndash; 12:15</td>
+        <td class="cet-cell" rowspan="1">4:45 &ndash; 6:15 PM</td>
+        <td colspan="2" style="padding:0;">
+          <div class="parallel-container">
+            <div class="parallel-track" style="border-left: 4px solid #c0392b; background: #fdf2f2;">
+              <div class="track-label">Track A</div>
+              <div class="session-name">Rule authoring UX <span class="session-priority badge-critical">Critical</span></div>
+              <div class="session-duration">90 min</div>
+              <div class="people-cell" style="margin-top:0.3rem;">Jason, Joana, Tia</div>
+            </div>
+            <div class="parallel-track" style="border-left: 4px solid #2980b9; background: #f2f7fb;">
+              <div class="track-label">Track B</div>
+              <div class="session-name">Rule versioning <span class="session-priority badge-should">Should Discuss</span></div>
+              <div class="session-duration">60 min (ends 11:45)</div>
+              <div class="people-cell" style="margin-top:0.3rem;">Mike C, Christos</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr class="break-row"><td colspan="4">15 min break</td></tr>
+
+      <tr class="p-important">
+        <td class="time-cell">12:30 &ndash; 1:00</td>
+        <td class="cet-cell">6:30 &ndash; 7:00 PM</td>
+        <td>
+          <div class="session-name">Agentic interface plan <span class="session-priority badge-important">Important</span></div>
+          <div class="session-duration">30 min</div>
+        </td>
+        <td class="people-cell">Dominique, Jason, Tia, Joana</td>
+      </tr>
+
+      <!-- US afternoon divider -->
+      <tr class="divider-row"><td colspan="4">US afternoon block</td></tr>
+
+      <tr class="p-should">
+        <td class="time-cell">1:15 &ndash; 2:15</td>
+        <td class="cet-cell">7:15 &ndash; 8:15 PM</td>
+        <td>
+          <div class="session-name">Create alert API <span class="session-priority badge-should">Should Discuss</span></div>
+          <div class="session-duration">60 min</div>
+        </td>
+        <td class="people-cell"><em class="optional">Open — no mandatory attendees</em></td>
+      </tr>
+      <tr class="break-row"><td colspan="4">15 min break</td></tr>
+
+      <tr class="p-if-possible">
+        <td class="time-cell">2:30 &ndash; 3:30</td>
+        <td class="cet-cell">8:30 &ndash; 9:30 PM</td>
+        <td>
+          <div class="session-name">Severity, first class feature <span class="session-priority badge-if-possible">If Possible</span></div>
+          <div class="session-duration">60 min</div>
+        </td>
+        <td class="people-cell">Jason, Tia, Mike C; <span class="optional">Joana optional</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Sessions end by 3:30 PM ET. 30 min buffer before 4:00 close.</p>
+</div>
+
+<!-- ============ TUESDAY ============ -->
+<div class="day-section">
+  <div class="day-header">Tuesday <span class="day-theme">Technical Deep Dive (morning only)</span></div>
+  <table>
+    <colgroup>
+      <col class="col-time">
+      <col class="col-cet">
+      <col class="col-session">
+      <col class="col-people">
+    </colgroup>
+    <thead>
+      <tr><th>ET</th><th>CET</th><th>Session</th><th>Attendees</th></tr>
+    </thead>
+    <tbody>
+      <tr class="divider-row"><td colspan="4">EU-friendly window</td></tr>
+      <tr class="p-important">
+        <td class="time-cell">9:00 &ndash; 10:00</td>
+        <td class="cet-cell">3:00 &ndash; 4:00 PM</td>
+        <td>
+          <div class="session-name">Alerts enrichment <span class="session-priority badge-important">Important</span></div>
+          <div class="session-duration">60 min</div>
+        </td>
+        <td class="people-cell">Mike C, Jason, Christos</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Jason unavailable Tuesday afternoon. Additional sessions could be added 10:15+ if needed.</p>
+</div>
+
+<!-- ============ WEDNESDAY ============ -->
+<div class="day-section">
+  <div class="day-header">Wednesday <span class="day-theme">Policies + Permissions</span></div>
+  <table>
+    <colgroup>
+      <col class="col-time">
+      <col class="col-cet">
+      <col class="col-session">
+      <col class="col-people">
+    </colgroup>
+    <thead>
+      <tr><th>ET</th><th>CET</th><th>Session</th><th>Attendees</th></tr>
+    </thead>
+    <tbody>
+      <tr class="divider-row"><td colspan="4">EU-friendly window</td></tr>
+      <tr class="p-important">
+        <td class="time-cell">9:00 &ndash; 11:00</td>
+        <td class="cet-cell">3:00 &ndash; 5:00 PM</td>
+        <td>
+          <div class="session-name">Notification policies for M2 <span class="session-priority badge-important">Important</span></div>
+          <div class="session-duration">120 min</div>
+        </td>
+        <td class="people-cell">Kevin, Christos, Tia, Jason</td>
+      </tr>
+      <tr class="break-row"><td colspan="4">15 min break</td></tr>
+      <tr class="p-important">
+        <td class="time-cell">11:15 &ndash; 12:15</td>
+        <td class="cet-cell">5:15 &ndash; 6:15 PM</td>
+        <td>
+          <div class="session-name">Sub-feature privileges + RBAC <span class="session-priority badge-important">Important</span></div>
+          <div class="session-duration">60 min</div>
+        </td>
+        <td class="people-cell">Christos, Jason, Tia, Joana</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ THURSDAY ============ -->
+<div class="day-section">
+  <div class="day-header">Thursday <span class="day-theme">Templates, Rollout + Forward-Looking</span></div>
+  <table>
+    <colgroup>
+      <col class="col-time">
+      <col class="col-cet">
+      <col class="col-session">
+      <col class="col-people">
+    </colgroup>
+    <thead>
+      <tr><th>ET</th><th>CET</th><th>Session</th><th>Attendees</th></tr>
+    </thead>
+    <tbody>
+      <tr style="background:#f0f0f0;">
+        <td class="time-cell" style="color:#999;">8:30 &ndash; 9:30</td>
+        <td class="cet-cell">2:30 &ndash; 3:30 PM</td>
+        <td colspan="2" style="color:#999; font-style:italic;">Weekly team meeting (not part of off-site)</td>
+      </tr>
+
+      <tr class="divider-row"><td colspan="4">EU-friendly window (9:30 AM &ndash; 1:00 PM ET)</td></tr>
+
+      <tr class="p-critical">
+        <td class="time-cell">9:30 &ndash; 11:30</td>
+        <td class="cet-cell">3:30 &ndash; 5:30 PM</td>
+        <td>
+          <div class="session-name">Rule templates <span class="session-priority badge-critical">Critical</span></div>
+          <div class="session-duration">120 min</div>
+        </td>
+        <td class="people-cell">Jason, Joana, Tia, Christos, Dominique</td>
+      </tr>
+      <tr class="break-row"><td colspan="4">15 min break</td></tr>
+
+      <tr class="p-critical">
+        <td class="time-cell">11:45 &ndash; 12:45</td>
+        <td class="cet-cell">5:45 &ndash; 6:45 PM</td>
+        <td>
+          <div class="session-name">v1 + v2 rollout and UX <span class="session-priority badge-critical">Critical</span></div>
+          <div class="session-duration">60 min</div>
+        </td>
+        <td class="people-cell">Tia, Joana, Jason</td>
+      </tr>
+      <tr class="break-row"><td colspan="4">15 min break</td></tr>
+
+      <!-- US afternoon -->
+      <tr class="divider-row"><td colspan="4">US afternoon block</td></tr>
+
+      <tr class="p-if-possible">
+        <td class="time-cell">1:00 &ndash; 2:00</td>
+        <td class="cet-cell">7:00 &ndash; 8:00 PM</td>
+        <td>
+          <div class="session-name">v2 everywhere <span class="session-priority badge-if-possible">If Possible</span></div>
+          <div class="session-duration">60 min</div>
+        </td>
+        <td class="people-cell">Tia, Jason, Mike C; <span class="optional">Joana optional</span></td>
+      </tr>
+      <tr class="break-row"><td colspan="4">15 min break</td></tr>
+
+      <tr class="p-if-possible">
+        <td class="time-cell">2:15 &ndash; 3:15</td>
+        <td class="cet-cell">8:15 &ndash; 9:15 PM</td>
+        <td>
+          <div class="session-name">Alert experience in Discover <span class="session-priority badge-if-possible">If Possible</span></div>
+          <div class="session-duration">60 min</div>
+        </td>
+        <td class="people-cell">Dominique, Jason, Tia; <span class="optional">Joana optional</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Sessions end by 3:15 PM ET. Buffer until 4:30 close for overflow or wrap-up.</p>
+</div>
+
+</body>
+</html>
