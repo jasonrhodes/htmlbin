@@ -763,12 +763,14 @@
         const wrapper = table.parentElement;
         wrapper.style.position = 'relative';
         const tableRect = table.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const bottomPos = tableRect.bottom - wrapperRect.top;
         const line = document.createElement('div');
         line.style.cssText = `
           position: absolute;
           left: 0;
           right: 0;
-          top: ${tableRect.height}px;
+          top: ${bottomPos}px;
           height: 3px;
           background: rgba(192, 57, 43, 0.55);
           z-index: 10;
