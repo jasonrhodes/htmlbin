@@ -214,6 +214,74 @@
     line-height: 1.5;
   }
 
+  @media (max-width: 960px) {
+    body { padding: 0.75rem; }
+    h1 { font-size: 1.3rem; }
+
+    /* Hide the table header and CET column */
+    thead { display: none; }
+    .col-cet, .cet-cell { display: none; }
+
+    /* Stack table rows as cards */
+    table { table-layout: auto; }
+    tr { display: block; margin-bottom: 0; }
+    td { display: block; padding: 0.3rem 0.75rem; border-bottom: none; }
+
+    /* Time cell as header of each card */
+    .time-cell {
+      font-size: 0.8rem;
+      padding-top: 0.6rem;
+    }
+
+    /* Session info */
+    .session-name { font-size: 0.9rem; }
+    .session-priority { font-size: 0.6rem; }
+
+    /* Leads inline under session */
+    .col-people, .people-cell {
+      width: auto;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* Priority rows keep their left border */
+    .p-critical, .p-important, .p-should, .p-if-possible {
+      border-left-width: 4px;
+      padding-left: 0;
+    }
+
+    /* Divider rows */
+    .divider-row td { padding: 0.3rem 0.75rem; }
+
+    /* Break rows */
+    .break-row td { padding: 0.2rem 0.75rem; border-bottom: 1px solid #f0f0f0; }
+
+    /* Parallel tracks stack vertically */
+    .parallel-container { flex-direction: column; }
+    .parallel-track {
+      border-right: none;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 0.5rem 0.75rem;
+    }
+    .parallel-track:last-child { border-bottom: none; }
+
+    /* Parallel block: the td with colspan spans full width */
+    td[colspan="2"] { display: block; padding: 0; }
+
+    /* Day header */
+    .day-header { font-size: 1rem; padding: 0.5rem 0.75rem; }
+    .day-header .day-theme { display: block; margin-left: 0; margin-top: 0.15rem; }
+
+    /* Legend wraps tighter */
+    .legend { gap: 0.75rem; font-size: 0.8rem; }
+
+    /* Notes */
+    .note { padding: 0 0.75rem; }
+
+    /* Grayed-out rows (weekly meeting etc) */
+    td[colspan="2"][style*="color:#999"] { display: block; }
+  }
+
   @media print {
     body { padding: 0.5rem; background: #fff; }
     .day-section { page-break-inside: avoid; }
