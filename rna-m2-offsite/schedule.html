@@ -214,6 +214,11 @@
     line-height: 1.5;
   }
 
+  .is-past td {
+    filter: grayscale(100%);
+    opacity: 0.4;
+  }
+
   @media (max-width: 960px) {
     body { padding: 0.75rem; }
     h1 { font-size: 1.3rem; }
@@ -291,7 +296,7 @@
 <body>
 
 <h1>RnA M2 Virtual Off-Site</h1>
-<p class="subtitle">April 2025 &mdash; Draft Schedule (v1)</p>
+<p class="subtitle">April 2025 &mdash; Draft Schedule (v1) <span id="live-clock" style="margin-left:1rem;font-size:0.8rem;color:#c0392b;font-weight:600;"></span></p>
 
 <div class="legend">
   <div class="legend-item"><div class="legend-swatch" style="background:#c0392b"></div> Critical</div>
@@ -542,5 +547,195 @@
   <p class="note">Carryover block closes the off-site at 4:30 PM ET.</p>
 </div>
 
+<script>
+(function() {
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // ?fake=Monday,15:05 → fake time for testing
+  function getFakeTime() {
+    const params = new URLSearchParams(window.location.search);
+    const fake = params.get('fake');
+    if (!fake) return null;
+    const parts = fake.split(',');
+    if (parts.length < 2) return null;
+    const day = parts[0].trim();
+    const timeParts = parts[1].trim().split(':');
+    if (timeParts.length < 2) return null;
+    return { day, hour: parseInt(timeParts[0], 10), minute: parseInt(timeParts[1], 10) };
+  }
+
+  function getNow() {
+    const fake = getFakeTime();
+    if (fake) return fake;
+    const now = new Date();
+    const etStr = now.toLocaleString('en-US', { timeZone: 'America/New_York' });
+    const et = new Date(etStr);
+    return {
+      day: DAY_NAMES[et.getDay()],
+      hour: et.getHours(),
+      minute: et.getMinutes()
+    };
+  }
+
+  function parseTime(str) {
+    // Parse "8:00", "10:45", "1:30", etc. — all in ET
+    // Times before 8 don't exist in our schedule; treat 1-7 as PM
+    const m = str.trim().match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    let h = parseInt(m[1], 10);
+    if (h < 8) h += 12; // 1:30 → 13:30, etc.
+    return h * 60 + parseInt(m[2], 10);
+  }
+
+  function parseTimeRange(cell) {
+    // The time cell contains something like "9:00 – 10:30" (with &ndash;)
+    const text = cell.textContent;
+    const parts = text.split(/[–—-]/);
+    if (parts.length < 2) return null;
+    const start = parseTime(parts[0]);
+    const end = parseTime(parts[1]);
+    if (start === null || end === null) return null;
+    return { start, end };
+  }
+
+  function findDaySection(dayName) {
+    const headers = document.querySelectorAll('.day-header');
+    for (const h of headers) {
+      if (h.textContent.trim().startsWith(dayName)) {
+        return h.closest('.day-section');
+      }
+    }
+    return null;
+  }
+
+  function isSessionRow(tr) {
+    return tr.classList.contains('p-critical') ||
+           tr.classList.contains('p-important') ||
+           tr.classList.contains('p-should') ||
+           tr.classList.contains('p-if-possible') ||
+           (tr.style.borderLeft && tr.style.borderLeft.includes('#95a5a6')); // carryover
+  }
+
+  function greyOut(tr) {
+    tr.classList.add('is-past');
+  }
+
+  function addTimeLine(section, tr, pct) {
+    const table = tr.closest('table');
+    const wrapper = table.parentElement;
+    wrapper.style.position = 'relative';
+
+    const tableRect = table.getBoundingClientRect();
+    const rowRect = tr.getBoundingClientRect();
+    const top = (rowRect.top - tableRect.top) + (rowRect.height * pct);
+
+    const line = document.createElement('div');
+    line.style.cssText = `
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: ${top}px;
+      height: 3px;
+      background: rgba(192, 57, 43, 0.55);
+      z-index: 10;
+      pointer-events: none;
+      box-shadow: 0 0 6px rgba(192, 57, 43, 0.3);
+    `;
+    const label = document.createElement('span');
+    label.textContent = 'NOW';
+    label.style.cssText = `
+      position: absolute;
+      right: 8px;
+      top: -10px;
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: rgba(192, 57, 43, 0.7);
+      letter-spacing: 0.05em;
+    `;
+    line.appendChild(label);
+    table.parentElement.appendChild(line);
+  }
+
+  function update() {
+    const now = getNow();
+    const nowMin = now.hour * 60 + now.minute;
+    const section = findDaySection(now.day);
+
+    // Update clock display
+    const clock = document.getElementById('live-clock');
+    if (clock) {
+      const h = now.hour > 12 ? now.hour - 12 : now.hour;
+      const ampm = now.hour >= 12 ? 'PM' : 'AM';
+      const min = String(now.minute).padStart(2, '0');
+      clock.textContent = `${now.day} ${h}:${min} ${ampm} ET`;
+    }
+
+    if (!section) return; // Not a scheduled day — no line
+
+    const rows = section.querySelectorAll('tbody tr');
+
+    // Find the first session's start time to check if event has begun
+    let firstStart = Infinity;
+    for (const row of rows) {
+      const timeCell = row.querySelector('.time-cell');
+      if (!timeCell || !isSessionRow(row)) continue;
+      const range = parseTimeRange(timeCell);
+      if (range) {
+        firstStart = Math.min(firstStart, range.start);
+      }
+    }
+
+    if (nowMin < firstStart) return; // Before event starts — no line
+
+    // First pass: find the active session and where the line goes
+    let activeRow = null;
+    let activePct = 0;
+    let lastEndedIdx = -1;
+
+    const rowArr = [...rows];
+    for (let i = 0; i < rowArr.length; i++) {
+      const row = rowArr[i];
+      const timeCell = row.querySelector('.time-cell');
+      if (!timeCell || !isSessionRow(row)) continue;
+
+      const range = parseTimeRange(timeCell);
+      if (!range) continue;
+
+      if (nowMin >= range.end) {
+        lastEndedIdx = i;
+      } else if (nowMin >= range.start && nowMin < range.end) {
+        activeRow = row;
+        activePct = (nowMin - range.start) / (range.end - range.start);
+      }
+    }
+
+    // Determine which row gets the line
+    let lineRowIdx = -1;
+    if (activeRow) {
+      lineRowIdx = rowArr.indexOf(activeRow);
+      addTimeLine(section, activeRow, activePct);
+    } else if (lastEndedIdx >= 0) {
+      // In a break between sessions — line on the break row after last ended
+      const next = rowArr[lastEndedIdx].nextElementSibling;
+      if (next && next.classList.contains('break-row')) {
+        lineRowIdx = rowArr.indexOf(next);
+        addTimeLine(section, next, 0.5);
+      } else {
+        lineRowIdx = lastEndedIdx;
+        addTimeLine(section, rowArr[lastEndedIdx], 1.0);
+      }
+    }
+
+    // Second pass: grey out everything above the line
+    if (lineRowIdx >= 0) {
+      for (let i = 0; i < lineRowIdx; i++) {
+        greyOut(rowArr[i]);
+      }
+    }
+  }
+
+  update();
+})();
+</script>
 </body>
 </html>
