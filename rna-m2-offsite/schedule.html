@@ -738,14 +738,27 @@
       lineRowIdx = rowArr.indexOf(activeRow);
       addTimeLine(section, activeRow, activePct);
     } else if (lastEndedIdx >= 0) {
-      // In a break between sessions — line on the break row after last ended
-      const next = rowArr[lastEndedIdx].nextElementSibling;
-      if (next && next.classList.contains('break-row')) {
-        lineRowIdx = rowArr.indexOf(next);
-        addTimeLine(section, next, 0.5);
+      // Check if we're past ALL sessions (not just in a break)
+      let anyRemaining = false;
+      for (let i = lastEndedIdx + 1; i < rowArr.length; i++) {
+        const tc = rowArr[i].querySelector('.time-cell');
+        if (!tc || !isSessionRow(rowArr[i])) continue;
+        const r = parseTimeRange(tc);
+        if (r && nowMin < r.end) { anyRemaining = true; break; }
+      }
+      if (anyRemaining) {
+        // In a break between sessions — line on the break row
+        const next = rowArr[lastEndedIdx].nextElementSibling;
+        if (next && next.classList.contains('break-row')) {
+          lineRowIdx = rowArr.indexOf(next);
+          addTimeLine(section, next, 0.5);
+        } else {
+          lineRowIdx = lastEndedIdx;
+          addTimeLine(section, rowArr[lastEndedIdx], 1.0);
+        }
       } else {
-        lineRowIdx = lastEndedIdx;
-        addTimeLine(section, rowArr[lastEndedIdx], 1.0);
+        // Past all sessions — grey out entire day, no line
+        lineRowIdx = rowArr.length;
       }
     }
 
