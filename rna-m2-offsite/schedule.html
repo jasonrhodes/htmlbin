@@ -670,6 +670,16 @@
       clock.textContent = `${now.day} ${h}:${min} ${ampm} ET`;
     }
 
+    // Grey out all previous days entirely
+    const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+    const todayIdx = dayOrder.indexOf(now.day);
+    for (let d = 0; d < todayIdx; d++) {
+      const prevSection = findDaySection(dayOrder[d]);
+      if (!prevSection) continue;
+      const prevRows = prevSection.querySelectorAll('tbody tr');
+      for (const row of prevRows) greyOut(row);
+    }
+
     if (!section) return; // Not a scheduled day — no line
 
     const rows = section.querySelectorAll('tbody tr');
