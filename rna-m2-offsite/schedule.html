@@ -757,8 +757,37 @@
           addTimeLine(section, rowArr[lastEndedIdx], 1.0);
         }
       } else {
-        // Past all sessions — grey out entire day, no line
+        // Past all sessions — grey out entire day, line at bottom
         lineRowIdx = rowArr.length;
+        const table = section.querySelector('table');
+        const wrapper = table.parentElement;
+        wrapper.style.position = 'relative';
+        const tableRect = table.getBoundingClientRect();
+        const line = document.createElement('div');
+        line.style.cssText = `
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: ${tableRect.height}px;
+          height: 3px;
+          background: rgba(192, 57, 43, 0.55);
+          z-index: 10;
+          pointer-events: none;
+          box-shadow: 0 0 6px rgba(192, 57, 43, 0.3);
+        `;
+        const label = document.createElement('span');
+        label.textContent = 'NOW';
+        label.style.cssText = `
+          position: absolute;
+          right: 8px;
+          top: -10px;
+          font-size: 0.55rem;
+          font-weight: 700;
+          color: rgba(192, 57, 43, 0.7);
+          letter-spacing: 0.05em;
+        `;
+        line.appendChild(label);
+        wrapper.appendChild(line);
       }
     }
 
