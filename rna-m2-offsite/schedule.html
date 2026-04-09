@@ -637,9 +637,9 @@
     const wrapper = table.parentElement;
     wrapper.style.position = 'relative';
 
-    const tableRect = table.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
     const rowRect = tr.getBoundingClientRect();
-    const top = (rowRect.top - tableRect.top) + (rowRect.height * pct);
+    const top = (rowRect.top - wrapperRect.top) + (rowRect.height * pct);
 
     const line = document.createElement('div');
     line.style.cssText = `
