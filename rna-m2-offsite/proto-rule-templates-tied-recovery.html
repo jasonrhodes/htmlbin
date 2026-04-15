@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rule Templates — Prototype</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f6f8;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  /* Top bar */
+  .top-bar {
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 0.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .top-bar .logo { font-weight: 700; font-size: 0.85rem; color: #2c3e50; }
+  .top-bar .breadcrumb { font-size: 0.8rem; color: #888; }
+  .top-bar .breadcrumb a { color: #2980b9; text-decoration: none; }
+
+  /* Section nav */
+  .section-nav {
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 0 2rem;
+    display: flex;
+    gap: 0;
+  }
+  .section-nav button {
+    padding: 0.75rem 1.25rem;
+    border: none;
+    background: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .section-nav button:hover { color: #555; }
+  .section-nav button.active { color: #2c3e50; border-bottom-color: #2980b9; }
+
+  .main { padding: 2rem; max-width: 64rem; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ===== TEMPLATE PICKER ===== */
+  .picker-intro { margin-bottom: 1.5rem; }
+  .picker-intro h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .picker-intro p { font-size: 0.9rem; color: #666; max-width: 40rem; line-height: 1.5; }
+
+  .template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: 1rem;
+  }
+  .template-card {
+    background: #fff;
+    border: 2px solid #e8eaed;
+    border-radius: 8px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .template-card:hover { border-color: #2980b9; box-shadow: 0 2px 8px rgba(41,128,185,0.12); }
+  .template-card.selected { border-color: #2980b9; background: #f0f7fd; }
+  .template-card .tc-icon {
+    width: 32px; height: 32px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; margin-bottom: 0.75rem; font-weight: 700; color: #fff;
+  }
+  .template-card h3 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+  .template-card p { font-size: 0.8rem; color: #666; line-height: 1.4; }
+  .template-card .tc-replaces { margin-top: 0.5rem; font-size: 0.7rem; color: #999; }
+  .template-card .tc-badge {
+    position: absolute; top: 0.75rem; right: 0.75rem;
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 0.15rem 0.4rem; border-radius: 3px; font-weight: 600;
+    background: #eee; color: #777;
+  }
+
+  .picker-actions { margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; }
+  .picker-actions .or-text { font-size: 0.8rem; color: #999; }
+
+  /* ===== FORMS COMMON ===== */
+  .form-header { margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 1rem; }
+  .form-header .back-btn {
+    background: none; border: 1px solid #ddd; border-radius: 4px;
+    padding: 0.3rem 0.6rem; font-size: 0.75rem; cursor: pointer; color: #666; margin-top: 0.25rem;
+  }
+  .form-header h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  .form-header p { font-size: 0.85rem; color: #666; }
+
+  .form-section {
+    background: #fff; border: 1px solid #e8eaed; border-radius: 8px;
+    padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .form-section h2 { font-size: 0.95rem; margin-bottom: 0.25rem; color: #2c3e50; }
+  .form-section .section-help { font-size: 0.78rem; color: #888; margin-bottom: 1rem; line-height: 1.45; }
+
+  .field-row { display: flex; gap: 1rem; margin-bottom: 0.75rem; align-items: flex-start; }
+  .field { flex: 1; }
+  .field label { display: block; font-size: 0.75rem; font-weight: 600; color: #555; margin-bottom: 0.25rem; }
+  .field input, .field select {
+    width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #d0d5dd;
+    border-radius: 4px; font-size: 0.85rem; background: #fff;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: #2980b9; box-shadow: 0 0 0 2px rgba(41,128,185,0.15);
+  }
+  .field .hint { font-size: 0.7rem; color: #999; margin-top: 0.2rem; }
+
+  /* Autocomplete */
+  .ac-wrapper { position: relative; }
+  .ac-dropdown {
+    display: none;
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border: 1px solid #d0d5dd; border-top: none;
+    border-radius: 0 0 4px 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 50; max-height: 180px; overflow-y: auto;
+  }
+  .ac-dropdown.visible { display: block; }
+  .ac-item {
+    padding: 0.35rem 0.6rem; font-size: 0.8rem; cursor: pointer;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .ac-item:hover { background: #f0f7fd; }
+  .ac-item .ac-type {
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.03em;
+    color: #999; background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 2px;
+  }
+  .ac-item .ac-field { color: #2c3e50; }
+
+  /* Explainer tooltips */
+  .explainer {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%; background: #e8eaed;
+    color: #666; font-size: 0.55rem; font-weight: 700; cursor: help;
+    margin-left: 0.3rem; vertical-align: middle; position: relative;
+  }
+  .explainer .tip {
+    display: none; position: absolute; bottom: 100%; left: 50%;
+    transform: translateX(-50%); background: #2c3e50; color: #fff;
+    padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.72rem;
+    font-weight: 400; line-height: 1.4; width: 240px; z-index: 100;
+    margin-bottom: 6px; pointer-events: none;
+  }
+  .explainer:hover .tip { display: block; }
+
+  /* Condition block */
+  .condition-block {
+    border: 1px solid #e8eaed; border-radius: 6px; padding: 1rem;
+    margin-bottom: 0.75rem; position: relative; background: #fafbfc;
+  }
+  .condition-block .condition-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: #888; margin-bottom: 0.75rem;
+  }
+  .condition-block .remove-condition {
+    position: absolute; top: 0.5rem; right: 0.5rem; background: none;
+    border: none; color: #ccc; cursor: pointer; font-size: 0.9rem; padding: 0.2rem;
+  }
+  .condition-block .remove-condition:hover { color: #c0392b; }
+
+  .add-condition-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: none; border: 1px dashed #c0d5e8; color: #2980b9;
+    padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem;
+    font-weight: 500; cursor: pointer; margin-bottom: 0.75rem;
+  }
+  .add-condition-btn:hover { background: #f0f7fd; border-color: #2980b9; }
+
+  /* Recovery section */
+  .recovery-options { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
+  .recovery-opt {
+    flex: 1; padding: 0.75rem; border: 2px solid #e8eaed; border-radius: 6px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .recovery-opt:hover { border-color: #a0c4e0; }
+  .recovery-opt.selected { border-color: #2980b9; background: #f0f7fd; }
+  .recovery-opt .opt-title { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.2rem; }
+  .recovery-opt .opt-desc { font-size: 0.72rem; color: #777; line-height: 1.35; }
+
+  .recovery-custom-fields {
+    display: none; margin-top: 0.75rem; padding: 0.75rem;
+    background: #f0f7fd; border-radius: 6px; border: 1px solid #c0d5e8;
+  }
+  .recovery-custom-fields.visible { display: block; }
+  .recovery-custom-fields .rc-label {
+    font-size: 0.75rem; font-weight: 600; color: #2980b9; margin-bottom: 0.5rem;
+  }
+
+  /* APM expression chips */
+  .apm-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .apm-chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.4rem 0.75rem; background: #fff; border: 1px solid #d0d5dd;
+    border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: all 0.15s;
+  }
+  .apm-chip:hover { border-color: #2980b9; }
+  .apm-chip .chip-label { color: #888; font-size: 0.7rem; }
+  .apm-chip .chip-value { font-weight: 600; color: #2c3e50; }
+  .apm-chip .chip-dd { color: #aaa; font-size: 0.6rem; margin-left: 0.2rem; }
+
+  /* Burn rate windows table */
+  .burn-windows {
+    width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.5rem;
+  }
+  .burn-windows th {
+    text-align: left; padding: 0.4rem 0.6rem; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.04em; color: #888;
+    border-bottom: 2px solid #e8eaed; font-weight: 600;
+  }
+  .burn-windows td {
+    padding: 0.5rem 0.6rem; border-bottom: 1px solid #eee; vertical-align: middle;
+  }
+  .burn-windows input {
+    width: 4.5rem; padding: 0.3rem 0.5rem; border: 1px solid #d0d5dd;
+    border-radius: 4px; font-size: 0.8rem;
+  }
+  .burn-windows select {
+    padding: 0.3rem 0.4rem; border: 1px solid #d0d5dd;
+    border-radius: 4px; font-size: 0.8rem;
+  }
+  .severity-badge {
+    display: inline-block; padding: 0.15rem 0.45rem; border-radius: 3px;
+    font-size: 0.7rem; font-weight: 600; color: #fff;
+  }
+  .sev-critical { background: #c0392b; }
+  .sev-high { background: #e67e22; }
+  .sev-medium { background: #f39c12; }
+  .sev-low { background: #7f8c8d; }
+
+  /* Generated panel */
+  .generated-banner {
+    background: #eaf7ed; border: 1px solid #b8e2c5; border-radius: 6px;
+    padding: 0.75rem 1rem; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem;
+  }
+  .generated-banner .icon { font-size: 1.1rem; }
+  .generated-banner .text { flex: 1; color: #1a6b3a; line-height: 1.4; }
+  .generated-banner .text strong { display: block; margin-bottom: 0.1rem; }
+  .generated-banner button {
+    background: #27ae60; color: #fff; border: none; padding: 0.35rem 0.75rem;
+    border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+
+  .full-form-section {
+    background: #fff; border: 1px solid #e8eaed; border-radius: 8px;
+    padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .full-form-section h2 {
+    font-size: 0.9rem; color: #2c3e50; margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .from-template {
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 0.15rem 0.4rem; border-radius: 3px; font-weight: 600;
+    background: #eaf7ed; color: #27ae60;
+  }
+
+  .esql-editor {
+    background: #1e1e2e; color: #cdd6f4; padding: 1rem; border-radius: 6px;
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem;
+    line-height: 1.6; overflow-x: auto; white-space: pre; position: relative;
+  }
+  .esql-editor .kw { color: #cba6f7; }
+  .esql-editor .fn { color: #89b4fa; }
+  .esql-editor .str { color: #a6e3a1; }
+  .esql-editor .num { color: #fab387; }
+  .esql-editor .op { color: #f38ba8; }
+  .esql-editor .fld { color: #89dceb; }
+  .esql-editor .comment { color: #6c7086; font-style: italic; }
+
+  /* Integrity panel */
+  .integrity-scenarios { display: flex; flex-direction: column; gap: 1rem; }
+  .scenario-card { background: #fff; border: 1px solid #e8eaed; border-radius: 8px; overflow: hidden; }
+  .scenario-header {
+    padding: 0.75rem 1rem; font-weight: 600; font-size: 0.85rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .scenario-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .scenario-body { padding: 0 1rem 1rem; display: flex; gap: 1.5rem; }
+  .scenario-body .code-side { flex: 1; min-width: 0; }
+  .scenario-body .explain-side {
+    width: 14rem; flex-shrink: 0; font-size: 0.78rem; color: #555; line-height: 1.45;
+  }
+  .scenario-body .explain-side .verdict {
+    display: inline-block; padding: 0.15rem 0.4rem; border-radius: 3px;
+    font-size: 0.7rem; font-weight: 600; margin-bottom: 0.4rem;
+  }
+  .verdict-safe { background: #eaf7ed; color: #27ae60; }
+  .verdict-warn { background: #fef9f2; color: #e67e22; }
+  .verdict-break { background: #fdf2f2; color: #c0392b; }
+
+  .diff-line { font-family: 'SF Mono', monospace; font-size: 0.75rem; line-height: 1.5; }
+  .diff-line.unchanged { color: #888; }
+  .diff-line.removed { color: #c0392b; background: #fdf2f2; }
+  .diff-line.added { color: #27ae60; background: #eaf7ed; }
+
+  /* Buttons */
+  .btn {
+    padding: 0.5rem 1.2rem; border-radius: 6px; font-size: 0.85rem;
+    font-weight: 600; cursor: pointer; border: none; transition: all 0.1s;
+  }
+  .btn-primary { background: #2980b9; color: #fff; }
+  .btn-primary:hover { background: #2471a3; }
+  .btn-secondary { background: #fff; color: #555; border: 1px solid #d0d5dd; }
+  .btn-secondary:hover { background: #f5f5f5; }
+  .btn-ghost { background: none; color: #2980b9; border: none; padding: 0.5rem 0.5rem; }
+
+  .advanced-toggle {
+    font-size: 0.78rem; color: #2980b9; cursor: pointer; border: none;
+    background: none; padding: 0; margin-top: 0.25rem; font-weight: 500;
+  }
+  .advanced-fields { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee; }
+  .advanced-fields.visible { display: block; }
+
+  @media (max-width: 640px) {
+    .main { padding: 1rem; }
+    .template-grid { grid-template-columns: 1fr; }
+    .field-row { flex-direction: column; }
+    .scenario-body { flex-direction: column; }
+    .scenario-body .explain-side { width: auto; }
+    .recovery-options { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="logo">elastic</span>
+  <span class="breadcrumb"><a href="#">Alerting v2</a> &rsaquo; Create rule</span>
+</div>
+
+<div class="section-nav" id="sectionNav">
+  <button class="active" data-panel="picker">1. Choose Template</button>
+  <button data-panel="form">2. Fill Out Template</button>
+  <button data-panel="generated">3. Full Rule Editor</button>
+  <button data-panel="integrity">4. Template Integrity</button>
+</div>
+
+<div class="main">
+
+<!-- ==================== PANEL 1: TEMPLATE PICKER ==================== -->
+<div class="panel active" id="panel-picker">
+  <div class="picker-intro">
+    <h1>Create a rule</h1>
+    <p>Start from a template to get up and running quickly, or skip to the full editor if you prefer to write ES|QL directly. Templates pre-fill your rule &mdash; you can always customize everything afterward.</p>
+  </div>
+  <div class="template-grid">
+    <div class="template-card selected" onclick="selectTemplate('threshold')" id="card-threshold">
+      <div class="tc-icon" style="background:#2980b9;">T</div>
+      <h3>Threshold Alert</h3>
+      <p>Monitor one or more metrics and alert when they cross a threshold. Multi-condition support with custom aggregations.</p>
+      <div class="tc-replaces">Replaces: Custom threshold, Metric threshold</div>
+    </div>
+    <div class="template-card" onclick="selectTemplate('latency')" id="card-latency">
+      <div class="tc-icon" style="background:#8e44ad;">L</div>
+      <h3>Service Latency</h3>
+      <p>Alert when a service's response time exceeds a threshold. Pick service, transaction type, percentile, and environment.</p>
+      <div class="tc-replaces">Replaces: APM latency rule</div>
+    </div>
+    <div class="template-card" onclick="selectTemplate('burnrate')" id="card-burnrate">
+      <div class="tc-icon" style="background:#e67e22;">B</div>
+      <h3>SLO Burn Rate</h3>
+      <p>Alert when an SLO's error budget is being consumed too fast, using multi-window burn rate detection with automatic severity.</p>
+      <div class="tc-replaces">Replaces: SLO burn rate rule</div>
+      <span class="tc-badge">Advanced</span>
+    </div>
+    <div class="template-card" onclick="selectTemplate('anomaly')" id="card-anomaly" style="opacity:0.5;">
+      <div class="tc-icon" style="background:#27ae60;">A</div>
+      <h3>Anomaly Detection</h3>
+      <p>Detect statistically significant changes in a metric using CHANGE_POINT. No manual thresholds needed.</p>
+      <div class="tc-replaces">Future template</div>
+      <span class="tc-badge">Coming later</span>
+    </div>
+  </div>
+  <div class="picker-actions">
+    <button class="btn btn-primary" onclick="useTemplate()">Use template</button>
+    <span class="or-text">or</span>
+    <button class="btn btn-ghost" onclick="showBlankEditor()">Skip to full editor &rarr;</button>
+  </div>
+</div>
+
+<!-- ==================== PANEL 2A: THRESHOLD TEMPLATE ==================== -->
+<div class="panel" id="panel-form-threshold">
+  <div class="form-header">
+    <button class="back-btn" onclick="showPanel('picker')">&larr;</button>
+    <div>
+      <h1>Threshold Alert</h1>
+      <p>Monitor one or more metrics against thresholds. Add multiple conditions to create compound alerts.</p>
+    </div>
+  </div>
+
+  <!-- Basics -->
+  <div class="form-section">
+    <h2>Basics</h2>
+    <div class="field-row">
+      <div class="field"><label>Rule name</label><input type="text" value="High CPU on production hosts"></div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Data source</label>
+        <select onchange="updateFieldSuggestions(this.value)">
+          <option>metrics-*</option>
+          <option>logs-*</option>
+          <option selected>metrics-system.cpu-default</option>
+        </select>
+      </div>
+      <div class="field"><label>Time field</label><select><option selected>@timestamp</option></select></div>
+    </div>
+  </div>
+
+  <!-- Conditions -->
+  <div class="form-section">
+    <h2>Conditions</h2>
+    <div class="section-help">Define what triggers this alert. Add multiple conditions &mdash; all must be true simultaneously.</div>
+
+    <div id="conditions-container">
+      <div class="condition-block" id="cond-A">
+        <div class="condition-label">Condition A</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Aggregation</label>
+            <select><option selected>Average</option><option>Max</option><option>Min</option><option>Sum</option><option>P95</option><option>P99</option><option>Count</option><option>Cardinality</option></select>
+          </div>
+          <div class="field">
+            <label>of field</label>
+            <div class="ac-wrapper">
+              <input type="text" value="system.cpu.total.norm.pct" onfocus="showAC(this)" oninput="filterAC(this)" onblur="hideAC(this)">
+              <div class="ac-dropdown" id="ac-cond-a-field">
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.cpu.total.norm.pct</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.cpu.user.norm.pct</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.cpu.system.norm.pct</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.memory.used.pct</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.memory.actual.used.pct</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.load.1</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.load.5</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">host.name</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">cloud.provider</span></div>
+                <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">cloud.region</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Condition</label>
+            <div style="display:flex;gap:0.5rem;">
+              <select style="width:auto;"><option>is above</option><option>is below</option><option>is between</option></select>
+              <input type="text" value="0.8" style="width:5rem;">
+            </div>
+          </div>
+          <div class="field">
+            <label>Evaluation window</label>
+            <div style="display:flex;gap:0.5rem;">
+              <input type="text" value="5" style="width:3.5rem;">
+              <select style="width:auto;"><option selected>minutes</option><option>hours</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="add-condition-btn" onclick="addCondition()">+ Add condition</button>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Group by <span class="explainer">?<span class="tip">Create separate alert episodes for each unique value of these fields. For example, group by host.name to get one alert per host.</span></span></label>
+        <div class="ac-wrapper">
+          <input type="text" value="host.name" onfocus="showAC(this)" oninput="filterAC(this)" onblur="hideAC(this)">
+          <div class="ac-dropdown">
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">host.name</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">cloud.instance.id</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">cloud.region</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">container.name</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Filter (optional)</label>
+        <div class="ac-wrapper">
+          <input type="text" placeholder='e.g. cloud.provider == "aws"' onfocus="showAC(this)" oninput="filterAC(this)" onblur="hideAC(this)">
+          <div class="ac-dropdown">
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">cloud.provider</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">cloud.region</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">cloud.availability_zone</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">host.os.family</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">agent.type</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recovery -->
+  <div class="form-section">
+    <h2>Recovery condition <span class="explainer">?<span class="tip">By default, an alert recovers when the trigger condition is no longer true. With a custom recovery condition, you can set a different threshold for recovery — e.g., alert at CPU &gt; 80% but only recover when CPU &lt; 60%. This prevents flapping.</span></span></h2>
+    <div class="section-help">How should this alert recover? A custom recovery condition prevents flapping when values hover near the threshold.</div>
+
+    <div class="recovery-options">
+      <div class="recovery-opt selected" onclick="selectRecovery(this, 'default')">
+        <div class="opt-title">Condition clears</div>
+        <div class="opt-desc">Alert recovers as soon as the trigger condition is no longer true.</div>
+      </div>
+      <div class="recovery-opt" onclick="selectRecovery(this, 'custom')">
+        <div class="opt-title">Custom recovery threshold</div>
+        <div class="opt-desc">Set a separate condition for recovery. Great for hysteresis &mdash; e.g., alert at 80%, recover at 60%.</div>
+      </div>
+    </div>
+
+    <div class="recovery-custom-fields" id="recovery-custom">
+      <div class="rc-label">Set a recovery threshold for each condition</div>
+      <div id="recovery-conditions-list">
+        <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #d8e4ef;">
+          <span style="font-size:0.7rem;font-weight:700;color:#2980b9;width:1rem;">A</span>
+          <span style="font-size:0.8rem;color:#555;">Average of</span>
+          <span style="font-size:0.8rem;font-weight:600;color:#2c3e50;">system.cpu.total.norm.pct</span>
+          <select style="width:auto;padding:0.3rem 0.4rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.8rem;">
+            <option selected>is below</option><option>is above</option><option>is between</option>
+          </select>
+          <input type="text" value="0.6" style="width:4.5rem;padding:0.3rem 0.5rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.8rem;">
+          <span style="font-size:0.7rem;color:#999;">Alert fires at &gt; 0.8</span>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:0.5rem;">Each condition's recovery threshold is evaluated independently. All must be met for the alert to recover.</div>
+    </div>
+  </div>
+
+  <!-- Alert behavior -->
+  <div class="form-section">
+    <h2>Alert behavior</h2>
+    <div class="section-help">Control when alerts activate and recover. These settings reduce noise from transient spikes.</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Activation delay <span class="explainer">?<span class="tip">How many consecutive times the condition must be true before the alert activates. Prevents false alarms from momentary spikes.</span></span></label>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <span style="font-size:0.8rem;color:#666;">After</span>
+          <input type="text" value="3" style="width:3rem;">
+          <span style="font-size:0.8rem;color:#666;">consecutive breaches</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Recovery delay <span class="explainer">?<span class="tip">How many consecutive times the condition must be clear (or custom recovery met) before the alert recovers.</span></span></label>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <span style="font-size:0.8rem;color:#666;">After</span>
+          <input type="text" value="2" style="width:3rem;">
+          <span style="font-size:0.8rem;color:#666;">consecutive clears</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Check every</label>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="text" value="1" style="width:3.5rem;">
+          <select style="width:auto;"><option selected>minute</option><option>5 minutes</option><option>15 minutes</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>No data behavior <span class="explainer">?<span class="tip">What happens if the query returns no results. "Keep last status" is safest for intermittent data.</span></span></label>
+        <select><option selected>Keep last status</option><option>Recover</option><option>Alert on no data</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+    <button class="btn btn-primary" onclick="showGenerated('threshold')">Generate rule &rarr;</button>
+    <button class="btn btn-secondary" onclick="showPanel('picker')">Back</button>
+  </div>
+</div>
+
+<!-- ==================== PANEL 2B: SERVICE LATENCY TEMPLATE ==================== -->
+<div class="panel" id="panel-form-latency">
+  <div class="form-header">
+    <button class="back-btn" onclick="showPanel('picker')">&larr;</button>
+    <div>
+      <h1>Service Latency</h1>
+      <p>Alert when a service's response time exceeds a threshold. Filters are scoped to APM data.</p>
+    </div>
+  </div>
+
+  <!-- Basics -->
+  <div class="form-section">
+    <h2>Basics</h2>
+    <div class="field-row">
+      <div class="field"><label>Rule name</label><input type="text" value="Checkout API high latency"></div>
+    </div>
+  </div>
+
+  <!-- Service filters — APM style chip selectors -->
+  <div class="form-section">
+    <h2>Service scope</h2>
+    <div class="section-help">Filter to a specific service, transaction type, and environment. These map to the APM data in your cluster.</div>
+
+    <div class="apm-filters">
+      <div class="apm-chip">
+        <span class="chip-label">Service</span>
+        <span class="chip-value">checkout-api</span>
+        <span class="chip-dd">&#9662;</span>
+      </div>
+      <div class="apm-chip">
+        <span class="chip-label">Type</span>
+        <span class="chip-value">request</span>
+        <span class="chip-dd">&#9662;</span>
+      </div>
+      <div class="apm-chip">
+        <span class="chip-label">Environment</span>
+        <span class="chip-value">production</span>
+        <span class="chip-dd">&#9662;</span>
+      </div>
+      <div class="apm-chip">
+        <span class="chip-label">Name</span>
+        <span class="chip-value" style="color:#999;">All</span>
+        <span class="chip-dd">&#9662;</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Criteria — APM style inline expression -->
+  <div class="form-section">
+    <h2>Alert condition</h2>
+    <div class="section-help">When should this alert fire?</div>
+
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;font-size:0.9rem;color:#444;margin-bottom:1rem;">
+      <span>When</span>
+      <select style="width:auto;padding:0.35rem 0.5rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.85rem;font-weight:600;">
+        <option>Average</option>
+        <option selected>95th percentile</option>
+        <option>99th percentile</option>
+      </select>
+      <span>latency is above</span>
+      <input type="text" value="1500" style="width:5rem;padding:0.35rem 0.5rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.85rem;font-weight:600;">
+      <span style="color:#888;">ms</span>
+      <span>for the last</span>
+      <input type="text" value="5" style="width:3rem;padding:0.35rem 0.5rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.85rem;font-weight:600;">
+      <select style="width:auto;padding:0.35rem 0.5rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.85rem;">
+        <option selected>minutes</option>
+        <option>hours</option>
+      </select>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Group alerts by</label>
+        <div class="ac-wrapper">
+          <input type="text" value="service.name, service.environment, transaction.type" onfocus="showAC(this)" onblur="hideAC(this)">
+          <div class="ac-dropdown">
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">service.name</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">service.environment</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">transaction.type</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">transaction.name</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">service.version</span></div>
+          </div>
+        </div>
+        <div class="hint">Pre-selected: service.name, service.environment, transaction.type</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recovery -->
+  <div class="form-section">
+    <h2>Recovery condition</h2>
+    <div class="recovery-options">
+      <div class="recovery-opt selected" onclick="selectRecovery(this, 'default')">
+        <div class="opt-title">Condition clears</div>
+        <div class="opt-desc">Recovers when latency drops below the threshold.</div>
+      </div>
+      <div class="recovery-opt" onclick="selectRecovery(this, 'custom')">
+        <div class="opt-title">Custom recovery threshold</div>
+        <div class="opt-desc">E.g., alert at p95 &gt; 1500ms, recover when p95 &lt; 1000ms.</div>
+      </div>
+    </div>
+    <div class="recovery-custom-fields" id="recovery-custom-latency">
+      <div class="rc-label">Recovery threshold</div>
+      <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;">
+        <span style="font-size:0.8rem;color:#555;">95th percentile of</span>
+        <span style="font-size:0.8rem;font-weight:600;color:#2c3e50;">transaction.duration.us</span>
+        <select style="width:auto;padding:0.3rem 0.4rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.8rem;">
+          <option selected>is below</option><option>is above</option>
+        </select>
+        <input type="text" value="1000" style="width:4.5rem;padding:0.3rem 0.5rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.8rem;">
+        <span style="color:#888;font-size:0.8rem;">ms</span>
+        <span style="font-size:0.7rem;color:#999;">Alert fires at &gt; 1500ms</span>
+      </div>
+      <div class="hint">Alert activates when p95 exceeds 1500ms, but only recovers when p95 drops below 1000ms.</div>
+    </div>
+  </div>
+
+  <!-- Alert behavior -->
+  <div class="form-section">
+    <h2>Alert behavior</h2>
+    <div class="field-row">
+      <div class="field">
+        <label>Activation delay</label>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <span style="font-size:0.8rem;color:#666;">After</span>
+          <input type="text" value="2" style="width:3rem;">
+          <span style="font-size:0.8rem;color:#666;">consecutive breaches</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Recovery delay</label>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <span style="font-size:0.8rem;color:#666;">After</span>
+          <input type="text" value="3" style="width:3rem;">
+          <span style="font-size:0.8rem;color:#666;">consecutive clears</span>
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Check every</label>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="text" value="1" style="width:3.5rem;">
+          <select style="width:auto;"><option selected>minute</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+    <button class="btn btn-primary" onclick="showGenerated('latency')">Generate rule &rarr;</button>
+    <button class="btn btn-secondary" onclick="showPanel('picker')">Back</button>
+  </div>
+</div>
+
+<!-- ==================== PANEL 2C: SLO BURN RATE TEMPLATE ==================== -->
+<div class="panel" id="panel-form-burnrate">
+  <div class="form-header">
+    <button class="back-btn" onclick="showPanel('picker')">&larr;</button>
+    <div>
+      <h1>SLO Burn Rate</h1>
+      <p>Alert when an SLO's error budget is being consumed too quickly. Uses Google's multi-window burn rate approach for reliable alerting with severity levels.</p>
+    </div>
+  </div>
+
+  <!-- SLO selection -->
+  <div class="form-section">
+    <h2>SLO</h2>
+    <div class="section-help">Choose the SLO to monitor. The template will query its underlying SLI data and calculate burn rates.</div>
+    <div class="field-row">
+      <div class="field"><label>Rule name</label><input type="text" value="Checkout availability burn rate"></div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Select SLO</label>
+        <select style="font-weight:600;">
+          <option selected>checkout-availability (99% target, occurrences)</option>
+          <option>api-latency-p99 (99.9% target, timeslice)</option>
+          <option>payment-success-rate (99.5% target, occurrences)</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:2rem;margin-top:0.5rem;font-size:0.78rem;color:#666;">
+      <span>Target: <strong style="color:#2c3e50;">99%</strong></span>
+      <span>Budgeting: <strong style="color:#2c3e50;">Occurrences</strong></span>
+      <span>Index: <strong style="color:#2c3e50;">.slo-observability.sli-v3*</strong></span>
+    </div>
+  </div>
+
+  <!-- Burn rate windows -->
+  <div class="form-section">
+    <h2>Burn rate windows <span class="explainer">?<span class="tip">Each window pair (long + short) must both exceed the burn rate threshold to fire. Long windows catch sustained issues; short windows ensure the problem is current. Higher burn rates = faster budget consumption = higher severity.</span></span></h2>
+    <div class="section-help">Configure detection windows. Both the long and short window must exceed the threshold to trigger. Pre-filled with Google's recommended values.</div>
+
+    <table class="burn-windows">
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Burn rate &ge;</th>
+          <th>Long window</th>
+          <th>Short window</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="severity-badge sev-critical">CRITICAL</span></td>
+          <td><input type="text" value="14.4"></td>
+          <td>
+            <div style="display:flex;gap:0.3rem;">
+              <input type="text" value="1" style="width:2.5rem;">
+              <select><option selected>hour</option><option>minutes</option></select>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;gap:0.3rem;">
+              <input type="text" value="5" style="width:2.5rem;">
+              <select><option selected>minutes</option><option>hour</option></select>
+            </div>
+          </td>
+          <td><button style="background:none;border:none;color:#ccc;cursor:pointer;">&times;</button></td>
+        </tr>
+        <tr>
+          <td><span class="severity-badge sev-high">HIGH</span></td>
+          <td><input type="text" value="6"></td>
+          <td>
+            <div style="display:flex;gap:0.3rem;">
+              <input type="text" value="6" style="width:2.5rem;">
+              <select><option selected>hours</option></select>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;gap:0.3rem;">
+              <input type="text" value="30" style="width:2.5rem;">
+              <select><option selected>minutes</option></select>
+            </div>
+          </td>
+          <td><button style="background:none;border:none;color:#ccc;cursor:pointer;">&times;</button></td>
+        </tr>
+        <tr>
+          <td><span class="severity-badge sev-medium">MEDIUM</span></td>
+          <td><input type="text" value="3"></td>
+          <td>
+            <div style="display:flex;gap:0.3rem;">
+              <input type="text" value="1" style="width:2.5rem;">
+              <select><option selected>day</option></select>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;gap:0.3rem;">
+              <input type="text" value="2" style="width:2.5rem;">
+              <select><option selected>hours</option></select>
+            </div>
+          </td>
+          <td><button style="background:none;border:none;color:#ccc;cursor:pointer;">&times;</button></td>
+        </tr>
+        <tr>
+          <td><span class="severity-badge sev-low">LOW</span></td>
+          <td><input type="text" value="1"></td>
+          <td>
+            <div style="display:flex;gap:0.3rem;">
+              <input type="text" value="3" style="width:2.5rem;">
+              <select><option selected>days</option></select>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;gap:0.3rem;">
+              <input type="text" value="6" style="width:2.5rem;">
+              <select><option selected>hours</option></select>
+            </div>
+          </td>
+          <td><button style="background:none;border:none;color:#ccc;cursor:pointer;">&times;</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button class="add-condition-btn" style="margin-top:0.5rem;">+ Add window</button>
+  </div>
+
+  <!-- Schedule -->
+  <div class="form-section">
+    <h2>Schedule</h2>
+    <div class="field-row">
+      <div class="field">
+        <label>Check every</label>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="text" value="1" style="width:3.5rem;">
+          <select style="width:auto;"><option selected>minute</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Lookback</label>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="text" value="3" style="width:3.5rem;">
+          <select style="width:auto;"><option selected>days</option></select>
+        </div>
+        <div class="hint">Must cover the longest burn rate window</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+    <button class="btn btn-primary" onclick="showGenerated('burnrate')">Generate rule &rarr;</button>
+    <button class="btn btn-secondary" onclick="showPanel('picker')">Back</button>
+  </div>
+</div>
+
+<!-- ==================== PANEL 3: FULL RULE EDITOR ==================== -->
+<div class="panel" id="panel-generated">
+  <div class="generated-banner" id="gen-banner">
+    <span class="icon" id="gen-banner-icon">&#x2714;</span>
+    <div class="text" id="gen-banner-text">
+      <strong id="gen-banner-title">Generated from Threshold Alert template</strong>
+      <span id="gen-banner-subtitle">This rule was pre-filled from your template. All fields are editable. Changes to the ES|QL may detach the template.</span>
+    </div>
+    <button onclick="goBackToForm()" id="gen-banner-btn">Edit in template</button>
+  </div>
+
+  <div class="full-form-section">
+    <h2>Rule details <span class="from-template" id="gen-ft-details">from template</span></h2>
+    <div class="field-row">
+      <div class="field"><label>Name</label><input type="text" id="gen-name" value=""></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Description</label><input type="text" id="gen-desc" value=""></div>
+    </div>
+  </div>
+
+  <div class="full-form-section">
+    <h2>ES|QL query <span class="from-template" id="gen-ft-esql">from template</span></h2>
+    <div class="esql-editor" id="gen-esql"></div>
+    <h2 style="margin-top:1rem;">Condition <span class="from-template" id="gen-ft-cond">from template</span></h2>
+    <div class="esql-editor" id="gen-condition"></div>
+  </div>
+
+  <div class="full-form-section" id="gen-recovery-section">
+    <h2>Recovery policy <span class="from-template">from template</span></h2>
+    <div id="gen-recovery-content"></div>
+  </div>
+
+  <div class="full-form-section">
+    <h2>State transitions <span class="from-template">from template</span></h2>
+    <div class="field-row">
+      <div class="field">
+        <label>Pending &rarr; Active</label>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <input type="text" id="gen-pending" value="3" style="width:3rem;">
+          <span style="font-size:0.8rem;color:#666;">consecutive breaches</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Recovering &rarr; Inactive</label>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <input type="text" id="gen-recovering" value="2" style="width:3rem;">
+          <span style="font-size:0.8rem;color:#666;">consecutive clears</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="full-form-section">
+    <h2>Schedule</h2>
+    <div class="field-row">
+      <div class="field"><label>Run every</label><input type="text" value="1m" style="width:6rem;"></div>
+      <div class="field"><label>Lookback</label><input type="text" id="gen-lookback" value="5m" style="width:6rem;"></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+    <button class="btn btn-primary">Create rule</button>
+    <button class="btn btn-secondary" onclick="goBackToForm()">Back to template</button>
+  </div>
+</div>
+
+<!-- ==================== PANEL 4: TEMPLATE INTEGRITY ==================== -->
+<div class="panel" id="panel-integrity">
+  <div class="picker-intro">
+    <h1>Template integrity: can we re-open in template mode?</h1>
+    <p>When a rule is created from a template, we store the template ID and a hash of the generated ES|QL. When re-opening, we compare the current query to the original to decide what's safe.</p>
+  </div>
+
+  <div class="integrity-scenarios">
+    <div class="scenario-card">
+      <div class="scenario-header"><div class="dot" style="background:#27ae60;"></div>Scenario 1: Rule untouched since template creation</div>
+      <div class="scenario-body">
+        <div class="code-side">
+          <div class="esql-editor" style="font-size:0.73rem;"><span class="kw">FROM</span> <span class="str">metrics-system.cpu-default</span>
+<span class="kw">| STATS</span> <span class="fld">avg_value</span> = <span class="fn">AVG</span>(<span class="fld">system.cpu.total.norm.pct</span>)
+    <span class="kw">BY</span> <span class="fld">host.name</span>,
+       <span class="fld">ts</span> = <span class="fn">BUCKET</span>(<span class="fld">@timestamp</span>, <span class="num">5</span> <span class="str">minutes</span>)</div>
+        </div>
+        <div class="explain-side">
+          <div class="verdict verdict-safe">TEMPLATE MODE</div>
+          <p>ES|QL matches stored hash exactly. We can parse the AST, extract all template values, and open the full template form.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header"><div class="dot" style="background:#27ae60;"></div>Scenario 2: User changed data source and metric field</div>
+      <div class="scenario-body">
+        <div class="code-side">
+          <div class="diff-line removed">FROM metrics-system.cpu-default</div>
+          <div class="diff-line added">FROM metrics-system.memory-default</div>
+          <div class="diff-line removed">| STATS avg_value = AVG(system.cpu.total.norm.pct)</div>
+          <div class="diff-line added">| STATS avg_value = AVG(system.memory.used.pct)</div>
+          <div class="diff-line unchanged">    BY host.name,</div>
+          <div class="diff-line unchanged">       ts = BUCKET(@timestamp, 5 minutes)</div>
+        </div>
+        <div class="explain-side">
+          <div class="verdict verdict-safe">TEMPLATE MODE</div>
+          <p>Query structure matches the template's AST pattern. Only parameterizable values changed. We extract the new values and populate the template form.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header"><div class="dot" style="background:#e67e22;"></div>Scenario 3: User added a WHERE filter</div>
+      <div class="scenario-body">
+        <div class="code-side">
+          <div class="diff-line unchanged">FROM metrics-system.cpu-default</div>
+          <div class="diff-line added">| WHERE cloud.provider == "aws"</div>
+          <div class="diff-line unchanged">| STATS avg_value = AVG(system.cpu.total.norm.pct)</div>
+          <div class="diff-line unchanged">    BY host.name,</div>
+          <div class="diff-line unchanged">       ts = BUCKET(@timestamp, 5 minutes)</div>
+        </div>
+        <div class="explain-side">
+          <div class="verdict verdict-warn">TEMPLATE MODE (partial)</div>
+          <p>Structure recognizable &mdash; template's core pattern is intact with a known extension (WHERE filter). Opens in template mode with the filter populated.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header"><div class="dot" style="background:#c0392b;"></div>Scenario 4: User added significant new ES|QL stages</div>
+      <div class="scenario-body">
+        <div class="code-side">
+          <div class="diff-line unchanged">FROM metrics-system.cpu-default</div>
+          <div class="diff-line unchanged">| STATS avg_value = AVG(system.cpu.total.norm.pct)</div>
+          <div class="diff-line unchanged">    BY host.name,</div>
+          <div class="diff-line unchanged">       ts = BUCKET(@timestamp, 5 minutes)</div>
+          <div class="diff-line added">| SORT host.name, ts</div>
+          <div class="diff-line added">| CHANGE_POINT avg_value ON ts</div>
+          <div class="diff-line added">| WHERE type IS NOT NULL AND pvalue &lt; 0.05</div>
+        </div>
+        <div class="explain-side">
+          <div class="verdict verdict-break">EDITOR ONLY</div>
+          <p>Query has new pipeline stages that fundamentally change the logic. Template mode unavailable. Full editor with a note that template was detached.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario-card" style="border-color:#2980b9;">
+      <div class="scenario-header" style="background:#f0f7fd;">How detection works</div>
+      <div style="padding:1rem;font-size:0.82rem;line-height:1.6;color:#444;">
+        <p style="margin-bottom:0.75rem;">Each template defines an <strong>AST pattern</strong> &mdash; the structural shape of its generated ES|QL. When re-opening a rule:</p>
+        <ol style="padding-left:1.25rem;margin-bottom:0.75rem;">
+          <li style="margin-bottom:0.3rem;"><strong>Hash check</strong> &mdash; if ES|QL hash matches stored original, open in template mode.</li>
+          <li style="margin-bottom:0.3rem;"><strong>Pattern match</strong> &mdash; parse AST, compare structure. If pipeline stages match with only parameter-level changes, extract values.</li>
+          <li style="margin-bottom:0.3rem;"><strong>Known extensions</strong> &mdash; some edits are recognized (WHERE filter, extra GROUP BY). These map to template fields.</li>
+          <li><strong>Structural divergence</strong> &mdash; new/removed stages or fundamentally different shape = editor only.</li>
+        </ol>
+        <p>The rule stores: <code>template_id</code>, <code>template_version</code>, and <code>query_hash</code>. Template detachment is a one-way door for structural changes, but parameter edits are always recoverable.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+let currentTemplate = 'threshold';
+
+// --- Panel navigation ---
+document.querySelectorAll('.section-nav button').forEach(btn => {
+  btn.addEventListener('click', () => showPanel(btn.dataset.panel));
+});
+
+function showPanel(id) {
+  // If 'form', route to the right template form
+  const panelId = id === 'form' ? 'panel-form-' + currentTemplate : 'panel-' + id;
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(panelId);
+  if (target) target.classList.add('active');
+
+  document.querySelectorAll('.section-nav button').forEach(b => {
+    const bp = b.dataset.panel;
+    b.classList.toggle('active', bp === id || (bp === 'form' && panelId.startsWith('panel-form')));
+  });
+  window.scrollTo(0, 0);
+}
+
+function selectTemplate(type) {
+  if (type === 'anomaly') return;
+  currentTemplate = type;
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('card-' + type);
+  if (card) card.classList.add('selected');
+}
+
+function useTemplate() {
+  showPanel('form');
+}
+
+// --- Autocomplete ---
+function showAC(input) {
+  const dd = input.parentElement.querySelector('.ac-dropdown');
+  if (dd) { filterAC(input); dd.classList.add('visible'); }
+}
+function hideAC(input) {
+  const dd = input.parentElement.querySelector('.ac-dropdown');
+  if (dd) setTimeout(() => dd.classList.remove('visible'), 150);
+}
+function filterAC(input) {
+  const dd = input.parentElement.querySelector('.ac-dropdown');
+  if (!dd) return;
+  const val = input.value.toLowerCase();
+  dd.querySelectorAll('.ac-item').forEach(item => {
+    const text = item.querySelector('.ac-field').textContent.toLowerCase();
+    item.style.display = text.includes(val) ? '' : 'none';
+  });
+}
+function pickAC(item) {
+  const field = item.querySelector('.ac-field').textContent;
+  const input = item.closest('.ac-wrapper').querySelector('input');
+  input.value = field;
+  item.closest('.ac-dropdown').classList.remove('visible');
+}
+
+// --- Recovery option ---
+function selectRecovery(el, type) {
+  const section = el.closest('.form-section');
+  section.querySelectorAll('.recovery-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const custom = section.querySelector('.recovery-custom-fields');
+  if (custom) custom.classList.toggle('visible', type === 'custom');
+}
+
+// --- Multi-condition ---
+let condCount = 1;
+function addCondition() {
+  condCount++;
+  const letter = String.fromCharCode(64 + condCount);
+  const container = document.getElementById('conditions-container');
+  const block = document.createElement('div');
+  block.className = 'condition-block';
+  block.dataset.letter = letter;
+  block.innerHTML = `
+    <div class="condition-label">Condition ${letter}</div>
+    <button class="remove-condition" onclick="removeCondition(this.parentElement)">&times;</button>
+    <div class="field-row">
+      <div class="field">
+        <label>Aggregation</label>
+        <select class="cond-agg"><option>Average</option><option selected>Max</option><option>Min</option><option>Sum</option><option>P95</option><option>P99</option><option>Count</option><option>Cardinality</option></select>
+      </div>
+      <div class="field">
+        <label>of field</label>
+        <div class="ac-wrapper">
+          <input type="text" class="cond-field" placeholder="Select field..." onfocus="showAC(this)" oninput="filterAC(this)" onblur="hideAC(this)">
+          <div class="ac-dropdown">
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.cpu.total.norm.pct</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.memory.used.pct</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">number</span><span class="ac-field">system.load.1</span></div>
+            <div class="ac-item" onmousedown="pickAC(this)"><span class="ac-type">keyword</span><span class="ac-field">host.name</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Condition</label>
+        <div style="display:flex;gap:0.5rem;">
+          <select style="width:auto;" class="cond-comp"><option>is above</option><option>is below</option><option>is between</option></select>
+          <input type="text" class="cond-thresh" placeholder="threshold" style="width:5rem;">
+        </div>
+      </div>
+      <div class="field">
+        <label>Evaluation window</label>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="text" value="5" style="width:3.5rem;">
+          <select style="width:auto;"><option selected>minutes</option><option>hours</option></select>
+        </div>
+      </div>
+    </div>`;
+  container.appendChild(block);
+  addRecoveryRow(letter);
+}
+function removeCondition(block) {
+  const letter = block.dataset.letter;
+  block.remove();
+  const row = document.getElementById('recovery-row-' + letter);
+  if (row) row.remove();
+}
+function addRecoveryRow(letter) {
+  const list = document.getElementById('recovery-conditions-list');
+  const row = document.createElement('div');
+  row.id = 'recovery-row-' + letter;
+  row.style.cssText = 'display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #d8e4ef;';
+  row.innerHTML = `
+    <span style="font-size:0.7rem;font-weight:700;color:#2980b9;width:1rem;">${letter}</span>
+    <span style="font-size:0.8rem;color:#555;font-style:italic;">Select aggregation and field above</span>
+    <select style="width:auto;padding:0.3rem 0.4rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.8rem;">
+      <option selected>is below</option><option>is above</option><option>is between</option>
+    </select>
+    <input type="text" placeholder="threshold" style="width:4.5rem;padding:0.3rem 0.5rem;border:1px solid #d0d5dd;border-radius:4px;font-size:0.8rem;">`;
+  list.appendChild(row);
+}
+
+function toggleAdvanced(btn) {
+  const fields = btn.nextElementSibling;
+  fields.classList.toggle('visible');
+  btn.textContent = fields.classList.contains('visible')
+    ? 'Hide advanced options \u2191' : 'Show advanced options \u2193';
+}
+
+// --- Generated panel content by template ---
+const esqlTemplates = {
+  threshold: {
+    name: 'High CPU on production hosts',
+    desc: 'Alerts when average CPU exceeds 80% for any host, after 3 consecutive breaches.',
+    banner: 'Generated from Threshold Alert template',
+    esql: `<span class="kw">FROM</span> <span class="str">metrics-system.cpu-default</span>
+<span class="kw">| STATS</span> <span class="fld">avg_value</span> <span class="op">=</span> <span class="fn">AVG</span>(<span class="fld">system.cpu.total.norm.pct</span>)
+    <span class="kw">BY</span> <span class="fld">host.name</span>,
+       <span class="fld">ts</span> <span class="op">=</span> <span class="fn">BUCKET</span>(<span class="fld">@timestamp</span>, <span class="num">5</span> <span class="str">minutes</span>)`,
+    condition: `<span class="fld">avg_value</span> <span class="op">&gt;</span> <span class="num">0.8</span>`,
+    recovery: '<select><option selected>No breach (condition clears)</option><option>Custom recovery query</option></select>',
+    lookback: '5m', pending: '3', recovering: '2'
+  },
+  latency: {
+    name: 'Checkout API high latency',
+    desc: 'Alerts when p95 latency exceeds 1500ms for checkout-api in production.',
+    banner: 'Generated from Service Latency template',
+    esql: `<span class="kw">FROM</span> <span class="str">traces-apm*</span>
+<span class="kw">| WHERE</span> <span class="fld">service.name</span> <span class="op">==</span> <span class="str">"checkout-api"</span>
+    <span class="kw">AND</span> <span class="fld">transaction.type</span> <span class="op">==</span> <span class="str">"request"</span>
+    <span class="kw">AND</span> <span class="fld">service.environment</span> <span class="op">==</span> <span class="str">"production"</span>
+<span class="kw">| STATS</span> <span class="fld">latency</span> <span class="op">=</span> <span class="fn">PERCENTILE</span>(<span class="fld">transaction.duration.us</span>, <span class="num">95</span>)
+    <span class="kw">BY</span> <span class="fld">service.name</span>, <span class="fld">service.environment</span>, <span class="fld">transaction.type</span>,
+       <span class="fld">ts</span> <span class="op">=</span> <span class="fn">BUCKET</span>(<span class="fld">@timestamp</span>, <span class="num">5</span> <span class="str">minutes</span>)`,
+    condition: `<span class="fld">latency</span> <span class="op">&gt;</span> <span class="num">1500000</span> <span class="comment">// 1500ms in microseconds</span>`,
+    recovery: '<select><option selected>No breach (condition clears)</option><option>Custom recovery query</option></select>',
+    lookback: '5m', pending: '2', recovering: '3'
+  },
+  burnrate: {
+    name: 'Checkout availability burn rate',
+    desc: 'Multi-window burn rate detection for checkout-availability SLO (99% target).',
+    banner: 'Generated from SLO Burn Rate template',
+    esql: `<span class="kw">FROM</span> <span class="str">.slo-observability.sli-v3*</span>
+<span class="kw">| EVAL</span>
+    <span class="fld">_5m</span> <span class="op">=</span> <span class="fn">NOW</span>() <span class="op">-</span> <span class="num">5</span> <span class="str">minute</span>,   <span class="fld">_1h</span> <span class="op">=</span> <span class="fn">NOW</span>() <span class="op">-</span> <span class="num">1</span> <span class="str">hour</span>,
+    <span class="fld">_30m</span> <span class="op">=</span> <span class="fn">NOW</span>() <span class="op">-</span> <span class="num">30</span> <span class="str">minutes</span>, <span class="fld">_6h</span> <span class="op">=</span> <span class="fn">NOW</span>() <span class="op">-</span> <span class="num">6</span> <span class="str">hours</span>,
+    <span class="fld">_2h</span> <span class="op">=</span> <span class="fn">NOW</span>() <span class="op">-</span> <span class="num">2</span> <span class="str">hours</span>,   <span class="fld">_1d</span> <span class="op">=</span> <span class="fn">NOW</span>() <span class="op">-</span> <span class="num">1</span> <span class="str">day</span>,
+    <span class="fld">_3d</span> <span class="op">=</span> <span class="fn">NOW</span>() <span class="op">-</span> <span class="num">3</span> <span class="str">days</span>
+<span class="kw">| STATS</span>
+    <span class="comment">// Critical: 1h long / 5m short</span>
+    <span class="fld">w0s_good</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.numerator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_5m</span>,
+    <span class="fld">w0s_total</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.denominator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_5m</span>,
+    <span class="fld">w0l_good</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.numerator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_1h</span>,
+    <span class="fld">w0l_total</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.denominator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_1h</span>,
+    <span class="comment">// High: 6h long / 30m short</span>
+    <span class="fld">w1s_good</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.numerator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_30m</span>,
+    <span class="fld">w1s_total</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.denominator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_30m</span>,
+    <span class="fld">w1l_good</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.numerator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_6h</span>,
+    <span class="fld">w1l_total</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.denominator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_6h</span>,
+    <span class="comment">// Medium + Low windows...</span>
+    <span class="fld">w2s_good</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.numerator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_2h</span>,
+    <span class="fld">w2s_total</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.denominator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_2h</span>,
+    <span class="fld">w2l_good</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.numerator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_1d</span>,
+    <span class="fld">w2l_total</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.denominator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_1d</span>,
+    <span class="fld">w3s_good</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.numerator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_6h</span>,
+    <span class="fld">w3s_total</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.denominator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_6h</span>,
+    <span class="fld">w3l_good</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.numerator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_3d</span>,
+    <span class="fld">w3l_total</span> <span class="op">=</span> <span class="fn">SUM</span>(<span class="fld">slo.denominator</span>) <span class="kw">WHERE</span> <span class="fld">@timestamp</span> <span class="op">&gt;=</span> <span class="fld">_3d</span>
+    <span class="kw">BY</span> <span class="fld">slo.instanceId</span>, <span class="fld">slo.id</span>
+<span class="kw">| EVAL</span>
+    <span class="fld">target</span> <span class="op">=</span> <span class="num">0.99</span>,
+    <span class="fld">w0s_burn</span> <span class="op">=</span> <span class="fn">CASE</span>(<span class="fld">w0s_total</span> <span class="op">&gt;</span> <span class="num">0</span>, (<span class="num">1</span> <span class="op">-</span> (<span class="fld">w0s_good</span> <span class="op">/</span> <span class="fld">w0s_total</span>)) <span class="op">/</span> (<span class="num">1</span> <span class="op">-</span> <span class="fld">target</span>), <span class="num">0</span>),
+    <span class="fld">w0l_burn</span> <span class="op">=</span> <span class="fn">CASE</span>(<span class="fld">w0l_total</span> <span class="op">&gt;</span> <span class="num">0</span>, (<span class="num">1</span> <span class="op">-</span> (<span class="fld">w0l_good</span> <span class="op">/</span> <span class="fld">w0l_total</span>)) <span class="op">/</span> (<span class="num">1</span> <span class="op">-</span> <span class="fld">target</span>), <span class="num">0</span>),
+    <span class="comment">// ... burn rate calcs for all windows ...</span>
+    <span class="fld">severity</span> <span class="op">=</span> <span class="fn">CASE</span>(
+        (<span class="fld">w0s_burn</span> <span class="op">&gt;=</span> <span class="num">14.4</span> <span class="kw">AND</span> <span class="fld">w0l_burn</span> <span class="op">&gt;=</span> <span class="num">14.4</span>), <span class="str">"CRITICAL"</span>,
+        (<span class="fld">w1s_burn</span> <span class="op">&gt;=</span> <span class="num">6</span> <span class="kw">AND</span> <span class="fld">w1l_burn</span> <span class="op">&gt;=</span> <span class="num">6</span>),     <span class="str">"HIGH"</span>,
+        (<span class="fld">w2s_burn</span> <span class="op">&gt;=</span> <span class="num">3</span> <span class="kw">AND</span> <span class="fld">w2l_burn</span> <span class="op">&gt;=</span> <span class="num">3</span>),     <span class="str">"MEDIUM"</span>,
+        (<span class="fld">w3s_burn</span> <span class="op">&gt;=</span> <span class="num">1</span> <span class="kw">AND</span> <span class="fld">w3l_burn</span> <span class="op">&gt;=</span> <span class="num">1</span>),     <span class="str">"LOW"</span>
+    )`,
+    condition: `<span class="fld">severity</span> <span class="kw">IS NOT NULL</span>`,
+    recovery: '<select><option selected>No breach (severity drops to null)</option></select>',
+    lookback: '3d', pending: '1', recovering: '1'
+  }
+};
+
+let generatedFromTemplate = null;
+
+function showGenerated(type) {
+  generatedFromTemplate = type;
+  const t = esqlTemplates[type] || esqlTemplates.threshold;
+  // Show template banner
+  const banner = document.getElementById('gen-banner');
+  banner.style.background = '#eaf7ed';
+  banner.style.borderColor = '#b8e2c5';
+  document.getElementById('gen-banner-icon').textContent = '\u2714';
+  document.getElementById('gen-banner-title').textContent = t.banner;
+  document.getElementById('gen-banner-subtitle').textContent = 'This rule was pre-filled from your template. All fields are editable. Changes to the ES|QL may detach the template.';
+  document.getElementById('gen-banner-btn').style.display = '';
+  // Show "from template" badges
+  document.querySelectorAll('.from-template').forEach(el => el.style.display = '');
+  // Fill fields
+  document.getElementById('gen-name').value = t.name;
+  document.getElementById('gen-desc').value = t.desc;
+  document.getElementById('gen-esql').innerHTML = t.esql;
+  document.getElementById('gen-condition').innerHTML = t.condition;
+  document.getElementById('gen-recovery-content').innerHTML = t.recovery;
+  document.getElementById('gen-lookback').value = t.lookback;
+  document.getElementById('gen-pending').value = t.pending;
+  document.getElementById('gen-recovering').value = t.recovering;
+  showPanel('generated');
+}
+
+function showBlankEditor() {
+  generatedFromTemplate = null;
+  // Show a "no template" banner
+  const banner = document.getElementById('gen-banner');
+  banner.style.background = '#f5f6f8';
+  banner.style.borderColor = '#ddd';
+  document.getElementById('gen-banner-icon').textContent = '';
+  document.getElementById('gen-banner-title').textContent = 'Full editor';
+  document.getElementById('gen-banner-subtitle').textContent = 'Write your ES|QL query and configure your rule from scratch. You can always go back and start from a template.';
+  document.getElementById('gen-banner-btn').style.display = 'none';
+  // Hide "from template" badges
+  document.querySelectorAll('.from-template').forEach(el => el.style.display = 'none');
+  // Blank / minimal fields
+  document.getElementById('gen-name').value = '';
+  document.getElementById('gen-desc').value = '';
+  document.getElementById('gen-esql').innerHTML = `<span class="kw">FROM</span> <span class="str">logs-*</span>\n<span class="kw">| STATS</span> <span class="fld">count</span> <span class="op">=</span> <span class="fn">COUNT</span>(<span class="op">*</span>)\n    <span class="kw">BY</span> <span class="fld">ts</span> <span class="op">=</span> <span class="fn">BUCKET</span>(<span class="fld">@timestamp</span>, <span class="num">5</span> <span class="str">minutes</span>)`;
+  document.getElementById('gen-condition').innerHTML = `<span class="fld">count</span> <span class="op">&gt;</span> <span class="num">100</span>`;
+  document.getElementById('gen-recovery-content').innerHTML = '<select><option selected>No breach (condition clears)</option><option>Custom recovery query</option></select>';
+  document.getElementById('gen-lookback').value = '5m';
+  document.getElementById('gen-pending').value = '1';
+  document.getElementById('gen-recovering').value = '1';
+  showPanel('generated');
+}
+
+function goBackToForm() {
+  if (generatedFromTemplate) {
+    currentTemplate = generatedFromTemplate;
+    showPanel('form');
+  } else {
+    showPanel('picker');
+  }
+}
+</script>
+
+<div style="text-align:center;padding:2rem 0 1rem;font-size:0.7rem;color:#bbb;">
+  Other prototypes:
+  <a href="proto-rule-templates.html" style="color:#aaa;margin:0 0.5rem;">Original</a> &middot;
+  <span style="color:#999;margin:0 0.5rem;">Tied Recovery (current)</span> &middot;
+  <a href="side-by-side.html" style="color:#aaa;margin:0 0.5rem;">Side-by-Side</a>
+</div>
+</body>
+</html>
