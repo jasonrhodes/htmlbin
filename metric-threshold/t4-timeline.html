@@ -23,6 +23,21 @@
     --cond-bg: #f3eefb;
     --base: #2563eb;
     --base-bg: #eff6ff;
+    --accent-bg: #eff6ff;
+
+    /* v3 Code theme — Catppuccin-ish */
+    --code-bg:       #1e1e2e;
+    --code-ink:      #cdd6f4;
+    --code-kw:       #cba6f7;
+    --code-fn:       #89b4fa;
+    --code-str:      #a6e3a1;
+    --code-num:      #fab387;
+    --code-op:       #f38ba8;
+    --code-fld:      #89dceb;
+    --code-com:      #6c7086;
+    --code-base-bg:  rgba(137, 180, 250, 0.10);
+    --code-base-bar: #89b4fa;
+    --code-dim:      #a6adc8;
   }
 
   * { box-sizing: border-box; }
@@ -713,6 +728,309 @@
     font-size: 11.5px;
     margin-right: 4px;
   }
+
+  /* ===== v3 panel: editor + live split preview ===== */
+
+  [data-panel="v3"] .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  [data-panel="v3"] .example-btn {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 13px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  [data-panel="v3"] .example-btn:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  [data-panel="v3"] .example-btn.active {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  [data-panel="v3"] .split-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  [data-panel="v3"] .pane {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--code-bg);
+    display: flex;
+    flex-direction: column;
+  }
+  [data-panel="v3"] .pane-head {
+    background: #11111b;
+    color: var(--code-dim);
+    padding: 8px 14px;
+    border-bottom: 1px solid #313244;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  [data-panel="v3"] .pane-head .pane-sub {
+    font-weight: 500;
+    color: var(--code-com);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11px;
+  }
+
+  /* Editor pane — the one editable surface (light, form-like) */
+  [data-panel="v3"] .pane.editor-pane {
+    background: #ffffff;
+    border: 2px solid #475569;
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.08);
+  }
+  [data-panel="v3"] .pane.editor-pane .pane-head {
+    background: #f1f5f9;
+    color: #334155;
+    border-bottom: 1px solid #cbd5e1;
+  }
+  [data-panel="v3"] .pane.editor-pane .pane-head .pane-sub {
+    color: #64748b;
+  }
+
+  [data-panel="v3"] .editor-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 220px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+  [data-panel="v3"] .editor-highlight {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 12px 14px;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    background: transparent;
+    white-space: pre;
+    overflow: auto;
+    pointer-events: none;
+    tab-size: 2;
+    z-index: 1;
+  }
+  [data-panel="v3"] .editor-highlight::-webkit-scrollbar { width: 0; height: 0; }
+  [data-panel="v3"] .editor-highlight { scrollbar-width: none; }
+
+  [data-panel="v3"] .editor-highlight .kw  { color: #7c4dff; font-weight: 600; }
+  [data-panel="v3"] .editor-highlight .fn  { color: #2563eb; }
+  [data-panel="v3"] .editor-highlight .str { color: #059669; }
+  [data-panel="v3"] .editor-highlight .num { color: #b45309; }
+  [data-panel="v3"] .editor-highlight .op  { color: #6b7280; }
+  [data-panel="v3"] .editor-highlight .fld { color: var(--ink); }
+  [data-panel="v3"] .editor-highlight .com { color: #9ca3af; font-style: italic; }
+
+  [data-panel="v3"] #esql-input {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-height: 220px;
+    border: none;
+    padding: 12px 14px;
+    margin: 0;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: transparent;
+    caret-color: var(--accent);
+    background: transparent;
+    resize: vertical;
+    outline: none;
+    tab-size: 2;
+    z-index: 2;
+  }
+  [data-panel="v3"] #esql-input::selection { background: #d8e4ff; color: transparent; }
+
+  [data-panel="v3"] .preview {
+    margin: 0;
+    padding: 12px 14px;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--code-ink);
+    background: var(--code-bg);
+    min-height: 220px;
+    white-space: pre;
+    overflow-x: auto;
+    flex: 1;
+  }
+  [data-panel="v3"] .preview .kw  { color: var(--code-kw); font-weight: 600; }
+  [data-panel="v3"] .preview .fn  { color: var(--code-fn); }
+  [data-panel="v3"] .preview .str { color: var(--code-str); }
+  [data-panel="v3"] .preview .num { color: var(--code-num); }
+  [data-panel="v3"] .preview .op  { color: var(--code-op); }
+  [data-panel="v3"] .preview .fld { color: var(--code-fld); }
+  [data-panel="v3"] .preview .com { color: var(--code-com); font-style: italic; }
+
+  [data-panel="v3"] .preview .base-section {
+    display: block;
+    background: var(--code-base-bg);
+    border-left: 3px solid var(--code-base-bar);
+    margin: -2px -14px 0 -14px;
+    padding: 2px 14px 2px 11px;
+    position: relative;
+  }
+  [data-panel="v3"] .preview .base-section::after {
+    content: "BASE QUERY";
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--code-base-bar);
+    opacity: 0.7;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  }
+  [data-panel="v3"] .preview.unsup { background: #3a2a1e; }
+
+  [data-panel="v3"] .derived {
+    margin-top: 24px;
+  }
+  [data-panel="v3"] .derived-intro {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  [data-panel="v3"] .derived-intro b { color: var(--ink); }
+
+  [data-panel="v3"] .derived-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  [data-panel="v3"] .derived-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+  }
+  [data-panel="v3"] .derived-head {
+    padding: 10px 14px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--line);
+  }
+  [data-panel="v3"] .derived-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+  }
+  [data-panel="v3"] .derived-label .pill {
+    display: inline-block;
+    background: var(--code-base-bar);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  [data-panel="v3"] .derived-label .pill.alert { background: var(--code-kw); }
+  [data-panel="v3"] .derived-label .pill.recov { background: var(--code-str); color: #0f3a22; }
+  [data-panel="v3"] .derived-desc {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  [data-panel="v3"] .recovery-input-wrap {
+    padding: 8px 12px;
+    background: var(--code-bg);
+    border-bottom: 1px solid #313244;
+  }
+  [data-panel="v3"] .recovery-input-wrap label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--code-com);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  [data-panel="v3"] .recovery-input-wrap input {
+    width: 100%;
+    background: #11111b;
+    color: var(--code-str);
+    border: 1px solid #313244;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11.5px;
+    outline: none;
+  }
+  [data-panel="v3"] .recovery-input-wrap input:focus {
+    border-color: var(--code-fn);
+  }
+
+  [data-panel="v3"] .mini {
+    margin: 0;
+    padding: 10px 14px;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--code-ink);
+    background: var(--code-bg);
+    white-space: pre;
+    overflow-x: auto;
+    flex: 1;
+    min-height: 110px;
+  }
+  [data-panel="v3"] .mini .kw  { color: var(--code-kw); font-weight: 600; }
+  [data-panel="v3"] .mini .fn  { color: var(--code-fn); }
+  [data-panel="v3"] .mini .str { color: var(--code-str); }
+  [data-panel="v3"] .mini .num { color: var(--code-num); }
+  [data-panel="v3"] .mini .op  { color: var(--code-op); }
+  [data-panel="v3"] .mini .fld { color: var(--code-fld); }
+  [data-panel="v3"] .mini .com { color: var(--code-com); font-style: italic; }
+
+  [data-panel="v3"] .editor-warn {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: #fef9f2;
+    border-left: 3px solid #e67e22;
+    font-size: 12.5px;
+    color: #8c4e10;
+    line-height: 1.5;
+  }
+  [data-panel="v3"] .editor-warn code {
+    background: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
 </style>
 </head>
 <body>
@@ -731,6 +1049,10 @@
       <button class="tab-btn" data-tab="v2" role="tab">
         v2 — ES|QL base query + condition
         <span class="sub">one user query, two runs, same decision</span>
+      </button>
+      <button class="tab-btn" data-tab="v3" role="tab">
+        v3 — UX prototype
+        <span class="sub">live base-query split in the authoring surface</span>
       </button>
     </nav>
 
@@ -1403,6 +1725,93 @@
       </div>
 
     </section>
+
+    <!-- ============================= -->
+    <!-- PANEL v3: LIVE EDITOR UX       -->
+    <!-- ============================= -->
+    <section class="tab-panel" data-panel="v3" role="tabpanel">
+
+      <p class="lede" style="margin-bottom: 28px;">
+        What the user actually sees when authoring a rule. Edit on the left; the framework's view on the right
+        highlights the <b style="color:var(--accent)">base query</b> — everything before the final <code>| WHERE</code>.
+        That base gets reused three ways: as the no-data check, appended with the alert condition to detect fires,
+        and appended with a recovery condition for explicit recovery lookups.
+      </p>
+
+      <div class="card">
+        <div class="card-title">Try an example or edit your own</div>
+
+        <div class="examples">
+          <button class="example-btn active" data-ex="cpu">CPU threshold</button>
+          <button class="example-btn" data-ex="errors">500 errors (log count)</button>
+          <button class="example-btn" data-ex="latency">p95 latency (multi-key)</button>
+          <button class="example-btn" data-ex="extras">With SORT + LIMIT</button>
+          <button class="example-btn" data-ex="multi">Multiple trailing WHEREs</button>
+          <button class="example-btn" data-ex="nostats">No STATS (unsupported)</button>
+        </div>
+
+        <div class="split-layout">
+          <div class="pane editor-pane">
+            <div class="pane-head">
+              <span>Editor</span>
+              <span class="pane-sub">what the user writes</span>
+            </div>
+            <div class="editor-wrap">
+              <pre id="esql-highlight" class="editor-highlight" aria-hidden="true"></pre>
+              <textarea id="esql-input" spellcheck="false"></textarea>
+            </div>
+          </div>
+
+          <div class="pane">
+            <div class="pane-head">
+              <span>Framework view</span>
+              <span class="pane-sub">base query highlighted</span>
+            </div>
+            <pre id="preview" class="preview"></pre>
+          </div>
+        </div>
+
+        <div id="warning-slot"></div>
+
+        <div class="derived">
+          <div class="derived-intro">
+            <b>The base query drives three runs per execution.</b> Each card shows what the framework actually sends
+            to ES. Edit the recovery condition to see how it composes with the base.
+          </div>
+
+          <div class="derived-grid">
+            <div class="derived-card">
+              <div class="derived-head">
+                <div class="derived-label"><span class="pill">BASE</span>No-data check</div>
+                <div class="derived-desc">Base query only → <code>seenNow</code></div>
+              </div>
+              <pre class="mini" id="derived-nodata"></pre>
+            </div>
+
+            <div class="derived-card">
+              <div class="derived-head">
+                <div class="derived-label"><span class="pill alert">+ REST</span>Alert evaluation</div>
+                <div class="derived-desc">Base + the rest → <code>firingNow</code></div>
+              </div>
+              <pre class="mini" id="derived-alert"></pre>
+            </div>
+
+            <div class="derived-card">
+              <div class="derived-head">
+                <div class="derived-label"><span class="pill recov">+ RECOVERY</span>Recovery check</div>
+                <div class="derived-desc">Base + recovery condition</div>
+              </div>
+              <div class="recovery-input-wrap">
+                <label for="recovery-input">Recovery condition</label>
+                <input id="recovery-input" type="text" spellcheck="false" />
+              </div>
+              <pre class="mini" id="derived-recovery"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
   </div>
 
   <script>
@@ -1424,9 +1833,247 @@
       });
 
       const initial = window.location.hash.replace('#', '');
-      if (initial === 'v1' || initial === 'v2') {
+      if (initial === 'v1' || initial === 'v2' || initial === 'v3') {
         activate(initial);
       }
+    })();
+
+    // ===== v3 panel: live ES|QL editor + preview =====
+    (function () {
+      const EXAMPLES = {
+        cpu: {
+          query: `FROM metrics-*
+| STATS avg_cpu = AVG(system.cpu) BY service.name
+| WHERE avg_cpu > 0.85`,
+          recovery: `| WHERE avg_cpu < 0.75`
+        },
+        errors: {
+          query: `FROM logs-*
+| WHERE message : "500 ERROR"
+| STATS errors = COUNT(*) BY service.name
+| WHERE errors > 10`,
+          recovery: `| WHERE errors == 0`
+        },
+        latency: {
+          query: `FROM traces-*
+| STATS p95 = PERCENTILE(duration, 95) BY service.name, http.route
+| WHERE p95 > 1000`,
+          recovery: `| WHERE p95 < 500`
+        },
+        extras: {
+          query: `FROM traces-*
+| STATS p95 = PERCENTILE(duration, 95) BY service.name
+| WHERE p95 > 1000
+| SORT p95 DESC
+| LIMIT 20`,
+          recovery: `| WHERE p95 < 500`
+        },
+        multi: {
+          query: `FROM logs-*
+| WHERE level == "error"
+| STATS count = COUNT(*) BY service.name
+| WHERE count > 10
+| WHERE count < 10000`,
+          recovery: `| WHERE count == 0`
+        },
+        nostats: {
+          query: `FROM logs-*
+| WHERE message : "CRITICAL"
+| LIMIT 100`,
+          recovery: ``
+        }
+      };
+
+      const KEYWORDS  = new Set(['FROM','WHERE','STATS','BY','EVAL','SORT','LIMIT','KEEP','DROP','DESC','ASC','AND','OR','NOT','IS','NULL','TRUE','FALSE','IN','ON']);
+      const FUNCTIONS = new Set(['AVG','COUNT','SUM','MAX','MIN','PERCENTILE','COUNT_DISTINCT','MATCH','DATE_EXTRACT','TO_STRING','TO_LONG','DATE_TRUNC','NOW','BUCKET']);
+
+      function splitCommands(text) {
+        const cmds = [];
+        let start = 0;
+        let inStr = false;
+        for (let i = 0; i < text.length; i++) {
+          const c = text[i];
+          if (c === '"' && text[i-1] !== '\\') inStr = !inStr;
+          if (c === '|' && !inStr) {
+            cmds.push(text.slice(start, i));
+            start = i + 1;
+          }
+        }
+        cmds.push(text.slice(start));
+        return cmds.map(c => c.replace(/^\s+|\s+$/g, '')).filter(Boolean);
+      }
+
+      function cmdName(cmd) {
+        const m = cmd.match(/^(\w+)/);
+        return m ? m[1].toUpperCase() : null;
+      }
+
+      function classify(commands) {
+        let lastStats = -1;
+        for (let i = commands.length - 1; i >= 0; i--) {
+          if (cmdName(commands[i]) === 'STATS') { lastStats = i; break; }
+        }
+        if (lastStats === -1) {
+          return { baseEndIdx: -1, hasCondition: false, unsupported: true };
+        }
+        let firstWhere = -1;
+        for (let i = lastStats + 1; i < commands.length; i++) {
+          if (cmdName(commands[i]) === 'WHERE') { firstWhere = i; break; }
+        }
+        if (firstWhere === -1) {
+          return { baseEndIdx: commands.length - 1, hasCondition: false, unsupported: false };
+        }
+        return { baseEndIdx: firstWhere - 1, hasCondition: true, unsupported: false };
+      }
+
+      function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+
+      function tokenize(text) {
+        const tokens = [];
+        let i = 0;
+        while (i < text.length) {
+          const c = text[i];
+          if (/\s/.test(c)) {
+            let s = i;
+            while (i < text.length && /\s/.test(text[i])) i++;
+            tokens.push({ type: 'ws', v: text.slice(s, i) });
+          } else if (c === '/' && text[i+1] === '/') {
+            let s = i;
+            while (i < text.length && text[i] !== '\n') i++;
+            tokens.push({ type: 'com', v: text.slice(s, i) });
+          } else if (c === '"') {
+            let s = i++;
+            while (i < text.length && text[i] !== '"') i++;
+            if (i < text.length) i++;
+            tokens.push({ type: 'str', v: text.slice(s, i) });
+          } else if (/\d/.test(c)) {
+            let s = i;
+            while (i < text.length && /[\d.]/.test(text[i])) i++;
+            tokens.push({ type: 'num', v: text.slice(s, i) });
+          } else if (/[<>=!+\-*/:,()]/.test(c)) {
+            let s = i;
+            while (i < text.length && /[<>=!+\-*/:,()]/.test(text[i])) i++;
+            tokens.push({ type: 'op', v: text.slice(s, i) });
+          } else if (/[A-Za-z_]/.test(c)) {
+            let s = i;
+            while (i < text.length && /[A-Za-z0-9_.*]/.test(text[i])) i++;
+            const w = text.slice(s, i);
+            const u = w.toUpperCase();
+            if (KEYWORDS.has(u)) tokens.push({ type: 'kw', v: w });
+            else if (FUNCTIONS.has(u)) tokens.push({ type: 'fn', v: w });
+            else tokens.push({ type: 'fld', v: w });
+          } else {
+            tokens.push({ type: 'op', v: c });
+            i++;
+          }
+        }
+        return tokens;
+      }
+
+      function renderTokens(text) {
+        const tokens = tokenize(text);
+        return tokens.map(t => {
+          if (t.type === 'ws') return escapeHtml(t.v);
+          return `<span class="${t.type}">${escapeHtml(t.v)}</span>`;
+        }).join('');
+      }
+
+      const inputEl          = document.getElementById('esql-input');
+      const highlightEl      = document.getElementById('esql-highlight');
+      const previewEl        = document.getElementById('preview');
+      const warningEl        = document.getElementById('warning-slot');
+      const recoveryInputEl  = document.getElementById('recovery-input');
+      const derivedNodata    = document.getElementById('derived-nodata');
+      const derivedAlert     = document.getElementById('derived-alert');
+      const derivedRecovery  = document.getElementById('derived-recovery');
+
+      if (!inputEl) return; // safety if panel not mounted
+
+      function syncHighlight() {
+        highlightEl.innerHTML = renderTokens(inputEl.value) + '\n';
+        highlightEl.scrollTop = inputEl.scrollTop;
+        highlightEl.scrollLeft = inputEl.scrollLeft;
+      }
+
+      inputEl.addEventListener('scroll', () => {
+        highlightEl.scrollTop = inputEl.scrollTop;
+        highlightEl.scrollLeft = inputEl.scrollLeft;
+      });
+
+      function render() {
+        syncHighlight();
+        const text = inputEl.value;
+        const commands = splitCommands(text);
+        const { baseEndIdx, hasCondition, unsupported } = classify(commands);
+
+        previewEl.classList.toggle('unsup', unsupported);
+
+        let html = '';
+        if (unsupported || commands.length === 0) {
+          html = commands.map((cmd, i) => {
+            const prefix = i === 0 ? '' : '| ';
+            return escapeHtml(prefix) + renderTokens(cmd);
+          }).join('\n');
+        } else {
+          const baseCmds = commands.slice(0, baseEndIdx + 1);
+          const restCmds = commands.slice(baseEndIdx + 1);
+          const baseText = baseCmds.map((c, i) => (i === 0 ? '' : '| ') + c).join('\n');
+          const restText = restCmds.map(c => '| ' + c).join('\n');
+          html += `<span class="base-section">${renderTokens(baseText)}</span>`;
+          if (restText) html += '\n' + renderTokens(restText);
+        }
+        previewEl.innerHTML = html;
+
+        warningEl.innerHTML = '';
+        if (unsupported) {
+          warningEl.innerHTML = `<div class="editor-warn">⚠ <b>No STATS command</b> — the framework can't detect per-group disappearance without a group-by. This query shape is only usable for hit-count rules, not group-aware alerting.</div>`;
+        } else if (!hasCondition) {
+          warningEl.innerHTML = `<div class="editor-warn">⚠ <b>No trailing WHERE after STATS</b> — every group the base query returns will fire. Real rules almost always add a threshold like <code>| WHERE count > 0</code>.</div>`;
+        }
+
+        if (unsupported) {
+          derivedNodata.innerHTML = '<span class="com">// not applicable</span>';
+          derivedAlert.innerHTML  = renderTokens(text.trim() || '// (empty)');
+          derivedRecovery.innerHTML = '<span class="com">// not applicable</span>';
+          return;
+        }
+
+        const baseCmds = commands.slice(0, baseEndIdx + 1);
+        const baseText = baseCmds.map((c, i) => (i === 0 ? '' : '| ') + c).join('\n');
+
+        derivedNodata.innerHTML = renderTokens(baseText);
+
+        const fullText = commands.map((c, i) => (i === 0 ? '' : '| ') + c).join('\n');
+        derivedAlert.innerHTML = renderTokens(fullText);
+
+        const recoveryCondition = recoveryInputEl.value.trim();
+        const recoveryText = recoveryCondition
+          ? baseText + '\n' + (recoveryCondition.startsWith('|') ? recoveryCondition : '| ' + recoveryCondition)
+          : baseText + '\n' + '// (enter recovery condition above)';
+        derivedRecovery.innerHTML = renderTokens(recoveryText);
+      }
+
+      document.querySelectorAll('[data-panel="v3"] .example-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-panel="v3"] .example-btn').forEach(b => b.classList.toggle('active', b === btn));
+          const ex = EXAMPLES[btn.dataset.ex];
+          inputEl.value = ex.query;
+          recoveryInputEl.value = ex.recovery;
+          render();
+        });
+      });
+
+      inputEl.addEventListener('input', () => {
+        document.querySelectorAll('[data-panel="v3"] .example-btn').forEach(b => b.classList.remove('active'));
+        render();
+      });
+      recoveryInputEl.addEventListener('input', render);
+
+      inputEl.value = EXAMPLES.cpu.query;
+      recoveryInputEl.value = EXAMPLES.cpu.recovery;
+      render();
     })();
   </script>
 </body>
