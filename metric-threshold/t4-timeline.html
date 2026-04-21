@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Metric Threshold — T4 Timeline</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --ink: #1a1c21;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --fire: #d8443b;
+    --fire-bg: #fdecea;
+    --ok: #2e7d6b;
+    --ok-bg: #e6f4ef;
+    --nodata: #b45309;
+    --nodata-bg: #fef3c7;
+    --dim: #9ca3af;
+    --dim-bg: #f3f4f6;
+    --accent: #2563eb;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv11", "ss01";
+    padding: 48px 32px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0 0 32px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 6px 20px rgba(0,0,0,0.04);
+    margin-bottom: 24px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 20px;
+  }
+
+  /* Timeline grid */
+  .timeline {
+    display: grid;
+    grid-template-columns: 110px repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+
+  .hdr, .svc-label, .cell {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 12px;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .hdr {
+    background: #fafbfc;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: center;
+    align-items: center;
+    min-height: 44px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .hdr.t4 {
+    color: var(--accent);
+    background: #eff6ff;
+  }
+
+  .svc-label {
+    background: #fafbfc;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    color: var(--ink);
+  }
+
+  .cell {
+    align-items: center;
+    text-align: center;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 14px;
+  }
+
+  .val {
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+  }
+  .tag {
+    font-size: 11px;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    font-weight: 600;
+  }
+
+  .state-fire   { background: var(--fire-bg);   color: var(--fire); }
+  .state-ok     { background: var(--ok-bg);     color: var(--ok); }
+  .state-below  { background: var(--dim-bg);    color: var(--dim); }
+  .state-nodata { background: var(--nodata-bg); color: var(--nodata); }
+  .state-empty  { background: #fafbfc;          color: var(--dim); }
+
+  .state-nodata .val {
+    font-style: italic;
+  }
+
+  /* Query panels */
+  .query-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .query {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .query-header {
+    padding: 14px 18px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--line);
+  }
+  .query-header .label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+  .query-header .name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .query-header .purpose {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  pre.es {
+    margin: 0;
+    padding: 16px 18px;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #2d3440;
+    background: #ffffff;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  pre.es .k    { color: #7c4dff; }    /* key */
+  pre.es .s    { color: #2e7d6b; }    /* string */
+  pre.es .n    { color: #b45309; }    /* number */
+  pre.es .c    { color: #9ca3af; font-style: italic; }  /* comment */
+  pre.es .op   { color: #6b7280; }    /* punctuation */
+
+  .returns {
+    padding: 14px 18px;
+    border-top: 1px solid var(--line);
+    background: #fafbfc;
+  }
+  .returns .returns-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .returns-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+  }
+  .returns-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot.fire   { background: var(--fire); }
+  .dot.nodata { background: var(--nodata); }
+  .dot.ok     { background: var(--ok); }
+  .returns-row .key { font-weight: 600; min-width: 70px; }
+  .returns-row .val { color: var(--muted); }
+  .returns-row .tag {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-left: auto;
+  }
+  .tag.fire   { color: var(--fire); }
+  .tag.nodata { color: var(--nodata); }
+  .tag.below  { color: var(--dim); }
+
+  .absent {
+    color: var(--dim);
+    font-style: italic;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    font-size: 12.5px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+  }
+
+  /* Step blocks */
+  .lede {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0 0 22px;
+    max-width: 780px;
+  }
+  .lede b { color: var(--ink); }
+
+  .step {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .step:last-child { margin-bottom: 0; }
+
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .step-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .step-desc {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    max-width: 720px;
+  }
+
+  /* Windows split table */
+  .windows {
+    display: grid;
+    grid-template-columns: 110px 1fr 1fr 1fr;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+  }
+  .windows .wh {
+    background: #fafbfc;
+    padding: 10px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  }
+  .windows .wh small {
+    display: block;
+    font-weight: 500;
+    color: var(--dim);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .windows .wcell {
+    padding: 10px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .windows .slabel {
+    padding: 10px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+    background: #fafbfc;
+  }
+  .windows .wcell.zero {
+    background: var(--nodata-bg);
+    color: var(--nodata);
+    font-weight: 600;
+  }
+  .windows .wcell.lowcpu {
+    background: var(--dim-bg);
+    color: var(--dim);
+    font-weight: 600;
+  }
+  .windows .wcell.hicpu {
+    color: var(--fire);
+    font-weight: 600;
+  }
+
+  /* Decision table */
+  .decision {
+    display: grid;
+    grid-template-columns: 110px 1fr 1fr 110px;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+  }
+  .decision .dh {
+    background: #fafbfc;
+    padding: 10px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  }
+  .decision .dcell {
+    padding: 10px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .decision .slabel {
+    padding: 10px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+    background: #fafbfc;
+  }
+  .decision .yes { color: var(--ok); font-weight: 700; }
+  .decision .no  { color: var(--dim); }
+  .decision .outcome {
+    padding: 10px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .decision .outcome.keep { background: var(--ok-bg); color: var(--ok); }
+  .decision .outcome.drop { background: var(--dim-bg); color: var(--dim); }
+  .decision .outcome.nodata { background: var(--nodata-bg); color: var(--nodata); }
+  .decision .outcome.fire { background: var(--fire-bg); color: var(--fire); }
+
+  .callout {
+    background: #eff6ff;
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin-top: 8px;
+  }
+  .callout b { color: var(--accent); }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 18px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+  }
+
+  .threshold-note {
+    display: inline-block;
+    background: #eff6ff;
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Metric Threshold rule — group states over time</h1>
+    <p class="subtitle">
+      How the v1 rule distinguishes a threshold-filtered group from a disappeared group at T4.
+    </p>
+
+    <div class="card">
+      <div class="card-title">Timeline</div>
+      <div class="threshold-note">Rule: group by <code style="font-family:inherit">service.name</code>, fires when CPU &gt; 0.85, runs every 1m</div>
+
+      <div class="timeline">
+        <div class="hdr"></div>
+        <div class="hdr">T1</div>
+        <div class="hdr">T2</div>
+        <div class="hdr">T3</div>
+        <div class="hdr t4">T4</div>
+
+        <!-- svc=A -->
+        <div class="svc-label">svc = A</div>
+        <div class="cell state-fire"><span class="val">0.92</span><span class="tag">firing</span></div>
+        <div class="cell state-fire"><span class="val">0.89</span><span class="tag">firing</span></div>
+        <div class="cell state-fire"><span class="val">0.91</span><span class="tag">firing</span></div>
+        <div class="cell state-nodata"><span class="val">— no docs —</span><span class="tag">no data</span></div>
+
+        <!-- svc=B -->
+        <div class="svc-label">svc = B</div>
+        <div class="cell state-fire"><span class="val">0.88</span><span class="tag">firing</span></div>
+        <div class="cell state-fire"><span class="val">0.90</span><span class="tag">firing</span></div>
+        <div class="cell state-fire"><span class="val">0.93</span><span class="tag">firing</span></div>
+        <div class="cell state-fire"><span class="val">0.87</span><span class="tag">firing</span></div>
+
+        <!-- svc=C -->
+        <div class="svc-label">svc = C</div>
+        <div class="cell state-fire"><span class="val">0.95</span><span class="tag">firing</span></div>
+        <div class="cell state-fire"><span class="val">0.91</span><span class="tag">firing</span></div>
+        <div class="cell state-fire"><span class="val">0.88</span><span class="tag">firing</span></div>
+        <div class="cell state-below"><span class="val">0.62</span><span class="tag">below threshold</span></div>
+
+        <!-- svc=D -->
+        <div class="svc-label">svc = D</div>
+        <div class="cell state-empty"><span class="val">·</span></div>
+        <div class="cell state-empty"><span class="val">·</span></div>
+        <div class="cell state-fire"><span class="val">0.90</span><span class="tag">firing</span></div>
+        <div class="cell state-fire"><span class="val">0.89</span><span class="tag">firing</span></div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="swatch" style="background:var(--fire-bg);border:1px solid var(--fire)"></span>CPU &gt; 0.85 — alert firing</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--dim-bg);border:1px solid var(--dim)"></span>Below threshold — group had docs but CPU ≤ 0.85</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--nodata-bg);border:1px solid var(--nodata)"></span>No data — group stopped reporting entirely</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">The two queries that run at T4</div>
+      <div class="query-grid">
+
+        <!-- Query 1 -->
+        <div class="query">
+          <div class="query-header">
+            <div class="label">Query 1</div>
+            <div class="name">Evaluation query</div>
+            <div class="purpose">Groups the data by service.name over <b>both</b> the current and previous windows, and returns groups that are either above the threshold now — or had data last window and none this window.</div>
+          </div>
+<pre class="es"><span class="k">GET</span> metrics-*/_search
+{
+  <span class="k">"aggs"</span>: {
+    <span class="k">"services"</span>: {
+      <span class="k">"composite"</span>: { <span class="k">"sources"</span>: [{ <span class="k">"service.name"</span>: ... }] },
+      <span class="k">"aggs"</span>: {
+        <span class="k">"currentPeriod"</span>: <span class="c">// T3 → T4</span>
+          { <span class="k">"filter"</span>: { <span class="k">"range"</span>: { <span class="k">"@timestamp"</span>: { <span class="k">"gte"</span>: <span class="s">"now-1m"</span> } } },
+            <span class="k">"aggs"</span>: { <span class="k">"avg_cpu"</span>: { <span class="k">"avg"</span>: { <span class="k">"field"</span>: <span class="s">"system.cpu"</span> } } } },
+        <span class="k">"lastPeriod"</span>: <span class="c">// T2 → T3</span>
+          { <span class="k">"filter"</span>: { <span class="k">"range"</span>: { <span class="k">"@timestamp"</span>: { <span class="k">"gte"</span>: <span class="s">"now-2m"</span>, <span class="k">"lt"</span>: <span class="s">"now-1m"</span> } } } },
+
+        <span class="k">"keep_group"</span>: {
+          <span class="k">"bucket_selector"</span>: {
+            <span class="k">"script"</span>: <span class="s">"currentPeriod.avg_cpu &gt; 0.85</span>
+                     <span class="s">|| (lastPeriod._count &gt; 0 &amp;&amp; currentPeriod._count &lt; 1)"</span>
+          }
+        }
+      }
+    }
+  }
+}</pre>
+          <div class="returns">
+            <div class="returns-label">Returns</div>
+            <div class="returns-rows">
+              <div class="returns-row">
+                <span class="dot nodata"></span>
+                <span class="key">svc = A</span>
+                <span class="val">avg_cpu: null · currentPeriod._count: 0</span>
+                <span class="tag nodata">no data</span>
+              </div>
+              <div class="returns-row">
+                <span class="dot fire"></span>
+                <span class="key">svc = B</span>
+                <span class="val">avg_cpu: 0.87</span>
+                <span class="tag fire">firing</span>
+              </div>
+              <div class="returns-row">
+                <span class="dot fire"></span>
+                <span class="key">svc = D</span>
+                <span class="val">avg_cpu: 0.89</span>
+                <span class="tag fire">firing</span>
+              </div>
+            </div>
+            <div class="absent">
+              svc = C is absent — had docs this window (avg_cpu = 0.62), but failed both branches of <code style="font-family:SF Mono,Menlo,monospace">keep_group</code>. The framework auto-recovers its alert.
+            </div>
+          </div>
+        </div>
+
+        <!-- Query 2 -->
+        <div class="query">
+          <div class="query-header">
+            <div class="label">Query 2</div>
+            <div class="name">Verification msearch</div>
+            <div class="purpose">For each group that <i>was</i> flagged as no-data on the previous run, ask: are there <b>any</b> docs for this group right now — with the CPU threshold removed? Confirms the group is still genuinely missing, vs just currently below threshold.</div>
+          </div>
+<pre class="es"><span class="c">// runs once per group carried in state.missingGroups</span>
+<span class="c">// (at T4, no groups carry over yet — this fires at T5 for svc=A)</span>
+
+<span class="k">GET</span> metrics-*/_search
+{
+  <span class="k">"size"</span>: <span class="n">0</span>,
+  <span class="k">"terminate_after"</span>: <span class="n">1</span>,
+  <span class="k">"track_total_hits"</span>: <span class="k">true</span>,
+  <span class="k">"query"</span>: {
+    <span class="k">"bool"</span>: { <span class="k">"filter"</span>: [
+      { <span class="k">"range"</span>: { <span class="k">"@timestamp"</span>: { <span class="k">"gte"</span>: <span class="s">"now-1m"</span> } } },
+      { <span class="k">"match"</span>: { <span class="k">"service.name"</span>: <span class="s">"A"</span> } }
+      <span class="c">// ← no CPU threshold filter</span>
+    ]}
+  }
+}</pre>
+          <div class="returns">
+            <div class="returns-label">Returns</div>
+            <div class="returns-rows">
+              <div class="returns-row">
+                <span class="dot nodata"></span>
+                <span class="key">svc = A</span>
+                <span class="val">hits.total.value: 0</span>
+                <span class="tag nodata">still missing</span>
+              </div>
+            </div>
+            <div class="absent">
+              If the msearch had returned <b>&gt; 0 hits</b>, svc = A would be dropped from <code style="font-family:SF Mono,Menlo,monospace">state.missingGroups</code> — meaning it has docs again, just below the CPU threshold. The alert would then recover normally.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="color:var(--muted); font-size:12.5px; text-align:center; margin-top:28px; max-width: 720px; margin-left:auto; margin-right:auto;">
+      <b>Query 1</b> runs every execution and catches new disappearances at the moment they happen.
+      <b>Query 2</b> runs on subsequent executions for each group still flagged as missing, distinguishing
+      "truly gone" from "back but below threshold".
+    </p>
+
+    <!-- Zoom-in card: Query 1 mechanics -->
+    <div class="card">
+      <div class="card-title">Inside Query 1 — base query run twice, condition applied at the end</div>
+
+      <p class="lede">
+        In v2 we talk about a <b>base query</b> (the data, without the alert condition) and the <b>alert condition</b>
+        (the threshold that decides firing). Query 1 is that same split, expressed in one ES search: the base query
+        runs against <b>both</b> windows via filter sub-aggs, and <code>CPU &gt; 0.85</code> is only applied
+        at the very end by the <code>bucket_selector</code>. That's what lets a single query distinguish
+        a group that disappeared (svc=A) from a group that's just below threshold (svc=C).
+      </p>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Group by service.name with a composite agg</div>
+          <div class="step-desc">
+            The rule groups by <code>service.name</code>. A <code>composite</code> aggregation paginates
+            over every unique value — one bucket per service. (A plain terms agg caps out at the bucket
+            limit; composite scales and supports <code>after_key</code> to walk the pages.)
+          </div>
+<pre class="es"><span class="k">GET</span> metrics-*/_search
+{
+  <span class="k">"size"</span>: <span class="n">0</span>,
+  <span class="k">"aggs"</span>: {
+    <span class="k">"services"</span>: {
+      <span class="k">"composite"</span>: {
+        <span class="k">"sources"</span>: [
+          { <span class="k">"service.name"</span>: { <span class="k">"terms"</span>: { <span class="k">"field"</span>: <span class="s">"service.name"</span> } } }
+        ]
+      }
+    }
+  }
+}</pre>
+          <div class="callout">
+            After this: one bucket per distinct service that reported anywhere in the search range — svc=A, B, C, and D all get buckets. Nothing said yet about time windows or CPU.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Drill in: filter sub-aggs for currentPeriod and lastPeriod</div>
+          <div class="step-desc">
+            Inside each service bucket, two <code>filter</code> sub-aggs slice the docs by <code>@timestamp</code>
+            — <code>currentPeriod</code> (T3 → T4) and <code>lastPeriod</code> (T2 → T3). These are
+            aggs-context filters: they scope sub-aggs to a subset without touching <code>hits</code> or the
+            sibling bucket.
+          </div>
+<pre class="es"><span class="k">"services"</span>: {
+  <span class="k">"composite"</span>: { ... },
+  <span class="k">"aggs"</span>: {
+    <span class="k">"currentPeriod"</span>: <span class="c">// T3 → T4</span>
+      { <span class="k">"filter"</span>: { <span class="k">"range"</span>: { <span class="k">"@timestamp"</span>: { <span class="k">"gte"</span>: <span class="s">"now-1m"</span> } } } },
+    <span class="k">"lastPeriod"</span>:    <span class="c">// T2 → T3</span>
+      { <span class="k">"filter"</span>: { <span class="k">"range"</span>: { <span class="k">"@timestamp"</span>: { <span class="k">"gte"</span>: <span class="s">"now-2m"</span>, <span class="k">"lt"</span>: <span class="s">"now-1m"</span> } } } }
+  }
+}</pre>
+
+          <div class="windows" style="grid-template-columns: 110px 1fr 1fr; margin-top: 14px;">
+            <div class="wh"></div>
+            <div class="wh">lastPeriod<small>T2 → T3</small></div>
+            <div class="wh">currentPeriod<small>T3 → T4</small></div>
+
+            <div class="slabel">svc = A</div>
+            <div class="wcell">14 docs</div>
+            <div class="wcell zero">0 docs</div>
+
+            <div class="slabel">svc = B</div>
+            <div class="wcell">12 docs</div>
+            <div class="wcell">15 docs</div>
+
+            <div class="slabel">svc = C</div>
+            <div class="wcell">13 docs</div>
+            <div class="wcell">11 docs</div>
+
+            <div class="slabel">svc = D</div>
+            <div class="wcell">10 docs</div>
+            <div class="wcell">12 docs</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Drill further: avg_cpu as a sub-agg of currentPeriod</div>
+          <div class="step-desc">
+            The metric — <code>avg</code> of <code>system.cpu</code> — is a sub-agg of <code>currentPeriod</code>,
+            so it averages only docs in the current window. <code>lastPeriod</code> doesn't need a metric;
+            the rule uses just its <code>_count</code> to detect disappearance.
+          </div>
+<pre class="es"><span class="k">"currentPeriod"</span>: {
+  <span class="k">"filter"</span>: { <span class="k">"range"</span>: { <span class="k">"@timestamp"</span>: { <span class="k">"gte"</span>: <span class="s">"now-1m"</span> } } },
+  <span class="k">"aggs"</span>: {
+    <span class="k">"avg_cpu"</span>: { <span class="k">"avg"</span>: { <span class="k">"field"</span>: <span class="s">"system.cpu"</span> } }
+  }
+}</pre>
+
+          <div class="windows" style="grid-template-columns: 110px 1fr; margin-top: 14px;">
+            <div class="wh"></div>
+            <div class="wh">currentPeriod.avg_cpu</div>
+
+            <div class="slabel">svc = A</div>
+            <div class="wcell zero">null</div>
+
+            <div class="slabel">svc = B</div>
+            <div class="wcell hicpu">0.87</div>
+
+            <div class="slabel">svc = C</div>
+            <div class="wcell lowcpu">0.62</div>
+
+            <div class="slabel">svc = D</div>
+            <div class="wcell hicpu">0.89</div>
+          </div>
+
+          <div class="callout" style="margin-top: 14px;">
+            ES now has raw facts about every service: docs-per-window and the current-window average.
+            Nothing's been decided — <b>svc=A has zero docs this window</b>; <b>svc=C has docs but low CPU</b>.
+            Both are still in play.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Tie it together — bucket_selector applies the alert condition</div>
+          <div class="step-desc">
+            A <code>bucket_selector</code> pipeline agg runs after the sub-aggs resolve and prunes the
+            composite buckets. Keep if the threshold fires <b>or</b> the group disappeared (had data last
+            window, none now). Everything else drops out of the response — and the framework recovers those alerts.
+          </div>
+
+<pre class="es"><span class="k">"keep_group"</span>: {
+  <span class="k">"bucket_selector"</span>: {
+    <span class="k">"script"</span>: <span class="s">"currentPeriod.avg_cpu &gt; 0.85                           </span> <span class="c">// alert condition</span>
+             <span class="s">|| (lastPeriod._count &gt; 0 &amp;&amp; currentPeriod._count &lt; 1)"</span>  <span class="c">// disappeared</span>
+  }
+}</pre>
+
+          <div class="decision" style="margin-top: 14px;">
+            <div class="dh"></div>
+            <div class="dh">avg_cpu &gt; 0.85</div>
+            <div class="dh">disappeared? (last&gt;0 &amp;&amp; cur&lt;1)</div>
+            <div class="dh">outcome</div>
+
+            <div class="slabel">svc = A</div>
+            <div class="dcell"><span class="no">false</span> &nbsp;<span style="color:var(--dim)">(null &gt; 0.85)</span></div>
+            <div class="dcell"><span class="yes">TRUE</span> &nbsp;<span style="color:var(--dim)">(14 &gt; 0 &amp;&amp; 0 &lt; 1)</span></div>
+            <div class="outcome nodata">kept — no data</div>
+
+            <div class="slabel">svc = B</div>
+            <div class="dcell"><span class="yes">TRUE</span></div>
+            <div class="dcell"><span class="no">false</span></div>
+            <div class="outcome fire">kept — firing</div>
+
+            <div class="slabel">svc = C</div>
+            <div class="dcell"><span class="no">false</span> &nbsp;<span style="color:var(--dim)">(0.62 &gt; 0.85)</span></div>
+            <div class="dcell"><span class="no">false</span> &nbsp;<span style="color:var(--dim)">(13 &gt; 0 &amp;&amp; 11 &lt; 1)</span></div>
+            <div class="outcome drop">dropped — recovers</div>
+
+            <div class="slabel">svc = D</div>
+            <div class="dcell"><span class="yes">TRUE</span></div>
+            <div class="dcell"><span class="no">false</span></div>
+            <div class="outcome fire">kept — firing</div>
+          </div>
+
+          <div class="callout" style="margin-top: 14px;">
+            Same two rows in step 3 looked similar (both had history; A was zero-docs now, C had docs).
+            The difference only <b>emerges at the bucket_selector</b>: svc=A passes via the disappearance
+            clause, svc=C fails both clauses and is dropped. That drop is indistinguishable from "never
+            existed" to the framework → it recovers the alert.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
