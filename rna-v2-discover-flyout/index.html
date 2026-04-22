@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Discover + Create Alert Rule flyout — prototype</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --ink: #1a1c21;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --dim: #9ca3af;
+    --accent: #2563eb;
+    --accent-bg: #eff6ff;
+
+    --chrome-dark: #0f172a;
+    --chrome-ink: #e2e8f0;
+    --sidebar-bg: #ffffff;
+    --sidebar-active: #eef4ff;
+    --sidebar-active-ink: #1d4ed8;
+
+    /* Code theme — Catppuccin-ish */
+    --code-bg:       #1e1e2e;
+    --code-ink:      #cdd6f4;
+    --code-kw:       #cba6f7;
+    --code-fn:       #89b4fa;
+    --code-str:      #a6e3a1;
+    --code-num:      #fab387;
+    --code-op:       #f38ba8;
+    --code-fld:      #89dceb;
+    --code-com:      #6c7086;
+    --code-dim:      #a6adc8;
+
+    /* Base / block accents */
+    --base-bar:       #3b82f6;
+    --base-bg:        rgba(59, 130, 246, 0.06);
+    --base-label-bg:  #dbeafe;
+    --base-label-ink: #1d4ed8;
+
+    --block-bar:       #dc2626;
+    --block-bg:        rgba(220, 38, 38, 0.05);
+    --block-label-bg:  #fee2e2;
+    --block-label-ink: #b91c1c;
+
+    --recovery-bar:       #059669;
+    --recovery-bg:        rgba(5, 150, 105, 0.06);
+    --recovery-label-bg:  #d1fae5;
+    --recovery-label-ink: #047857;
+
+    --flyout-w: 560px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 720px;
+  }
+
+  /* ====== Top chrome ====== */
+  .top-chrome {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    background: var(--chrome-dark);
+    color: var(--chrome-ink);
+    padding: 0 12px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .top-chrome .logo {
+    width: 20px; height: 20px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #5ea4dd, #3b82f6);
+  }
+  .top-chrome .product {
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: -0.01em;
+  }
+  .top-chrome .search-bar {
+    flex: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    height: 28px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.10);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 12px;
+    color: #94a3b8;
+    gap: 8px;
+  }
+  .top-chrome .search-bar .kbd {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.10);
+    font-family: "SF Mono", Menlo, monospace;
+  }
+  .top-chrome .icon-btn {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #cbd5e1;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .top-chrome .icon-btn:hover { background: rgba(255,255,255,0.06); }
+  .top-chrome .ai-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.10);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .top-chrome .avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: #dc2626;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* ====== Main row ====== */
+  .main-row {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  .rail {
+    width: 72px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px 0;
+    flex-shrink: 0;
+  }
+  .rail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    gap: 4px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+  .rail-item:hover { background: #f8fafc; }
+  .rail-item.active {
+    color: var(--sidebar-active-ink);
+    background: var(--sidebar-active);
+    border-left-color: var(--sidebar-active-ink);
+    font-weight: 600;
+  }
+  .rail-item .ri {
+    width: 22px; height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .rail-bottom { margin-top: auto; }
+
+  /* ====== Discover ====== */
+  .discover {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .discover-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--card);
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .breadcrumb .space-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    background: #d9f2ea;
+    color: #0d6b52;
+    font-weight: 600;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .breadcrumb .crumb { color: var(--ink); font-weight: 500; }
+  .breadcrumb .sep { color: var(--dim); }
+  .discover-info-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .tabs-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    background: var(--card);
+    padding: 0 16px;
+    flex-shrink: 0;
+    height: 40px;
+  }
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    color: var(--ink);
+    position: relative;
+    top: 1px;
+    cursor: pointer;
+  }
+  .tab.active {
+    background: var(--bg);
+    border-color: var(--line);
+  }
+  .tab-add {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .tab-add:hover { background: #f1f5f9; }
+  .tabs-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn:hover { background: #f8fafc; }
+  .btn.ghost { border-color: transparent; }
+  .btn.more { padding: 5px 8px; }
+
+  .search-area {
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--line);
+    background: var(--card);
+    flex-shrink: 0;
+  }
+  .search-btn {
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-weight: 600;
+    border: 1px solid #c7d9fe;
+    border-radius: 6px;
+    padding: 7px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .date-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    background: #fff;
+  }
+  .date-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 4px;
+  }
+  .date-nav .icon-btn {
+    width: 28px; height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .date-nav .icon-btn + .icon-btn { border-left: none; }
+  .search-spacer { flex: 1; }
+
+  /* ====== ES|QL multi-line editor with BASE / BLOCK split ====== */
+  .esql-editor {
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 0 10px 0;
+    flex-shrink: 0;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .esql-line {
+    display: flex;
+    align-items: center;
+    padding-left: 0;
+    padding-right: 16px;
+    position: relative;
+    cursor: text;
+  }
+  .esql-line.dragover {
+    background: rgba(220, 38, 38, 0.08);
+  }
+  .esql-line .ln {
+    display: inline-block;
+    width: 40px;
+    padding: 0 8px 0 16px;
+    text-align: right;
+    color: var(--dim);
+    user-select: none;
+    font-size: 12px;
+  }
+  .esql-line .bar {
+    width: 3px;
+    height: 100%;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+  .esql-line.base .bar { background: var(--base-bar); }
+  .esql-line.base { background: var(--base-bg); }
+  .esql-line.block .bar { background: var(--block-bar); }
+  .esql-line.block { background: var(--block-bg); }
+  .esql-line.recovery .bar { background: var(--recovery-bar); }
+  .esql-line.recovery { background: var(--recovery-bg); }
+  .esql-line.neutral .bar { background: #cbd5e1; }
+  .esql-line.neutral { background: transparent; }
+
+  /* Draggable boundary between BASE and ALERT BLOCK */
+  .block-boundary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 16px 3px 40px;
+    background: linear-gradient(to bottom, var(--base-bg) 0%, var(--base-bg) 49%, #e2e8f0 49%, #e2e8f0 51%, var(--block-bg) 51%, var(--block-bg) 100%);
+    cursor: ns-resize;
+    user-select: none;
+    font-size: 10.5px;
+    color: var(--muted);
+    position: relative;
+    transition: background 0.12s, padding 0.12s;
+  }
+  .block-boundary:hover {
+    background: linear-gradient(to bottom, rgba(59, 130, 246, 0.16) 0%, rgba(59, 130, 246, 0.16) 49%, var(--accent) 49%, var(--accent) 51%, rgba(220, 38, 38, 0.16) 51%, rgba(220, 38, 38, 0.16) 100%);
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .block-boundary .boundary-grip {
+    display: inline-flex;
+    gap: 1px;
+    color: var(--muted);
+    font-size: 8px;
+    letter-spacing: -1px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .block-boundary .boundary-label {
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .block-boundary.dragging {
+    background: linear-gradient(to bottom, rgba(59, 130, 246, 0.28) 0%, rgba(59, 130, 246, 0.28) 49%, var(--accent) 49%, var(--accent) 51%, rgba(220, 38, 38, 0.28) 51%, rgba(220, 38, 38, 0.28) 100%);
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .block-boundary.dragging .boundary-label { color: var(--accent); font-weight: 600; }
+  body.boundary-dragging { cursor: ns-resize !important; user-select: none; }
+  body.boundary-dragging * { cursor: ns-resize !important; }
+
+  .view-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .view-chip .vc-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .view-chip.base { background: var(--base-label-bg); color: var(--base-label-ink); }
+  .view-chip.base .vc-dot { background: var(--base-bar); }
+  .view-chip.block { background: var(--block-label-bg); color: var(--block-label-ink); }
+  .view-chip.block .vc-dot { background: var(--block-bar); }
+  .view-chip.recovery { background: var(--recovery-label-bg); color: var(--recovery-label-ink); }
+  .view-chip.recovery .vc-dot { background: var(--recovery-bar); }
+  .view-chip .vc-reset {
+    margin-left: 4px;
+    cursor: pointer;
+    opacity: 0.6;
+  }
+  .view-chip .vc-reset:hover { opacity: 1; }
+
+  .esql-line .code {
+    flex: 1;
+    padding: 0 12px;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .esql-line .line-label {
+    margin-left: auto;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  }
+  .esql-line.base .line-label {
+    background: var(--base-label-bg);
+    color: var(--base-label-ink);
+  }
+  .esql-line.block .line-label {
+    background: var(--block-label-bg);
+    color: var(--block-label-ink);
+  }
+  .esql-line.recovery .line-label {
+    background: var(--recovery-label-bg);
+    color: var(--recovery-label-ink);
+  }
+  .esql-line .split-handle {
+    position: absolute;
+    left: 40px;
+    right: 16px;
+    top: -3px;
+    height: 6px;
+    cursor: ns-resize;
+    z-index: 2;
+    display: none;
+  }
+  .esql-line .split-handle:hover {
+    background: rgba(220, 38, 38, 0.2);
+  }
+  .esql-line:hover .split-handle { display: block; }
+
+  /* ES|QL syntax colors (light theme in editor) */
+  .tok-kw { color: #7c4dff; font-weight: 600; }
+  .tok-fn { color: #2563eb; }
+  .tok-str { color: #059669; }
+  .tok-num { color: #b45309; }
+  .tok-op { color: #6b7280; }
+  .tok-fld { color: var(--ink); }
+  .tok-com { color: #9ca3af; font-style: italic; }
+  .tok-param {
+    color: #7e22ce;
+    background: rgba(126, 34, 206, 0.10);
+    border: 1px solid rgba(126, 34, 206, 0.22);
+    padding: 0 4px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .qbox-body .code-param {
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.14);
+    padding: 0 4px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .qbox-body .interpolated {
+    background: rgba(167, 139, 250, 0.18);
+    outline: 1px solid rgba(167, 139, 250, 0.35);
+    border-radius: 3px;
+    padding: 0 4px;
+  }
+
+  /* ES|QL control pill */
+  .esql-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 12.5px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+  }
+  .esql-control:hover { border-color: #c7d9fe; background: #f8fafc; }
+  .esql-control .ctrl-grip {
+    color: var(--dim);
+    font-size: 12px;
+    letter-spacing: -2px;
+  }
+  .esql-control .ctrl-name {
+    color: #7e22ce;
+    font-weight: 600;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12px;
+  }
+  .esql-control .ctrl-value {
+    color: var(--ink);
+    font-weight: 600;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12px;
+  }
+  .esql-control .ctrl-count {
+    background: #059669;
+    color: #fff;
+    padding: 1px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: "SF Mono", Menlo, monospace;
+  }
+  .ctrl-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    padding: 6px 0;
+    z-index: 100;
+    display: none;
+  }
+  .ctrl-menu.open { display: block; }
+  .ctrl-menu-header {
+    font-size: 11px;
+    color: var(--muted);
+    padding: 6px 14px 4px;
+    font-weight: 600;
+  }
+  .ctrl-menu-item {
+    padding: 7px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: "SF Mono", Menlo, monospace;
+  }
+  .ctrl-menu-item:hover { background: #f1f5f9; }
+  .ctrl-menu-item .check {
+    width: 14px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .ctrl-menu-item.selected { font-weight: 600; }
+
+  /* ====== Discover body ====== */
+  .discover-body {
+    flex: 1;
+    overflow: auto;
+    padding: 14px 16px;
+  }
+  .discover-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .discover-meta .docs {
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .hist-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 16px 14px;
+    margin-bottom: 14px;
+  }
+  .hist-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .hist-head .breakdown-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 12.5px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .hist-head .spacer { flex: 1; }
+  .hist-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 110px;
+    padding: 0 4px;
+  }
+  .hist-bar {
+    flex: 1;
+    background: #93c5fd;
+    border-radius: 2px 2px 0 0;
+    opacity: 0.65;
+  }
+  .hist-axis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+  .hist-sub {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .results-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .results-head {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .results-head .spacer { flex: 1; }
+  .results-head .icon-btn {
+    width: 28px; height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+  }
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .results-table th {
+    text-align: left;
+    padding: 8px 14px;
+    color: var(--muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+    background: #fafbfc;
+  }
+  .results-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    color: var(--ink);
+  }
+  .results-table tr:last-child td { border-bottom: none; }
+  .val-mono { font-family: "SF Mono", Menlo, monospace; color: var(--ink); }
+
+  /* ====== Flyout ====== */
+  .flyout {
+    width: var(--flyout-w);
+    flex-shrink: 0;
+    background: var(--card);
+    border-left: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    box-shadow: -4px 0 16px rgba(15, 23, 42, 0.04);
+  }
+  .flyout-header {
+    padding: 16px 20px 10px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .flyout-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    flex: 1;
+  }
+  .flyout-header .close-btn {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .flyout-header .close-btn:hover { background: #f1f5f9; }
+
+  .alerting-banner {
+    margin: 10px 20px 0;
+    padding: 12px 14px;
+    background: #fff4f1;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #7f1d1d;
+  }
+  .alerting-banner .title {
+    font-weight: 700;
+    color: #991b1b;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .alerting-banner .title .pill {
+    display: inline-block;
+    padding: 1px 6px;
+    background: #991b1b;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    border-radius: 3px;
+  }
+  .alerting-banner .kw-base { color: var(--base-label-ink); font-weight: 700; }
+  .alerting-banner .kw-block { color: var(--block-label-ink); font-weight: 700; }
+
+  .mode-toggle {
+    display: inline-flex;
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 3px;
+    gap: 2px;
+    margin: 10px 20px 0;
+    align-self: flex-start;
+  }
+  .mode-btn {
+    padding: 5px 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-btn.active {
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    font-weight: 600;
+  }
+
+  .flyout-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 100px;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+  .field-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+  .field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .field-sub {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .field-hint {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .input, .textarea, .select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+  }
+  .input:focus, .textarea:focus, .select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .input.placeholder { color: var(--muted); }
+  .textarea { min-height: 52px; resize: vertical; }
+
+  .group-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 14px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .group-title .caret {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  /* Track card (checkbox + nested query previews) */
+  .track-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fafbfc;
+    margin-bottom: 14px;
+    overflow: hidden;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .track-card.on {
+    background: var(--accent-bg);
+    border-color: #c7d9fe;
+  }
+  .track-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    cursor: pointer;
+    margin-bottom: 0;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+  }
+  .track-toggle input[type="checkbox"] {
+    margin-top: 2px;
+    cursor: pointer;
+  }
+  .track-toggle .track-body { flex: 1; }
+  .track-toggle .track-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .track-toggle .track-desc {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+  .track-content {
+    padding: 0 12px 12px;
+    border-top: 1px solid rgba(148, 163, 184, 0.22);
+    padding-top: 12px;
+    background: rgba(255,255,255,0.5);
+  }
+  .track-content .field:last-child { margin-bottom: 0; }
+
+  /* Query display / edit boxes (dark code theme) */
+  .qbox {
+    background: var(--code-bg);
+    border: 1px solid #313244;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .qbox-head {
+    background: #11111b;
+    padding: 7px 10px 7px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #313244;
+  }
+  .qbox-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  }
+  .qbox-label.base { background: var(--base-label-bg); color: var(--base-label-ink); }
+  .qbox-label.block { background: var(--block-label-bg); color: var(--block-label-ink); }
+  .qbox-label.recovery { background: var(--recovery-label-bg); color: var(--recovery-label-ink); }
+  .qbox-subtitle {
+    font-size: 11px;
+    color: var(--code-com);
+    margin-left: 4px;
+  }
+  .qbox-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .qbox-run {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    color: var(--code-fn);
+    border: 1px solid #313244;
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .qbox-run:hover {
+    background: rgba(137, 180, 250, 0.12);
+    border-color: var(--code-fn);
+  }
+  .qbox-run .play {
+    font-size: 9px;
+    line-height: 1;
+  }
+  .qbox-body {
+    padding: 10px 12px;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--code-ink);
+    white-space: pre;
+    overflow-x: auto;
+    min-height: 24px;
+  }
+  .qbox-body.editable { outline: none; }
+  .qbox-body.editable:focus { background: rgba(137, 180, 250, 0.04); }
+  .qbox-body .code-kw  { color: var(--code-kw); font-weight: 600; }
+  .qbox-body .code-fn  { color: var(--code-fn); }
+  .qbox-body .code-str { color: var(--code-str); }
+  .qbox-body .code-num { color: var(--code-num); }
+  .qbox-body .code-op  { color: var(--code-op); }
+  .qbox-body .code-fld { color: var(--code-fld); }
+
+  /* Recovery selector */
+  .recovery-selector {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .recovery-option {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .recovery-option:last-child { border-bottom: none; }
+  .recovery-option:hover { background: #fafbfc; }
+  .recovery-option input[type="radio"] {
+    margin-top: 2px;
+    cursor: pointer;
+  }
+  .recovery-option .ro-title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .recovery-option .ro-desc {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+  .recovery-option.selected {
+    background: var(--accent-bg);
+    border-color: #c7d9fe;
+  }
+  .recovery-custom-body {
+    padding: 12px;
+    border-top: 1px solid var(--line);
+    background: #fff;
+    display: none;
+  }
+  .recovery-selector:has(#recov-custom:checked) .recovery-custom-body {
+    display: block;
+  }
+
+  .schedule-row {
+    display: grid;
+    grid-template-columns: 80px 90px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+  .schedule-row .label {
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  .flyout-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    flex-shrink: 0;
+  }
+  .btn-link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 6px 4px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary:hover { background: #1e50cf; }
+
+  /* Gating: when track toggle is off, hide block-dependent UI */
+  .track-gated { display: block; }
+  body:not(.tracking) .track-gated { display: none; }
+
+  /* YAML editor */
+  .yaml-wrap {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--code-bg);
+    min-height: 560px;
+    display: flex;
+  }
+  .yaml-gutter {
+    background: #181825;
+    padding: 12px 8px 12px 10px;
+    color: var(--code-com);
+    font-family: "SF Mono", "JetBrains Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    text-align: right;
+    user-select: none;
+    min-width: 40px;
+    white-space: pre;
+    overflow: hidden;
+  }
+  .yaml-editor-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 560px;
+  }
+  .yaml-highlight {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 12px 14px;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--code-ink);
+    background: transparent;
+    white-space: pre;
+    overflow: auto;
+    pointer-events: none;
+    tab-size: 2;
+    z-index: 1;
+  }
+  .yaml-highlight::-webkit-scrollbar { width: 0; height: 0; }
+  .yaml-highlight { scrollbar-width: none; }
+  .yaml-highlight .key { color: var(--code-fn); }
+  .yaml-highlight .str { color: var(--code-str); }
+  .yaml-highlight .num { color: var(--code-num); }
+  .yaml-highlight .bool { color: var(--code-kw); font-weight: 600; }
+  .yaml-highlight .com { color: var(--code-com); font-style: italic; }
+  .yaml-highlight .pipe { color: var(--code-op); }
+  .yaml-highlight .dash { color: var(--code-op); }
+
+  #yaml-input {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 560px;
+    border: none;
+    padding: 12px 14px;
+    margin: 0;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: transparent;
+    caret-color: var(--code-fn);
+    background: transparent;
+    resize: none;
+    outline: none;
+    tab-size: 2;
+    z-index: 2;
+    white-space: pre;
+  }
+  #yaml-input::selection { background: rgba(137, 180, 250, 0.25); color: transparent; }
+
+  /* Right-click context menu */
+  .context-menu {
+    position: fixed;
+    min-width: 240px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    padding: 4px 0;
+    z-index: 9999;
+    font-size: 13px;
+    display: none;
+  }
+  .context-menu.open { display: block; }
+  .ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .ctx-item:hover { background: #f1f5f9; }
+  .ctx-item .ctx-kbd {
+    margin-left: auto;
+    color: var(--muted);
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px;
+  }
+  .ctx-item.disabled {
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+  .ctx-item.disabled:hover { background: transparent; }
+  .ctx-sep {
+    height: 1px;
+    background: var(--line);
+    margin: 4px 0;
+  }
+
+  /* Flash feedback when a Run button is clicked */
+  @keyframes flash-bg {
+    0% { background: rgba(137, 180, 250, 0.15); }
+    100% { background: var(--card); }
+  }
+  .esql-editor.flash { animation: flash-bg 0.6s ease-out; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--chrome-dark);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10000;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Group field pill */
+  .group-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 4px;
+    margin-right: 4px;
+  }
+  .group-pill .x {
+    cursor: pointer;
+    opacity: 0.6;
+  }
+  .group-pill .x:hover { opacity: 1; }
+</style>
+</head>
+<body class="tracking">
+  <div class="app">
+    <!-- ======= TOP CHROME ======= -->
+    <div class="top-chrome">
+      <div class="logo"></div>
+      <div class="product">elastic</div>
+      <div class="search-bar">
+        <span>🔍</span>
+        <span>Find apps, content, and more.</span>
+        <span class="kbd">⌘ /</span>
+      </div>
+      <div class="icon-btn">?</div>
+      <div class="icon-btn">🎉</div>
+      <div class="icon-btn">💬</div>
+      <div class="ai-pill">🤖 AI Assistant</div>
+      <div class="avatar">J</div>
+    </div>
+
+    <!-- ======= MAIN ROW ======= -->
+    <div class="main-row">
+      <div class="rail">
+        <div class="rail-item"><span class="ri">👁️</span><span>Observability</span></div>
+        <div class="rail-item active"><span class="ri">🧭</span><span>Discover</span></div>
+        <div class="rail-item"><span class="ri">📊</span><span>Dashboards</span></div>
+        <div class="rail-item"><span class="ri">⚙️</span><span>Workflows</span></div>
+        <div class="rail-item"><span class="ri">⚠️</span><span>Alerts</span></div>
+        <div class="rail-item"><span class="ri">📁</span><span>Cases</span></div>
+        <div class="rail-item"><span class="ri">🎯</span><span>SLOs</span></div>
+        <div class="rail-item"><span class="ri">⋯</span><span>More</span></div>
+        <div class="rail-bottom">
+          <div class="rail-item"><span class="ri">+</span></div>
+          <div class="rail-item"><span class="ri">&lt;/&gt;</span></div>
+          <div class="rail-item"><span class="ri">🗄️</span></div>
+          <div class="rail-item"><span class="ri">⚙️</span></div>
+          <div class="rail-item"><span class="ri">⤴</span></div>
+        </div>
+      </div>
+
+      <div class="discover">
+        <div class="discover-header">
+          <div class="breadcrumb">
+            <span class="space-pill">D</span>
+            <span class="crumb">edge-oblt</span>
+            <span class="sep">/</span>
+            <span class="crumb">Discover</span>
+          </div>
+          <div class="discover-info-chip">ⓘ Check out context-aware Discover</div>
+        </div>
+
+        <div class="tabs-row">
+          <div class="tab active">Untitled</div>
+          <div class="tab-add">＋</div>
+          <div class="tabs-actions">
+            <button class="btn ghost"><span>▾</span></button>
+            <button class="btn">↗ Share</button>
+            <button class="btn">📂 Open</button>
+            <button class="btn more">⋮</button>
+            <button class="btn"><span>💾</span> Save</button>
+          </div>
+        </div>
+
+        <div class="search-area">
+          <button class="search-btn">Search</button>
+          <div class="date-picker">📅 Last 15 minutes ▾</div>
+          <div class="date-nav">
+            <button class="icon-btn">‹</button>
+            <button class="icon-btn">🔍</button>
+            <button class="icon-btn">›</button>
+          </div>
+          <div class="esql-control" id="cpuCtrl">
+            <span class="ctrl-grip">⋮⋮</span>
+            <span class="ctrl-name">cpu_threshold</span>
+            <span class="ctrl-value" id="ctrlValue">0.85</span>
+            <span class="ctrl-count">1</span>
+            <span style="color:var(--muted); font-size:11px;">▾</span>
+            <div class="ctrl-menu" id="ctrlMenu">
+              <div class="ctrl-menu-header">CPU_THRESHOLD — 4 options</div>
+              <div class="ctrl-menu-item" data-val="0.6"><span class="check"></span>0.6</div>
+              <div class="ctrl-menu-item" data-val="0.7"><span class="check"></span>0.7</div>
+              <div class="ctrl-menu-item selected" data-val="0.85"><span class="check">✓</span>0.85</div>
+              <div class="ctrl-menu-item" data-val="0.95"><span class="check"></span>0.95</div>
+            </div>
+          </div>
+          <div class="search-spacer"></div>
+          <button class="icon-btn" title="Saved queries">🔍</button>
+          <button class="icon-btn" title="Favorites">☆</button>
+          <button class="icon-btn" title="History">🕓</button>
+          <button class="icon-btn" title="Help">?</button>
+        </div>
+
+        <!-- ES|QL multi-line editor with BASE / ALERT BLOCK split -->
+        <div class="esql-editor" id="esqlEditor"></div>
+
+        <div class="discover-body">
+          <div class="discover-meta">
+            <span class="docs"><span id="queryMs">71</span>ms</span>
+            <span>|</span>
+            <span><span id="docsProcessed">4.2K</span> documents processed</span>
+            <span id="viewChip" class="view-chip" style="margin-left:10px; display:none;"></span>
+            <span style="margin-left:auto">⌨ ≡</span>
+          </div>
+
+          <div class="hist-card">
+            <div class="hist-head">
+              <button class="btn ghost" title="Visualize">📊</button>
+              <button class="btn ghost" title="Time">⏲</button>
+              <button class="btn ghost" title="Expand">⬇</button>
+              <div class="breakdown-select">Breakdown by host.name ▾</div>
+              <div class="spacer"></div>
+              <button class="btn ghost" title="Edit">✎</button>
+              <button class="btn ghost" title="View">🗗</button>
+            </div>
+            <div class="hist-chart" id="histChart"></div>
+            <div class="hist-axis">
+              <span>15:00</span><span>15:03</span><span>15:06</span><span>15:09</span><span>15:12</span><span>15:15</span>
+            </div>
+            <div class="hist-sub">@timestamp every 30 second</div>
+          </div>
+
+          <div class="results-card">
+            <div class="results-head">
+              <span><span id="resultsCount">3</span> results</span>
+              <div class="spacer"></div>
+              <button class="icon-btn">🔍</button>
+              <button class="icon-btn">⌨</button>
+              <button class="icon-btn">⚙</button>
+              <button class="icon-btn">⎕</button>
+              <button class="icon-btn">☰</button>
+            </div>
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;"><input type="checkbox" /></th>
+                  <th>host.name</th>
+                  <th>avg_cpu</th>
+                  <th>avg_mem</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======= FLYOUT ======= -->
+      <div class="flyout">
+        <div class="flyout-header">
+          <h2>Create Alert Rule</h2>
+          <div class="close-btn">✕</div>
+        </div>
+
+        <div class="alerting-banner">
+          <div class="title">
+            <span class="pill">NEW</span>
+            <span>Alerting v2: Create alert rules from Discover</span>
+          </div>
+          <div>
+            Your query is automatically split into two parts:
+            <span class="kw-base">BASE</span> (everything before the alert filter — what the rule groups and measures) and
+            <span class="kw-block">ALERT BLOCK</span> (the filter that controls when the rule fires). Right-click a line in
+            the query editor to adjust the split.
+          </div>
+        </div>
+
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="form">
+            <span>▤</span> Form
+          </button>
+          <button class="mode-btn" data-mode="yaml">
+            <span>❮❯</span> YAML
+          </button>
+        </div>
+
+        <div class="flyout-body">
+          <!-- ====== FORM MODE ====== -->
+          <div id="form-mode">
+            <div class="field">
+              <div class="field-head"><span class="field-label">Name</span></div>
+              <input class="input placeholder" value="Untitled rule" />
+            </div>
+
+            <div class="field">
+              <div class="field-head">
+                <span class="field-label">Tags</span>
+                <span class="field-sub">optional</span>
+              </div>
+              <div class="input" style="min-height:32px;"></div>
+            </div>
+
+            <div class="field">
+              <button class="btn-link" style="padding-left:0;">＋ Add description</button>
+            </div>
+
+            <div class="group-title"><span class="caret">▾</span> Rule evaluation</div>
+
+            <div class="field">
+              <div class="field-head">
+                <span class="field-label">Group Fields</span>
+                <span class="field-sub">optional</span>
+              </div>
+              <div class="input" style="min-height:32px; display:flex; align-items:center; flex-wrap:wrap; gap:4px; padding:4px 8px;">
+                <span class="group-pill">host.name <span class="x">✕</span></span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-head"><span class="field-label">Time Field</span></div>
+              <select class="select"><option>@timestamp</option></select>
+            </div>
+
+            <!-- Track card: groups checkbox + all split-dependent UI (previews, recovery, no-data) -->
+            <div class="track-card" id="trackCard">
+              <label class="track-toggle" id="trackToggle">
+                <input type="checkbox" id="trackCheckbox" checked />
+                <div class="track-body">
+                  <div class="track-title">Track active and recovered alerts over time</div>
+                  <div class="track-desc">
+                    Split the query into a base and an alert block. Track per-group state across rule executions,
+                    detect recovery, and optionally define a custom recovery condition.
+                  </div>
+                </div>
+              </label>
+
+              <div class="track-content">
+                <!-- When tracking: base + alert block + recovery + no-data -->
+                <div class="track-gated">
+                  <div class="field">
+                    <div class="field-head"><span class="field-label">Detected base query</span></div>
+                    <div class="qbox">
+                      <div class="qbox-head">
+                        <span class="qbox-label base">BASE</span>
+                        <span class="qbox-subtitle">No-data check / prefix of every run</span>
+                        <div class="qbox-actions">
+                          <button class="qbox-run" data-run="base" title="Load this query into Discover">
+                            <span class="play">▶</span> Run
+                          </button>
+                        </div>
+                      </div>
+                      <pre class="qbox-body" id="box-base"></pre>
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <div class="field-head"><span class="field-label">Detected alert block</span></div>
+                    <div class="qbox">
+                      <div class="qbox-head">
+                        <span class="qbox-label block">ALERT BLOCK</span>
+                        <span class="qbox-subtitle">Appended to base when evaluating alerts</span>
+                        <div class="qbox-actions">
+                          <button class="qbox-run" data-run="alert" title="Load base + this block into Discover">
+                            <span class="play">▶</span> Run
+                          </button>
+                        </div>
+                      </div>
+                      <pre class="qbox-body editable" id="box-alert" contenteditable="true" spellcheck="false"></pre>
+                    </div>
+                    <div class="field-hint">Edits here sync back to the query editor's split.</div>
+                  </div>
+
+                  <div class="field">
+                    <div class="field-head"><span class="field-label">Recovery behavior</span></div>
+                    <div class="recovery-selector">
+                      <label class="recovery-option">
+                        <input type="radio" name="recov" id="recov-default" checked />
+                        <div>
+                          <div class="ro-title">Default</div>
+                          <div class="ro-desc">Alerting groups are considered recovered when they drop out of the alert query's results.</div>
+                        </div>
+                      </label>
+                      <label class="recovery-option">
+                        <input type="radio" name="recov" id="recov-custom" />
+                        <div style="flex:1;">
+                          <div class="ro-title">Custom recovery condition</div>
+                          <div class="ro-desc">Define a separate recovery block — useful when "no longer firing" and "has actually recovered" differ.</div>
+                        </div>
+                      </label>
+                      <div class="recovery-custom-body">
+                        <div class="qbox">
+                          <div class="qbox-head">
+                            <span class="qbox-label recovery">RECOVERY BLOCK</span>
+                            <span class="qbox-subtitle">Appended to base when checking recovery</span>
+                            <div class="qbox-actions">
+                              <button class="qbox-run" data-run="recovery" title="Load base + recovery into Discover">
+                                <span class="play">▶</span> Run
+                              </button>
+                            </div>
+                          </div>
+                          <pre class="qbox-body editable" id="box-recovery" contenteditable="true" spellcheck="false"></pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="field" style="margin-bottom:0;">
+                    <div class="field-head">
+                      <span class="field-label">No-data behavior</span>
+                    </div>
+                    <select class="select">
+                      <option>Alert as "no longer present"</option>
+                      <option>Ignore (no no-data handling)</option>
+                    </select>
+                    <div class="field-hint">The BASE query runs by itself to check whether the dataset has any rows. If the base query is absent from storage, no-data handling is unavailable.</div>
+                  </div>
+                </div>
+
+                <!-- When not tracking: single "query" preview, no recovery, no no-data -->
+                <div id="no-track-block" style="display:none;">
+                  <div class="field" style="margin-bottom:0;">
+                    <div class="field-head"><span class="field-label">Query</span></div>
+                    <div class="qbox">
+                      <div class="qbox-head">
+                        <span class="qbox-label" style="background:#e5e7eb;color:#374151;">QUERY</span>
+                        <span class="qbox-subtitle">Full ES|QL; alerts fire on any returned rows</span>
+                        <div class="qbox-actions">
+                          <button class="qbox-run" data-run="full" title="Load this query into Discover">
+                            <span class="play">▶</span> Run
+                          </button>
+                        </div>
+                      </div>
+                      <pre class="qbox-body" id="box-full"></pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="group-title"><span class="caret">▾</span> Rule execution</div>
+            <div class="field">
+              <div class="field-head"><span class="field-label">Schedule</span></div>
+              <div class="schedule-row">
+                <span class="label">Every</span>
+                <input class="input" value="1" />
+                <select class="select"><option>minute</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====== YAML MODE ====== -->
+          <div id="yaml-mode" style="display:none;">
+            <div class="field-hint" style="margin-bottom:10px;">
+              Full rule config as YAML. Edits here round-trip to the form fields.
+            </div>
+            <div class="yaml-wrap">
+              <div class="yaml-gutter" id="yaml-gutter"></div>
+              <div class="yaml-editor-wrap">
+                <pre id="yaml-highlight" class="yaml-highlight" aria-hidden="true"></pre>
+                <textarea id="yaml-input" spellcheck="false"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flyout-footer">
+          <button class="btn-link">Cancel</button>
+          <button class="btn-primary">Create rule</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right-click context menu for ES|QL editor -->
+  <div class="context-menu" id="ctxMenu">
+    <div class="ctx-item" data-action="set-block-boundary">
+      Start alert block here
+      <span class="ctx-kbd">⌘⌥B</span>
+    </div>
+    <div class="ctx-item" data-action="reset-split">
+      Reset to automatic split
+    </div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" data-action="copy-base">
+      Copy BASE
+    </div>
+    <div class="ctx-item" data-action="copy-block">
+      Copy ALERT BLOCK
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ==== Running example — one source of truth ====
+    // The editor uses the raw ?cpu_threshold param; the flyout previews interpolate the current value.
+    const QUERY_LINES = [
+      'FROM metrics-*',
+      '| STATS avg_cpu = AVG(system.cpu), avg_mem = AVG(system.memory) BY host.name',
+      '| WHERE avg_cpu > ?cpu_threshold AND avg_mem > 0.90',
+      '| SORT avg_cpu DESC',
+      '| LIMIT 25'
+    ];
+    let blockStart = 2;
+    let recoveryBlock = '| WHERE avg_cpu < 0.60';
+
+    // Control parameter value
+    let cpuThreshold = 0.85;
+    const THRESHOLD_OPTIONS = [0.6, 0.7, 0.85, 0.95];
+
+    function interpolate(text) {
+      return text.replace(/\?cpu_threshold\b/g, String(cpuThreshold));
+    }
+
+    // Highlight-aware interpolation: produce tokenized HTML with the param replaced by a
+    // visually-highlighted number so the user can see where the substitution happened.
+    function highlightDarkInterpolated(text) {
+      // First, split by ?cpu_threshold occurrences
+      const parts = text.split(/(\?cpu_threshold\b)/g);
+      return parts.map(p => {
+        if (p === '?cpu_threshold') {
+          return `<span class="interpolated">${highlightDark(String(cpuThreshold))}</span>`;
+        }
+        return highlightDark(p);
+      }).join('');
+    }
+
+    // ==== ES|QL tokenizer (light theme) ====
+    const KEYWORDS  = new Set(['FROM','WHERE','STATS','BY','EVAL','SORT','LIMIT','KEEP','DROP','DESC','ASC','AND','OR','NOT','IS','NULL','TRUE','FALSE','IN','ON']);
+    const FUNCTIONS = new Set(['AVG','COUNT','SUM','MAX','MIN','PERCENTILE','COUNT_DISTINCT','MATCH','DATE_EXTRACT','TO_STRING','TO_LONG','DATE_TRUNC','NOW','BUCKET','VALUES','CASE']);
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function tokenize(text) {
+      const tokens = [];
+      let i = 0;
+      while (i < text.length) {
+        const c = text[i];
+        if (/\s/.test(c)) { let s = i; while (i < text.length && /\s/.test(text[i])) i++; tokens.push({type:'ws',v:text.slice(s,i)}); }
+        else if (c === '"') { let s = i++; while (i < text.length && text[i] !== '"') i++; if (i < text.length) i++; tokens.push({type:'str',v:text.slice(s,i)}); }
+        else if (/\d/.test(c)) { let s = i; while (i < text.length && /[\d.]/.test(text[i])) i++; tokens.push({type:'num',v:text.slice(s,i)}); }
+        else if (/[<>=!+\-*/:,()]/.test(c)) { let s = i; while (i < text.length && /[<>=!+\-*/:,()]/.test(text[i])) i++; tokens.push({type:'op',v:text.slice(s,i)}); }
+        else if (c === '?') {
+          // ES|QL named parameter — e.g. ?cpu_threshold
+          let s = i++;
+          while (i < text.length && /[A-Za-z0-9_]/.test(text[i])) i++;
+          tokens.push({type:'param', v: text.slice(s, i)});
+        }
+        else if (/[A-Za-z_]/.test(c)) {
+          let s = i; while (i < text.length && /[A-Za-z0-9_.*]/.test(text[i])) i++;
+          const w = text.slice(s,i), u = w.toUpperCase();
+          if (KEYWORDS.has(u)) tokens.push({type:'kw',v:w});
+          else if (FUNCTIONS.has(u)) tokens.push({type:'fn',v:w});
+          else tokens.push({type:'fld',v:w});
+        }
+        else if (c === '|') { tokens.push({type:'op',v:c}); i++; }
+        else { tokens.push({type:'op',v:c}); i++; }
+      }
+      return tokens;
+    }
+
+    function highlightLight(text) {
+      return tokenize(text).map(t => t.type === 'ws' ? escapeHtml(t.v) : `<span class="tok-${t.type}">${escapeHtml(t.v)}</span>`).join('');
+    }
+    function highlightDark(text) {
+      // same tokens, dark code classes
+      return tokenize(text).map(t => t.type === 'ws' ? escapeHtml(t.v) : `<span class="code-${t.type}">${escapeHtml(t.v)}</span>`).join('');
+    }
+
+    // ==== Current view state ====
+    // Views: 'alert' (default when tracking) = full base+block; 'base'; 'recovery'; 'full' (no-track)
+    let currentView = 'alert';
+
+    // ==== Editor rendering — view-aware ====
+    const editorEl = document.getElementById('esqlEditor');
+    function computeEditorRows() {
+      // returns [{ line, role, label }] for the currently-viewed query
+      if (currentView === 'base') {
+        return QUERY_LINES.slice(0, blockStart).map((line, i) => ({
+          line, role: 'base', label: i === 0 ? 'BASE' : ''
+        }));
+      }
+      if (currentView === 'recovery') {
+        const base = QUERY_LINES.slice(0, blockStart).map((line, i) => ({
+          line, role: 'base', label: i === 0 ? 'BASE' : ''
+        }));
+        const rec = recoveryBlock.split('\n').map((line, i) => ({
+          line, role: 'recovery', label: i === 0 ? 'RECOVERY BLOCK' : ''
+        }));
+        return [...base, ...rec];
+      }
+      if (currentView === 'full' && !trackBox.checked) {
+        return QUERY_LINES.map(line => ({ line, role: 'neutral', label: '' }));
+      }
+      // 'alert' — default split view
+      return QUERY_LINES.map((line, idx) => ({
+        line,
+        role: idx < blockStart ? 'base' : 'block',
+        label: idx === 0 ? 'BASE' : idx === blockStart ? 'ALERT BLOCK' : ''
+      }));
+    }
+
+    function renderEditor() {
+      editorEl.innerHTML = '';
+      const rows = computeEditorRows();
+      rows.forEach((row, idx) => {
+        // Insert draggable boundary just before the first BLOCK line, only in 'alert' view
+        const prev = rows[idx - 1];
+        if (currentView === 'alert' && prev && prev.role === 'base' && row.role === 'block') {
+          const boundary = document.createElement('div');
+          boundary.className = 'block-boundary';
+          boundary.title = 'Drag to adjust where the alert block begins';
+          boundary.innerHTML = `
+            <span class="boundary-grip">⋮⋮⋮⋮⋮⋮</span>
+            <span class="boundary-label">Drag to adjust split</span>
+          `;
+          editorEl.appendChild(boundary);
+        }
+
+        const div = document.createElement('div');
+        div.className = 'esql-line ' + row.role;
+        div.dataset.idx = idx;
+        div.innerHTML = `
+          <span class="ln">${idx + 1}</span>
+          <span class="bar"></span>
+          <span class="code">${highlightLight(row.line)}</span>
+          ${row.label ? `<span class="line-label">${row.label}</span>` : ''}
+        `;
+        editorEl.appendChild(div);
+      });
+    }
+
+    // ==== Flyout query box text helpers ====
+    function baseQueryText() { return QUERY_LINES.slice(0, blockStart).join('\n'); }
+    function alertBlockText() { return QUERY_LINES.slice(blockStart).join('\n'); }
+    function fullQueryText() { return QUERY_LINES.join('\n'); }
+
+    function syncBoxes() {
+      document.getElementById('box-base').innerHTML     = highlightDarkInterpolated(baseQueryText());
+      document.getElementById('box-alert').innerHTML    = highlightDarkInterpolated(alertBlockText());
+      document.getElementById('box-recovery').innerHTML = highlightDarkInterpolated(recoveryBlock);
+      document.getElementById('box-full').innerHTML     = highlightDarkInterpolated(fullQueryText());
+    }
+
+    // ==== Simulated data ====
+    // 15 hosts with varied CPU so threshold changes meaningfully alter the alert count.
+    const ALL_HOSTS = [
+      { host: 'edge-oblt-01', cpu: 0.94, mem: 0.96 },
+      { host: 'edge-oblt-02', cpu: 0.72, mem: 0.93 },
+      { host: 'edge-oblt-03', cpu: 0.18, mem: 0.24 },
+      { host: 'edge-oblt-04', cpu: 0.36, mem: 0.41 },
+      { host: 'edge-oblt-05', cpu: 0.66, mem: 0.92 },
+      { host: 'edge-oblt-06', cpu: 0.92, mem: 0.91 },
+      { host: 'edge-oblt-07', cpu: 0.21, mem: 0.44 },
+      { host: 'edge-oblt-08', cpu: 0.88, mem: 0.94 },
+      { host: 'edge-oblt-09', cpu: 0.22, mem: 0.31 },
+      { host: 'edge-oblt-10', cpu: 0.90, mem: 0.94 },
+      { host: 'edge-oblt-11', cpu: 0.35, mem: 0.58 },
+      { host: 'edge-oblt-12', cpu: 0.41, mem: 0.29 },
+      { host: 'edge-oblt-13', cpu: 0.28, mem: 0.52 },
+      { host: 'edge-oblt-14', cpu: 0.31, mem: 0.66 },
+      { host: 'edge-oblt-15', cpu: 0.52, mem: 0.33 },
+    ];
+
+    function getResults(view) {
+      if (view === 'base') return [...ALL_HOSTS].sort((a,b) => b.cpu - a.cpu);
+      if (view === 'alert' || view === 'full') {
+        return ALL_HOSTS.filter(h => h.cpu > cpuThreshold && h.mem > 0.90).sort((a,b) => b.cpu - a.cpu);
+      }
+      if (view === 'recovery') return ALL_HOSTS.filter(h => h.cpu < 0.60).sort((a,b) => b.cpu - a.cpu);
+      return [];
+    }
+
+    const BASE_HIST     = [55, 72, 48, 44, 68, 62, 82, 92, 58, 78, 68, 72, 80, 88, 72, 62, 48, 58];
+    const RECOVERY_HIST = BASE_HIST.map(h => Math.round(h * 0.78));
+    // Per-threshold alert histograms — higher threshold = sparser bars
+    const ALERT_HIST_BY_THRESHOLD = {
+      0.6:  [14, 22, 30, 16, 24, 38, 18, 26, 22, 18, 42, 14, 24, 30, 22, 34, 18, 20],
+      0.7:  [6,  14, 22, 10, 16, 28, 12, 18, 14, 12, 32, 10, 16, 22, 14, 26, 10, 12],
+      0.85: [0,  0,  8,  0,  0,  14, 0,  4,  0,  0,  18, 0,  6,  0,  0,  12, 0,  3],
+      0.95: [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    };
+
+    function getHistogram(view) {
+      if (view === 'base') return BASE_HIST;
+      if (view === 'recovery') return RECOVERY_HIST;
+      if (view === 'alert' || view === 'full') {
+        return ALERT_HIST_BY_THRESHOLD[cpuThreshold] || ALERT_HIST_BY_THRESHOLD[0.85];
+      }
+      return BASE_HIST;
+    }
+
+    const QUERY_MS = { base: 42, alert: 71, recovery: 58, full: 71 };
+
+    function renderResults() {
+      const body = document.getElementById('resultsBody');
+      const rows = getResults(currentView);
+      body.innerHTML = rows.map(r => `
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td class="val-mono">${r.host}</td>
+          <td class="val-mono">${r.cpu.toFixed(2)}</td>
+          <td class="val-mono">${r.mem.toFixed(2)}</td>
+        </tr>
+      `).join('');
+      document.getElementById('resultsCount').textContent = rows.length;
+      document.getElementById('docsProcessed').textContent = '17K';
+      document.getElementById('queryMs').textContent = QUERY_MS[currentView];
+    }
+
+    function renderHistogram() {
+      const chart = document.getElementById('histChart');
+      chart.innerHTML = '';
+      getHistogram(currentView).forEach(h => {
+        const bar = document.createElement('div');
+        bar.className = 'hist-bar';
+        bar.style.height = h + 'px';
+        chart.appendChild(bar);
+      });
+    }
+
+    // View chip in the meta row
+    function renderViewChip() {
+      const chip = document.getElementById('viewChip');
+      const MAP = {
+        base: { cls: 'base', text: 'Viewing BASE' },
+        alert: null, // default — no chip
+        recovery: { cls: 'recovery', text: 'Viewing RECOVERY' },
+        full: null,
+      };
+      const cfg = MAP[currentView];
+      if (!cfg) {
+        chip.style.display = 'none';
+        chip.innerHTML = '';
+        return;
+      }
+      chip.className = 'view-chip ' + cfg.cls;
+      chip.style.display = 'inline-flex';
+      chip.innerHTML = `<span class="vc-dot"></span>${cfg.text}<span class="vc-reset" title="Back to full query">✕</span>`;
+      chip.querySelector('.vc-reset').addEventListener('click', (e) => {
+        e.stopPropagation();
+        setView(trackBox.checked ? 'alert' : 'full');
+      });
+    }
+
+    function setView(view) {
+      currentView = view;
+      renderEditor();
+      renderResults();
+      renderHistogram();
+      renderViewChip();
+    }
+
+    // ==== Form / YAML toggle ====
+    const formPane = document.getElementById('form-mode');
+    const yamlPane = document.getElementById('yaml-mode');
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.dataset.mode;
+        formPane.style.display = mode === 'form' ? '' : 'none';
+        yamlPane.style.display = mode === 'yaml' ? '' : 'none';
+      });
+    });
+
+    // ==== Track toggle ====
+    const trackBox = document.getElementById('trackCheckbox');
+    const trackCard = document.getElementById('trackCard');
+    const noTrackBlock = document.getElementById('no-track-block');
+    function applyTracking() {
+      const on = trackBox.checked;
+      document.body.classList.toggle('tracking', on);
+      trackCard.classList.toggle('on', on);
+      noTrackBlock.style.display = on ? 'none' : '';
+      // Reset view to the default for this tracking state
+      setView(on ? 'alert' : 'full');
+    }
+    trackBox.addEventListener('change', applyTracking);
+
+    // ==== Toast + Run buttons ====
+    const toastEl = document.getElementById('toast');
+    let toastTimer;
+    function showToast(text) {
+      toastEl.textContent = text;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
+    }
+    function flashEditor() {
+      editorEl.classList.remove('flash');
+      void editorEl.offsetWidth;
+      editorEl.classList.add('flash');
+    }
+
+    document.querySelectorAll('.qbox-run').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.run; // 'base' | 'alert' | 'recovery' | 'full'
+        setView(kind);
+        flashEditor();
+        const counts = {
+          base:     `Ran BASE query — ${getResults('base').length} groups`,
+          alert:    `Ran BASE + ALERT BLOCK — ${getResults('alert').length} firing`,
+          recovery: `Ran BASE + RECOVERY BLOCK — ${getResults('recovery').length} recovering`,
+          full:     `Ran query — ${getResults('full').length} results`,
+        };
+        showToast(counts[kind] || 'Ran query');
+      });
+    });
+
+    // ==== Control pill: cpu_threshold ====
+    const cpuCtrl = document.getElementById('cpuCtrl');
+    const ctrlMenu = document.getElementById('ctrlMenu');
+    const ctrlValueEl = document.getElementById('ctrlValue');
+
+    cpuCtrl.addEventListener('click', (e) => {
+      if (e.target.closest('.ctrl-menu')) return;
+      ctrlMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#cpuCtrl')) ctrlMenu.classList.remove('open');
+    });
+    ctrlMenu.querySelectorAll('.ctrl-menu-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = parseFloat(item.dataset.val);
+        setThreshold(val);
+        ctrlMenu.classList.remove('open');
+      });
+    });
+
+    function setThreshold(val) {
+      cpuThreshold = val;
+      ctrlValueEl.textContent = String(val);
+      ctrlMenu.querySelectorAll('.ctrl-menu-item').forEach(el => {
+        const isSel = parseFloat(el.dataset.val) === val;
+        el.classList.toggle('selected', isSel);
+        el.querySelector('.check').textContent = isSel ? '✓' : '';
+      });
+      // Re-render everything: editor keeps ?cpu_threshold, flyout previews interpolate
+      syncBoxes();
+      setView(currentView); // re-runs results + histogram for the new threshold
+      showToast(`cpu_threshold = ${val}`);
+    }
+
+    // ==== Initial render ====
+    syncBoxes();
+    applyTracking(); // sets initial view and renders editor/results/histogram
+
+    // ==== Editable alert block → updates editor + base/alert split ====
+    const boxAlert = document.getElementById('box-alert');
+    boxAlert.addEventListener('input', () => {
+      const text = boxAlert.innerText;
+      const newLines = text.split('\n').filter(l => l.trim() !== '');
+      QUERY_LINES.length = blockStart;
+      newLines.forEach(l => QUERY_LINES.push(l));
+      setView(currentView);
+    });
+    const boxRecov = document.getElementById('box-recovery');
+    boxRecov.addEventListener('input', () => {
+      recoveryBlock = boxRecov.innerText;
+      if (currentView === 'recovery') setView('recovery');
+    });
+
+    // ==== Drag-to-adjust boundary between BASE and ALERT BLOCK ====
+    let boundaryDragging = false;
+    let dragFrame = null;
+
+    editorEl.addEventListener('mousedown', (e) => {
+      const bnd = e.target.closest('.block-boundary');
+      if (!bnd) return;
+      e.preventDefault();
+      boundaryDragging = true;
+      bnd.classList.add('dragging');
+      document.body.classList.add('boundary-dragging');
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!boundaryDragging) return;
+      if (dragFrame) return;
+      dragFrame = requestAnimationFrame(() => {
+        dragFrame = null;
+        // Find which line the cursor is currently over → that line becomes the new block start.
+        const lines = editorEl.querySelectorAll('.esql-line');
+        let newStart = QUERY_LINES.length; // past the end = empty block
+        for (let i = 0; i < lines.length; i++) {
+          const rect = lines[i].getBoundingClientRect();
+          // If cursor is above the top half of line i, the boundary sits above line i → block starts at i
+          if (e.clientY < rect.top + rect.height / 2) {
+            newStart = i;
+            break;
+          }
+        }
+        // Don't let the block consume all lines (base must have at least 1 line)
+        newStart = Math.max(1, Math.min(newStart, QUERY_LINES.length));
+        if (newStart !== blockStart) {
+          blockStart = newStart;
+          setView(currentView);
+          syncBoxes();
+        }
+      });
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!boundaryDragging) return;
+      boundaryDragging = false;
+      document.body.classList.remove('boundary-dragging');
+      document.querySelectorAll('.block-boundary.dragging').forEach(b => b.classList.remove('dragging'));
+      showToast(`Alert block now starts at line ${blockStart + 1}`);
+    });
+
+    // ==== Right-click context menu on ES|QL editor ====
+    const ctxMenu = document.getElementById('ctxMenu');
+    let ctxTargetIdx = null;
+    editorEl.addEventListener('contextmenu', (e) => {
+      const lineEl = e.target.closest('.esql-line');
+      if (!lineEl) return;
+      e.preventDefault();
+      ctxTargetIdx = parseInt(lineEl.dataset.idx, 10);
+      ctxMenu.style.left = e.clientX + 'px';
+      ctxMenu.style.top = e.clientY + 'px';
+      ctxMenu.classList.add('open');
+    });
+    document.addEventListener('click', () => ctxMenu.classList.remove('open'));
+    ctxMenu.addEventListener('click', (e) => {
+      const item = e.target.closest('.ctx-item');
+      if (!item) return;
+      const action = item.dataset.action;
+      if (action === 'set-block-boundary' && ctxTargetIdx !== null) {
+        blockStart = ctxTargetIdx;
+        // If we're currently viewing a specific query and the split changed, rerun the current view
+        setView(currentView);
+        syncBoxes();
+        showToast(`Alert block now starts at line ${ctxTargetIdx + 1}`);
+      } else if (action === 'reset-split') {
+        // Auto-detect: start of trailing WHERE block after the last STATS
+        let lastStats = -1;
+        for (let i = QUERY_LINES.length - 1; i >= 0; i--) {
+          if (/^\s*\|?\s*STATS\b/i.test(QUERY_LINES[i]) || /^STATS\b/i.test(QUERY_LINES[i])) { lastStats = i; break; }
+        }
+        let firstWhere = -1;
+        for (let i = lastStats + 1; i < QUERY_LINES.length; i++) {
+          if (/^\s*\|?\s*WHERE\b/i.test(QUERY_LINES[i])) { firstWhere = i; break; }
+        }
+        blockStart = firstWhere >= 0 ? firstWhere : QUERY_LINES.length;
+        setView(currentView);
+        syncBoxes();
+        showToast('Reset to automatic split');
+      } else if (action === 'copy-base') {
+        navigator.clipboard?.writeText(baseQueryText()).catch(() => {});
+        showToast('Copied BASE');
+      } else if (action === 'copy-block') {
+        navigator.clipboard?.writeText(alertBlockText()).catch(() => {});
+        showToast('Copied ALERT BLOCK');
+      }
+    });
+
+    // ==== YAML editor ====
+    const DEFAULT_YAML = `# Full rule config — mirrors the form.
+name: Untitled rule
+tags: []
+description: ~
+
+rule_evaluation:
+  track_active_and_recovered: true
+
+  # Storage shape TBD (see rna-program#409). Below is the "base + blocks" view.
+  # ?cpu_threshold is an ES|QL control; value comes from controls.cpu_threshold.
+  query:
+    base: |
+      FROM metrics-*
+      | STATS avg_cpu = AVG(system.cpu), avg_mem = AVG(system.memory) BY host.name
+    alert_block: |
+      | WHERE avg_cpu > ?cpu_threshold AND avg_mem > 0.90
+      | SORT avg_cpu DESC
+      | LIMIT 25
+    recovery_block: "| WHERE avg_cpu < 0.60"
+
+  controls:
+    cpu_threshold:
+      type: number
+      default: 0.85
+      options: [0.6, 0.7, 0.85, 0.95]
+
+  group_fields:
+    - host.name
+  time_field: "@timestamp"
+
+  no_data_behavior: alert_as_missing
+  recovery: custom
+
+rule_execution:
+  schedule:
+    every: 1
+    unit: minute
+
+actions: []
+`;
+
+    const yamlInput = document.getElementById('yaml-input');
+    const yamlHighlight = document.getElementById('yaml-highlight');
+    const yamlGutter = document.getElementById('yaml-gutter');
+
+    function yamlTokenize(line) {
+      const commentIdx = line.indexOf('#');
+      let codePart = line, commentPart = '';
+      if (commentIdx >= 0) {
+        if (commentIdx === 0 || /\s/.test(line[commentIdx - 1])) {
+          codePart = line.slice(0, commentIdx);
+          commentPart = line.slice(commentIdx);
+        }
+      }
+      let out = '';
+      const lead = codePart.match(/^\s*/)[0];
+      out += escapeHtml(lead);
+      let rest = codePart.slice(lead.length);
+      if (rest.startsWith('- ')) { out += `<span class="dash">-</span> `; rest = rest.slice(2); }
+      else if (rest === '-') { out += `<span class="dash">-</span>`; rest = ''; }
+      const keyMatch = rest.match(/^([A-Za-z_][A-Za-z0-9_\-]*)(\s*):\s*/);
+      if (keyMatch) {
+        out += `<span class="key">${escapeHtml(keyMatch[1])}</span>${escapeHtml(keyMatch[2])}:`;
+        let val = rest.slice(keyMatch[0].length);
+        const leadAfter = rest.slice(keyMatch[1].length + keyMatch[2].length + 1, keyMatch[0].length);
+        out += escapeHtml(leadAfter);
+        if (val === '|' || val === '>') out += `<span class="pipe">${val}</span>`;
+        else if (/^("|')/.test(val)) out += `<span class="str">${escapeHtml(val)}</span>`;
+        else if (/^-?\d+(\.\d+)?$/.test(val)) out += `<span class="num">${escapeHtml(val)}</span>`;
+        else if (/^(true|false|null|~|\[\s*\])$/.test(val)) out += `<span class="bool">${escapeHtml(val)}</span>`;
+        else out += escapeHtml(val);
+      } else {
+        if (/^("|')/.test(rest)) out += `<span class="str">${escapeHtml(rest)}</span>`;
+        else if (/^-?\d+/.test(rest)) out += `<span class="num">${escapeHtml(rest)}</span>`;
+        else out += escapeHtml(rest);
+      }
+      if (commentPart) out += `<span class="com">${escapeHtml(commentPart)}</span>`;
+      return out;
+    }
+    function renderYaml() {
+      const text = yamlInput.value;
+      const lines = text.split('\n');
+      yamlHighlight.innerHTML = lines.map(yamlTokenize).join('\n') + '\n';
+      yamlGutter.innerHTML = lines.map((_, i) => i + 1).join('\n') + '\n';
+      yamlHighlight.scrollTop = yamlInput.scrollTop;
+      yamlHighlight.scrollLeft = yamlInput.scrollLeft;
+    }
+    yamlInput.value = DEFAULT_YAML;
+    renderYaml();
+    yamlInput.addEventListener('input', renderYaml);
+    yamlInput.addEventListener('scroll', () => {
+      yamlHighlight.scrollTop = yamlInput.scrollTop;
+      yamlHighlight.scrollLeft = yamlInput.scrollLeft;
+      // Gutter has overflow:hidden; use scrollTop to mirror textarea
+      yamlGutter.scrollTop = yamlInput.scrollTop;
+    });
+  </script>
+</body>
+</html>
