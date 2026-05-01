@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alerting Views — Visual Exploration</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1d1e24;
+  --g50: #f7f8fc; --g100: #eef0f4; --g200: #d3dae6; --g400: #98a2b3; --g500: #69707d; --g700: #343741; --g800: #1d1e24;
+  --b50: #e6f1ff; --b100: #cce0ff; --b500: #0077cc; --b700: #005d99;
+  --gr50: #e6f9f7; --gr500: #00bfb3; --gr700: #007871;
+  --am50: #fff8e6; --am200: #fcd883; --am600: #c77700; --am700: #8a5000;
+  --r50: #fff0f0; --r500: #bd271e;
+  --pu50: #f5e6ff; --pu500: #a855f7; --pu700: #6b21a8;
+  --snap: #c77700; --snap-bg: #fff8e6; --snap-border: #fcd883;
+  --ts: #0077cc;   --ts-bg: #e6f1ff;   --ts-border: #cce0ff;
+  --bd: #d3dae6; --r: 4px;
+}
+body { font-family: 'Inter','Helvetica Neue',Arial,sans-serif; font-size: 14px; color: var(--ink); background: var(--g50); line-height: 1.5; }
+
+/* ─ chrome ─ */
+.topbar { background: var(--g800); color: #fff; height: 44px; display: flex; align-items: center; padding: 0 18px; gap: 6px; position: sticky; top: 0; z-index: 300; }
+.topbar .logo { font-weight: 700; font-size: 14px; margin-right: 12px; }
+.topbar .bc  { font-size: 12px; color: rgba(255,255,255,.5); display: flex; gap: 4px; }
+.topbar .bc span { color: rgba(255,255,255,.85); }
+.topbar .draft { margin-left: auto; background: var(--am600); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: .3px; }
+
+.tabbar { background: #fff; border-bottom: 1px solid var(--bd); display: flex; padding: 0 18px; overflow-x: auto; position: sticky; top: 44px; z-index: 200; }
+.tb { padding: 11px 14px; border: none; background: none; font-size: 13px; font-weight: 500; color: var(--g500); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tb:hover { color: var(--g700); }
+.tb.on { color: var(--b500); border-bottom-color: var(--b500); }
+.tn { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--g200); color: var(--g500); font-size: 10px; font-weight: 700; margin-right: 5px; }
+.tb.on .tn { background: var(--b50); color: var(--b500); }
+.panel { display: none; } .panel.on { display: block; }
+.content { padding: 24px 28px; max-width: 1100px; margin: 0 auto; }
+
+/* ─ type ─ */
+h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+h2 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+h3 { font-size: 13px; font-weight: 600; color: var(--g700); margin-bottom: 6px; }
+.sub { color: var(--g500); font-size: 13px; margin-bottom: 20px; }
+p { color: var(--g700); line-height: 1.6; margin-bottom: 10px; font-size: 13px; }
+hr { border: none; border-top: 1px solid var(--bd); margin: 22px 0; }
+
+/* ─ callout ─ */
+.co { padding: 12px 14px; border-radius: var(--r); border: 1px solid; margin-bottom: 14px; font-size: 13px; display: flex; gap: 9px; }
+.co i { font-style: normal; flex-shrink: 0; margin-top: 1px; font-size: 14px; }
+.co p { margin: 0; color: inherit; }
+.co b { font-weight: 600; }
+.c-i { background: var(--b50); border-color: var(--b100); color: var(--b700); }
+.c-w { background: var(--am50); border-color: var(--am200); color: var(--am600); }
+.c-g { background: var(--gr50); border-color: #b3ece9; color: var(--gr700); }
+.c-t { background: var(--pu50); border-color: #d4b0f5; color: var(--pu700); }
+
+/* ─ layout ─ */
+.row { display: flex; gap: 16px; margin-bottom: 18px; }
+.row > * { flex: 1; min-width: 0; }
+.col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.col3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* ─ card ─ */
+.card { background: #fff; border: 1px solid var(--bd); border-radius: var(--r); padding: 16px; }
+.card-sm { background: #fff; border: 1px solid var(--bd); border-radius: var(--r); padding: 12px 14px; }
+
+/* ─ system badges ─ */
+.sys { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; vertical-align: middle; letter-spacing: .2px; flex-shrink: 0; }
+.sys-snap { background: var(--snap-bg); color: var(--snap); border: 1px solid var(--snap-border); }
+.sys-ts   { background: var(--ts-bg);   color: var(--ts);   border: 1px solid var(--ts-border); }
+
+/* ─ buttons ─ */
+.btn { padding: 5px 12px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+.btn-pri  { background: var(--b500); color: #fff; border-color: var(--b500); }
+.btn-sec  { background: #fff; color: var(--b500); border-color: var(--b500); }
+.btn-gh   { background: #fff; color: var(--g700); border-color: var(--bd); }
+.btn-gh:hover { background: var(--g100); }
+.btn-snz  { background: var(--am50); color: var(--am600); border-color: var(--am200); }
+.btn-sm   { padding: 3px 8px; font-size: 11px; }
+
+/* ─ status badges ─ */
+.st { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+.st-act  { background: var(--am50);  color: var(--am600); }
+.st-pend { background: var(--pu50);  color: var(--pu700); }
+.st-rec  { background: var(--b50);   color: var(--b700); }
+.st-ok   { background: var(--gr50);  color: var(--gr700); }
+.st-ina  { background: var(--g100);  color: var(--g500); }
+
+/* ─ section header ─ */
+.sec-hdr { border-bottom: 1px solid var(--bd); padding-bottom: 14px; margin-bottom: 20px; }
+
+/* ═══════════════════════════════
+   KIBANA PAGE MOCKUP SHELL
+═══════════════════════════════ */
+.kb { display: flex; border: 1px solid var(--bd); border-radius: var(--r); overflow: hidden; background: #fff; min-height: 500px; }
+
+/* sidenav */
+.kn { width: 188px; flex-shrink: 0; background: #14151d; color: #fff; font-size: 12px; display: flex; flex-direction: column; }
+.kn-head { padding: 10px 12px 8px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,.07); }
+.kn-sol { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.85); }
+.kn-item { padding: 6px 12px; color: rgba(255,255,255,.6); cursor: pointer; display: flex; align-items: center; gap: 7px; border-left: 2px solid transparent; font-size: 12px; }
+.kn-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); }
+.kn-item.on { color: #fff; background: rgba(255,255,255,.09); border-left-color: var(--b500); font-weight: 500; }
+.kn-sep { height: 1px; background: rgba(255,255,255,.07); margin: 4px 0; }
+.kn-sec { padding: 8px 12px 3px; font-size: 9px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: rgba(255,255,255,.3); }
+
+/* page body */
+.km { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.km-hdr { padding: 14px 18px 12px; border-bottom: 1px solid var(--bd); }
+.km-title { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+.km-sub { font-size: 12px; color: var(--g500); }
+.km-tabs { display: flex; border-bottom: 1px solid var(--bd); padding: 0 18px; }
+.km-tab  { padding: 8px 12px; font-size: 12px; font-weight: 500; color: var(--g500); border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px; white-space: nowrap; }
+.km-tab:hover { color: var(--g700); }
+.km-tab.on  { color: var(--b500); border-bottom-color: var(--b500); }
+.km-body { padding: 14px 18px; flex: 1; overflow-y: auto; }
+.km-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* toolbar */
+.tbar { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+.tbar-search { flex: 1; height: 32px; border: 1px solid var(--bd); border-radius: var(--r); padding: 0 10px; font-size: 12px; color: var(--g500); display: flex; align-items: center; background: var(--g50); }
+
+/* ═══════════════════════════════
+   VIEW 1: HUB PAGE
+═══════════════════════════════ */
+.hub-banner { border-radius: var(--r); padding: 16px 18px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px; border: 1px solid; }
+.hub-banner.snap { background: var(--snap-bg); border-color: var(--snap-border); }
+.hub-banner.ts   { background: var(--ts-bg);   border-color: var(--ts-border); }
+.hub-banner.mix  { background: var(--g50);     border-color: var(--bd); }
+.hb-icon  { font-size: 22px; flex-shrink: 0; }
+.hb-body  { flex: 1; }
+.hb-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.hb-meta  { font-size: 12px; color: var(--g500); }
+.hb-counts { display: flex; gap: 16px; flex-shrink: 0; text-align: center; }
+.hb-count  { font-size: 22px; font-weight: 700; line-height: 1; }
+.hb-clbl   { font-size: 10px; color: var(--g500); margin-top: 3px; }
+.hb-count.act  { color: var(--am600); }
+.hb-count.rec  { color: var(--b500); }
+.hb-count.pend { color: var(--pu700); }
+.hb-count.ok   { color: var(--gr700); }
+.hb-cta { flex-shrink: 0; }
+
+/* ═══════════════════════════════
+   VIEW 2: MIXED ACTIVE
+═══════════════════════════════ */
+.mix-row {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+  border-radius: var(--r); margin-bottom: 4px; border: 1px solid var(--bd);
+  background: #fff; cursor: pointer; transition: box-shadow .1s;
+}
+.mix-row:hover { box-shadow: 0 1px 6px rgba(0,0,0,.1); }
+.mix-row .left-bar { width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0; }
+.left-bar.snap { background: var(--snap); }
+.left-bar.ts   { background: var(--ts); }
+.mr-name  { font-weight: 500; font-size: 13px; color: var(--ink); flex: 1; min-width: 0; }
+.mr-group { font-size: 11px; color: var(--g500); }
+.mr-dur   { font-size: 11px; color: var(--g500); flex-shrink: 0; white-space: nowrap; }
+.mr-acts  { display: flex; gap: 5px; flex-shrink: 0; }
+
+/* ═══════════════════════════════
+   VIEW 3: ENTITY VIEW
+═══════════════════════════════ */
+.entity-card { border: 1px solid var(--bd); border-radius: var(--r); overflow: hidden; margin-bottom: 12px; background: #fff; }
+.entity-head { padding: 10px 14px; border-bottom: 1px solid var(--bd); display: flex; align-items: center; gap: 10px; background: var(--g50); }
+.entity-name { font-weight: 600; font-size: 14px; }
+.entity-type { font-size: 11px; color: var(--g500); }
+.entity-alerts { display: flex; gap: 6px; margin-left: auto; }
+.entity-body { padding: 0; }
+.entity-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--g100); }
+.entity-row:last-child { border-bottom: none; }
+.entity-row .left-bar { width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0; min-height: 20px; }
+
+/* ═══════════════════════════════
+   VIEW 4: BOARD / KANBAN
+═══════════════════════════════ */
+.board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.board-col { background: var(--g50); border-radius: var(--r); padding: 10px; }
+.board-col-hdr { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--g500); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+.board-col-count { background: var(--g200); color: var(--g700); font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.board-card { background: #fff; border: 1px solid var(--bd); border-radius: var(--r); padding: 9px 10px; margin-bottom: 7px; cursor: pointer; transition: box-shadow .1s; }
+.board-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.bc-rule { font-size: 11px; color: var(--g500); margin-bottom: 3px; }
+.bc-name { font-size: 12px; font-weight: 500; color: var(--ink); margin-bottom: 5px; }
+.bc-data { font-size: 11px; font-family: 'SF Mono','Cascadia Code',monospace; color: var(--g700); margin-bottom: 6px; }
+.bc-foot { display: flex; align-items: center; justify-content: space-between; }
+.bc-dur  { font-size: 10px; color: var(--g500); }
+.bc-actions { display: flex; gap: 3px; }
+
+/* lifecycle mini bar */
+.lc-bar { height: 3px; border-radius: 2px; display: flex; overflow: hidden; margin-top: 5px; }
+.lc-p { background: var(--pu500); }
+.lc-a { background: var(--am600); }
+.lc-r { background: var(--b500); }
+.lc-i { background: var(--g200); }
+
+/* v1 only column */
+.v1-only { font-size: 10px; color: var(--g400); font-style: italic; padding: 6px 0; text-align: center; }
+
+/* ═══════════════════════════════
+   RULES: FEATURED SECTION
+═══════════════════════════════ */
+.rules-sec-hdr {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0; margin-bottom: 6px;
+  border-bottom: 2px solid var(--bd);
+}
+.rules-sec-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.rules-sec-title.ts   { color: var(--ts); }
+.rules-sec-title.snap { color: var(--snap); }
+.rules-sec-count { font-size: 11px; color: var(--g500); }
+.rules-sec-spacer { flex: 1; }
+
+.rr { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-bottom: 1px solid var(--g100); }
+.rr:last-child { border-bottom: none; }
+.rr:hover { background: var(--g50); border-radius: var(--r); }
+.rr-name  { font-weight: 500; font-size: 13px; color: var(--b500); cursor: pointer; flex: 1; }
+.rr-meta  { font-size: 11px; color: var(--g500); }
+.rr-snip  { font-size: 11px; font-family: 'SF Mono','Cascadia Code',monospace; color: var(--g500); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rr-type  { font-size: 11px; background: var(--g100); color: var(--g500); padding: 1px 6px; border-radius: 10px; border: 1px solid var(--bd); flex-shrink: 0; white-space: nowrap; }
+.rr-type.ts { background: var(--ts-bg); color: var(--ts); border-color: var(--ts-border); }
+.rr-acts  { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* annotation callout */
+.anno {
+  border-left: 3px solid var(--am600); background: var(--am50);
+  padding: 10px 12px; font-size: 12px; color: var(--am700);
+  border-radius: 0 var(--r) var(--r) 0; margin-bottom: 12px;
+}
+.anno b { font-weight: 600; }
+
+/* comparison grid */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.compare-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 5px 8px; border-radius: var(--r) var(--r) 0 0; margin-bottom: -1px; }
+.lbl-b4  { background: var(--r50); color: var(--r500); }
+.lbl-af  { background: var(--gr50); color: var(--gr700); }
+
+/* progress tag */
+.ptag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: 6px; }
+.ptag-oc { background: var(--b50); color: var(--b700); }
+.ptag-nb { background: var(--g100); color: var(--g500); }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <span class="logo">elastic</span>
+  <div class="bc"><span>Alerting Views Exploration</span></div>
+  <span class="draft">VISUAL EXPLORATION · May 2026</span>
+</nav>
+
+<div class="tabbar">
+  <button class="tb on" onclick="show('hub',this)"><span class="tn">1</span>Alerting Hub</button>
+  <button class="tb"    onclick="show('mixed',this)"><span class="tn">2</span>Active Now (mixed)</button>
+  <button class="tb"    onclick="show('entity',this)"><span class="tn">3</span>Entity view</button>
+  <button class="tb"    onclick="show('board',this)"><span class="tn">4</span>Lifecycle board</button>
+  <button class="tb"    onclick="show('rules',this)"><span class="tn">5</span>Rules — featured sections</button>
+  <button class="tb"    onclick="show('shared',this)"><span class="tn">6</span>Shared actions</button>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+  TAB 1 — ALERTING HUB
+══════════════════════════════════════════════════════════ -->
+<div id="tab-hub" class="panel on content">
+  <div class="sec-hdr">
+    <h1>View 1 — Alerting Hub page</h1>
+    <p class="sub">The landing page is a <b>status overview</b>, not a list. Users navigate from the hub to whichever view they need. The two alerting systems get distinct cards; the "Active Now" mixed view is a third entry point.</p>
+  </div>
+
+  <div class="anno">
+    <b>Core idea:</b> When a user clicks "Alerts" in the O11y nav, they land on a hub page that shows counts + health for both systems, not an immediate list. "What's happening?" is answered at a glance; clicking through gets you the list you need. This avoids forcing a tab choice on users who just want the summary.
+  </div>
+
+  <div class="kb">
+    <div class="kn">
+      <div class="kn-head"><span class="kn-sol">Observability</span></div>
+      <div class="kn-sep"></div>
+      <div class="kn-item">⊙ Discover</div>
+      <div class="kn-item">⊞ Dashboards</div>
+      <div class="kn-item">⚙ Workflows</div>
+      <div class="kn-item on">⚠ Alerts</div>
+      <div class="kn-item">⊟ Cases</div>
+      <div class="kn-item">◎ SLOs</div>
+    </div>
+    <div class="km">
+      <div class="km-hdr">
+        <div class="km-title">Alerts</div>
+        <div class="km-sub">Both alerting systems · All active activity · Last updated just now</div>
+      </div>
+      <div class="km-body">
+
+        <!-- Active now banner (mixed) -->
+        <div class="hub-banner mix" style="margin-bottom:16px;">
+          <div class="hb-icon">🔴</div>
+          <div class="hb-body">
+            <div class="hb-title">Active right now — across all rules</div>
+            <div class="hb-meta">20 things firing across both alerting systems · Oldest active: 4h 22m</div>
+          </div>
+          <div class="hb-counts">
+            <div><div class="hb-count act">20</div><div class="hb-clbl">active</div></div>
+            <div><div class="hb-count rec">4</div><div class="hb-clbl">recovering</div></div>
+          </div>
+          <div class="hb-cta"><button class="btn btn-pri">View active now →</button></div>
+        </div>
+
+        <div class="col2">
+
+          <!-- Snapshot alerting card -->
+          <div class="hub-banner snap" style="flex-direction:column;align-items:flex-start;gap:12px;">
+            <div style="display:flex;align-items:center;gap:10px;width:100%;">
+              <div class="hb-icon">⚡</div>
+              <div class="hb-body">
+                <div class="hb-title">Snapshot Alerting <span class="sys sys-snap" style="margin-left:6px;font-size:9px;">SNAPSHOT</span></div>
+                <div class="hb-meta">Rule types: Metric Threshold, Log Threshold, APM, ML Anomaly, ES Query…</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:20px;width:100%;">
+              <div><div class="hb-count act" style="font-size:18px;">14</div><div class="hb-clbl">active alerts</div></div>
+              <div><div class="hb-count ok" style="font-size:18px;">6</div><div class="hb-clbl">recovered today</div></div>
+              <div style="flex:1;"></div>
+              <button class="btn btn-gh" style="align-self:flex-end;">View alerts →</button>
+            </div>
+            <div style="font-size:11px;color:var(--am700);opacity:.8;">Last fired: 2 min ago · Oldest active: 4h 22m</div>
+          </div>
+
+          <!-- Time series alerting card -->
+          <div class="hub-banner ts" style="flex-direction:column;align-items:flex-start;gap:12px;">
+            <div style="display:flex;align-items:center;gap:10px;width:100%;">
+              <div class="hb-icon">📈</div>
+              <div class="hb-body">
+                <div class="hb-title">Time Series Alerting <span class="sys sys-ts" style="margin-left:6px;font-size:9px;">TIME SERIES</span></div>
+                <div class="hb-meta">ES|QL rules · Full event history · Lifecycle-tracked episodes</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:20px;width:100%;">
+              <div><div class="hb-count act" style="font-size:18px;">6</div><div class="hb-clbl">active</div></div>
+              <div><div class="hb-count rec" style="font-size:18px;">4</div><div class="hb-clbl">recovering</div></div>
+              <div><div class="hb-count pend" style="font-size:18px;">2</div><div class="hb-clbl">pending</div></div>
+              <div style="flex:1;"></div>
+              <button class="btn btn-gh" style="align-self:flex-end;">View episodes →</button>
+            </div>
+            <div style="font-size:11px;color:var(--b700);opacity:.8;">Updated 30s ago · 3 rules active · 12 total rules</div>
+          </div>
+
+        </div><!-- /col2 -->
+
+        <!-- recent activity feed (last 1h) -->
+        <h2 style="margin-top:18px;margin-bottom:10px;font-size:13px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.4px;">Recent activity — last hour</h2>
+        <div class="mix-row" style="margin-bottom:4px;">
+          <div class="left-bar ts"></div>
+          <span class="sys sys-ts" style="font-size:9px;">TS</span>
+          <div style="flex:1;"><span class="mr-name" style="font-size:12px;">Host Resource Pressure · host-a → Active</span><br><span class="mr-group">Crossed pending threshold 45m ago</span></div>
+          <span style="font-size:11px;color:var(--g400);">45m ago</span>
+        </div>
+        <div class="mix-row" style="margin-bottom:4px;">
+          <div class="left-bar snap"></div>
+          <span class="sys sys-snap" style="font-size:9px;">SNAP</span>
+          <div style="flex:1;"><span class="mr-name" style="font-size:12px;">CPU &gt; 85% — host-c → Recovered</span><br><span class="mr-group">Metric Threshold · Was active for 1h 12m</span></div>
+          <span style="font-size:11px;color:var(--g400);">1h ago</span>
+        </div>
+        <div class="mix-row">
+          <div class="left-bar ts"></div>
+          <span class="sys sys-ts" style="font-size:9px;">TS</span>
+          <div style="flex:1;"><span class="mr-name" style="font-size:12px;">Service Health Monitor · checkoutservice → Active</span><br><span class="mr-group">Pending 2 executions, then activated</span></div>
+          <span style="font-size:11px;color:var(--g400);">2h ago</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col2" style="margin-top:16px;">
+    <div class="co c-t"><i>💡</i><div><p><b>Why a hub instead of tabs:</b> Users who click "Alerts" often want to know status first, then drill. Two tabs immediately force a choice. The hub gives status across both systems at a glance, then lets users navigate to the right detail view. "Active Now" is the path for users who just want to triage.</p></div></div>
+    <div class="co c-i"><i>ℹ</i><div><p>The nav item in the O11y sidebar is just "Alerts" — it doesn't say v1 or v2. The hub page is what disambiguates. The distinct card styling (amber for Snapshot, blue for Time Series) establishes the visual language used throughout.</p></div></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+  TAB 2 — MIXED ACTIVE VIEW
+══════════════════════════════════════════════════════════ -->
+<div id="tab-mixed" class="panel content">
+  <div class="sec-hdr">
+    <h1>View 2 — Active Now (mixed)</h1>
+    <p class="sub">A minimal unified list of everything currently firing. Both systems. Deliberately limited columns. The left colored bar is the system indicator — no separate column needed.</p>
+  </div>
+
+  <div class="anno">
+    <b>Core idea:</b> Show the ACTIVE things, not the whole history. Snooze works on both from this view. System-specific actions (ack for TS episodes, rule navigation for Snapshot) live in the flyout that opens when you click a row. The left-border color pattern is borrowed from calendar apps — a lightweight, learned visual shorthand.
+  </div>
+
+  <div class="kb">
+    <div class="kn">
+      <div class="kn-head"><span class="kn-sol">Observability</span></div>
+      <div class="kn-sep"></div>
+      <div class="kn-item on">⚠ Alerts</div>
+      <div class="kn-sep"></div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Active Now</div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Snapshot Alerting</div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Time Series</div>
+    </div>
+    <div class="km">
+      <div class="km-hdr">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div>
+            <div class="km-title">Active Now</div>
+            <div class="km-sub">20 active · across both alerting systems · <span class="sys sys-snap">SNAPSHOT</span> and <span class="sys sys-ts">TIME SERIES</span></div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:6px;">
+            <button class="btn btn-snz btn-sm">Snooze selected</button>
+            <button class="btn btn-gh btn-sm">Group by ▾</button>
+            <button class="btn btn-gh btn-sm">Filter ▾</button>
+          </div>
+        </div>
+      </div>
+      <div class="km-body">
+
+        <!-- group header: group by rule name across systems -->
+        <div style="font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.4px;padding:6px 0 4px;">CPU / Memory pressure</div>
+
+        <div class="mix-row">
+          <div class="left-bar snap"></div>
+          <span class="sys sys-snap">SNAP</span>
+          <div style="flex:1;min-width:0;">
+            <div class="mr-name">CPU &gt; 85%</div>
+            <div class="mr-group">host-a, host-c · Metric Threshold · O11y</div>
+          </div>
+          <span class="st st-act">2 active</span>
+          <span class="mr-dur">4h 22m</span>
+          <div class="mr-acts">
+            <button class="btn btn-snz btn-sm">Snooze</button>
+            <button class="btn btn-gh btn-sm">⋯</button>
+          </div>
+        </div>
+
+        <div class="mix-row">
+          <div class="left-bar ts"></div>
+          <span class="sys sys-ts">TS</span>
+          <div style="flex:1;min-width:0;">
+            <div class="mr-name">Host Resource Pressure</div>
+            <div class="mr-group">host-a · avg_cpu: 0.91, avg_mem: 0.73</div>
+          </div>
+          <span class="st st-act">Active</span>
+          <span class="mr-dur">45m</span>
+          <div class="mr-acts">
+            <button class="btn btn-snz btn-sm">Snooze</button>
+            <button class="btn btn-gh btn-sm">Ack</button>
+            <button class="btn btn-gh btn-sm">⋯</button>
+          </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.4px;padding:10px 0 4px;">Error rate / Service health</div>
+
+        <div class="mix-row">
+          <div class="left-bar snap"></div>
+          <span class="sys sys-snap">SNAP</span>
+          <div style="flex:1;min-width:0;">
+            <div class="mr-name">High Error Rate (APM)</div>
+            <div class="mr-group">checkoutservice · APM Error Rate · O11y</div>
+          </div>
+          <span class="st st-act">Active</span>
+          <span class="mr-dur">2h 10m</span>
+          <div class="mr-acts">
+            <button class="btn btn-snz btn-sm">Snooze</button>
+            <button class="btn btn-gh btn-sm">⋯</button>
+          </div>
+        </div>
+
+        <div class="mix-row">
+          <div class="left-bar ts"></div>
+          <span class="sys sys-ts">TS</span>
+          <div style="flex:1;min-width:0;">
+            <div class="mr-name">Service Health Monitor</div>
+            <div class="mr-group">checkoutservice · avg_err: 0.083, error_count: 36</div>
+          </div>
+          <span class="st st-act">Active</span>
+          <span class="mr-dur">2h 14m</span>
+          <div class="mr-acts">
+            <button class="btn btn-snz btn-sm">Snooze</button>
+            <button class="btn btn-gh btn-sm">Ack</button>
+            <button class="btn btn-gh btn-sm">⋯</button>
+          </div>
+        </div>
+
+        <div class="mix-row" style="opacity:.7;">
+          <div class="left-bar ts"></div>
+          <span class="sys sys-ts">TS</span>
+          <div style="flex:1;min-width:0;">
+            <div class="mr-name">Service Health Monitor</div>
+            <div class="mr-group">currencyservice · avg_err: 0.019 (was 0.061) · recovering</div>
+          </div>
+          <span class="st st-rec">Recovering</span>
+          <span class="mr-dur">2h 30m</span>
+          <div class="mr-acts">
+            <button class="btn btn-gh btn-sm">View</button>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;padding:8px 0;font-size:11px;color:var(--g400);border-top:1px solid var(--g100);">Showing 5 of 24 · <a href="#" style="color:var(--b500);">Load more</a> · <a href="#" style="color:var(--b500);">View Snapshot Alerting →</a> · <a href="#" style="color:var(--b500);">View Time Series →</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="co c-t" style="margin-top:14px;"><i>💡</i><div><p><b>Grouping as the key affordance.</b> The default group-by here is by "entity/topic" (CPU pressure, error rate) not by system. This is what makes the mixed view useful — you can see "all my CPU/memory issues" regardless of which system produced them. Group by Rule, by System, by Service, by Severity are all valid alternatives via the Group By control.</p></div></div>
+
+  <div class="co c-i"><i>ℹ</i><div><p><b>Actions that only appear for one system:</b> "Ack" only shows on Time Series rows (v2 has explicit ack; v1 doesn't surface this from the list). System-specific detail (episode lifecycle, rule event history) lives in the click-through flyout, not this list. The list only surfaces shared + most common actions.</p></div></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+  TAB 3 — ENTITY VIEW
+══════════════════════════════════════════════════════════ -->
+<div id="tab-entity" class="panel content">
+  <div class="sec-hdr">
+    <h1>View 3 — Entity-centric alerts</h1>
+    <p class="sub">Organize by what's being monitored (service, host, cluster), not by which alerting system fired. Both v1 and v2 alerts about the same entity appear together. The system is secondary.</p>
+  </div>
+
+  <div class="anno">
+    <b>Core idea:</b> SREs don't ask "what's in my v2 alerting system?" — they ask "what's wrong with checkoutservice?" This view is organized around entities. Within each entity card, alerts from both systems appear together with system indicators. This is the most outside-Kibana-boxes idea in this prototype.
+  </div>
+
+  <div class="kb">
+    <div class="kn">
+      <div class="kn-head"><span class="kn-sol">Observability</span></div>
+      <div class="kn-sep"></div>
+      <div class="kn-item on">⚠ Alerts</div>
+      <div class="kn-sep"></div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Active Now</div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">By Entity ← </div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Snapshot</div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Time Series</div>
+    </div>
+    <div class="km">
+      <div class="km-hdr">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div>
+            <div class="km-title">Alerts by entity</div>
+            <div class="km-sub">Grouped by service or host · Both alerting systems · 4 entities with active issues</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:6px;">
+            <button class="btn btn-gh btn-sm">Entity type ▾</button>
+            <button class="btn btn-gh btn-sm">Status ▾</button>
+          </div>
+        </div>
+      </div>
+      <div class="km-body">
+
+        <!-- entity card: checkoutservice — 2 alerts from different systems -->
+        <div class="entity-card">
+          <div class="entity-head">
+            <div>
+              <div class="entity-name">checkoutservice</div>
+              <div class="entity-type">service · APM · Java</div>
+            </div>
+            <div class="entity-alerts">
+              <span class="st st-act">2 active</span>
+              <span class="sys sys-snap">SNAP</span>
+              <span class="sys sys-ts">TS</span>
+            </div>
+          </div>
+          <div class="entity-body">
+            <div class="entity-row">
+              <div class="left-bar snap" style="min-height:28px;"></div>
+              <span class="sys sys-snap" style="font-size:9px;">SNAP</span>
+              <div style="flex:1;font-size:12px;"><span style="font-weight:500;">High Error Rate (APM)</span> <span style="color:var(--g500);">· APM Error Rate rule</span></div>
+              <span class="st st-act" style="font-size:10px;">Active 2h 10m</span>
+              <button class="btn btn-snz btn-sm">Snooze</button>
+            </div>
+            <div class="entity-row">
+              <div class="left-bar ts" style="min-height:28px;"></div>
+              <span class="sys sys-ts" style="font-size:9px;">TS</span>
+              <div style="flex:1;font-size:12px;"><span style="font-weight:500;">Service Health Monitor</span> <span style="color:var(--g500);">· avg_err: 0.083 · error_count: 36</span></div>
+              <span class="st st-act" style="font-size:10px;">Active 2h 14m</span>
+              <button class="btn btn-snz btn-sm">Snooze</button>
+              <button class="btn btn-gh btn-sm">Ack</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- entity card: host-a — multiple alerts -->
+        <div class="entity-card">
+          <div class="entity-head">
+            <div>
+              <div class="entity-name">host-a</div>
+              <div class="entity-type">host · Infra · EU-West-1</div>
+            </div>
+            <div class="entity-alerts">
+              <span class="st st-act">1 active</span>
+              <span class="st st-pend">1 pending</span>
+              <span class="sys sys-snap">SNAP</span>
+              <span class="sys sys-ts">TS</span>
+            </div>
+          </div>
+          <div class="entity-body">
+            <div class="entity-row">
+              <div class="left-bar snap" style="min-height:28px;"></div>
+              <span class="sys sys-snap" style="font-size:9px;">SNAP</span>
+              <div style="flex:1;font-size:12px;"><span style="font-weight:500;">CPU &gt; 85%</span> <span style="color:var(--g500);">· Metric Threshold · system.cpu.pct: 0.91</span></div>
+              <span class="st st-act" style="font-size:10px;">Active 4h 22m</span>
+              <button class="btn btn-snz btn-sm">Snooze</button>
+            </div>
+            <div class="entity-row">
+              <div class="left-bar ts" style="min-height:28px;"></div>
+              <span class="sys sys-ts" style="font-size:9px;">TS</span>
+              <div style="flex:1;font-size:12px;"><span style="font-weight:500;">Host Resource Pressure</span> <span style="color:var(--g500);">· avg_cpu: 0.91, avg_mem: 0.73</span></div>
+              <span class="st st-pend" style="font-size:10px;">Pending (2/3)</span>
+              <button class="btn btn-snz btn-sm">Snooze</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- entity card: currencyservice — recovering -->
+        <div class="entity-card" style="opacity:.8;">
+          <div class="entity-head">
+            <div>
+              <div class="entity-name">currencyservice</div>
+              <div class="entity-type">service · APM · Go</div>
+            </div>
+            <div class="entity-alerts">
+              <span class="st st-rec">1 recovering</span>
+              <span class="sys sys-ts">TS</span>
+            </div>
+          </div>
+          <div class="entity-body">
+            <div class="entity-row">
+              <div class="left-bar ts" style="min-height:28px;"></div>
+              <span class="sys sys-ts" style="font-size:9px;">TS</span>
+              <div style="flex:1;font-size:12px;"><span style="font-weight:500;">Service Health Monitor</span> <span style="color:var(--g500);">· avg_err: 0.019 (was 0.061)</span></div>
+              <span class="st st-rec" style="font-size:10px;">Recovering (1/2)</span>
+              <button class="btn btn-gh btn-sm">View</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="co c-t" style="margin-top:14px;"><i>💡</i><div><p><b>The big unlock:</b> If two rules (one v1, one v2) are both monitoring checkoutservice's error rate, an SRE sees both on one card. This is the "creative solution for mixed state" from the offsite — side-by-side by entity, not by system. Works because grouping fields (service.name, host.name) are shared between v1 and v2 even though schemas differ.</p></div></div>
+  <div class="co c-w"><i>⚠</i><div><p><b>Limitation:</b> Entity attribution requires that both v1 and v2 alerts can be mapped to the same entity key (service name, host name, etc.). v2 uses the grouping fields from the ES|QL query. v1 needs the alert to carry compatible fields. This works for APM/Infra rules today; may not work for all v1 rule types.</p></div></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+  TAB 4 — LIFECYCLE BOARD
+══════════════════════════════════════════════════════════ -->
+<div id="tab-board" class="panel content">
+  <div class="sec-hdr">
+    <h1>View 4 — Lifecycle board</h1>
+    <p class="sub">A Kanban-style board organized by alert lifecycle state. v1 alerts only appear in "Active" and "Resolved". v2 episodes appear in all columns. The board makes lifecycle gaps between the systems instantly visible.</p>
+  </div>
+
+  <div class="anno">
+    <b>Core idea:</b> Lifecycle IS the primary organizing principle for v2. v1 doesn't have Pending or Recovering — those columns are v2-only. The board makes this structural difference self-evident without explanation. Users naturally understand: "if it's in the Active column, it's from either system; if it's in Pending, it's always v2."
+  </div>
+
+  <div class="kb" style="min-height:520px;">
+    <div class="km">
+      <div class="km-hdr">
+        <div class="km-title">Alert lifecycle board</div>
+        <div class="km-sub">v1 (Snapshot) and v2 (Time Series) · All active and recent episodes</div>
+      </div>
+      <div class="km-body" style="overflow-x:auto;">
+        <div class="board" style="min-width:700px;">
+
+          <!-- Pending column — v2 only -->
+          <div class="board-col">
+            <div class="board-col-hdr">
+              Pending <span class="board-col-count">2</span>
+              <span class="sys sys-ts" style="font-size:9px;margin-left:auto;">TS only</span>
+            </div>
+            <div class="board-card">
+              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Host Resource Pressure</div>
+              <div class="bc-name">host-a</div>
+              <div class="bc-data">avg_cpu: 0.91 avg_mem: 0.73</div>
+              <div class="lc-bar"><div class="lc-p" style="width:100%;"></div></div>
+              <div class="bc-foot"><span class="bc-dur">2/3 evals · 45m</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div>
+            </div>
+            <div class="board-card">
+              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Network Anomaly</div>
+              <div class="bc-name">host-b</div>
+              <div class="bc-data">total_out: 512MB</div>
+              <div class="lc-bar"><div class="lc-p" style="width:100%;"></div></div>
+              <div class="bc-foot"><span class="bc-dur">1/2 evals · 12m</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div>
+            </div>
+            <div class="v1-only">v1 rules do not have a pending state</div>
+          </div>
+
+          <!-- Active column — both systems -->
+          <div class="board-col">
+            <div class="board-col-hdr">
+              Active <span class="board-col-count">6</span>
+            </div>
+            <!-- v2 card -->
+            <div class="board-card" style="border-left:3px solid var(--ts);">
+              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div>
+              <div class="bc-name">checkoutservice</div>
+              <div class="bc-data">avg_err: 0.083 count: 36</div>
+              <div class="lc-bar"><div class="lc-p" style="width:15%;"></div><div class="lc-a" style="width:85%;"></div></div>
+              <div class="bc-foot"><span class="bc-dur">2h 14m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
+            </div>
+            <!-- v1 card -->
+            <div class="board-card" style="border-left:3px solid var(--snap);">
+              <div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> CPU &gt; 85%</div>
+              <div class="bc-name">host-a, host-c</div>
+              <div class="bc-data">value: 0.91 (2 instances)</div>
+              <div class="bc-foot"><span class="bc-dur">4h 22m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button></div></div>
+            </div>
+            <!-- v1 card -->
+            <div class="board-card" style="border-left:3px solid var(--snap);">
+              <div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> High Error Rate (APM)</div>
+              <div class="bc-name">checkoutservice</div>
+              <div class="bc-data">error_rate: 8.3%</div>
+              <div class="bc-foot"><span class="bc-dur">2h 10m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button></div></div>
+            </div>
+            <!-- v2 card -->
+            <div class="board-card" style="border-left:3px solid var(--ts);">
+              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Cascading Failure</div>
+              <div class="bc-name">host-a (3 signal types)</div>
+              <div class="bc-data">signal_types: 3</div>
+              <div class="lc-bar"><div class="lc-p" style="width:10%;"></div><div class="lc-a" style="width:90%;"></div></div>
+              <div class="bc-foot"><span class="bc-dur">1h 5m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
+            </div>
+          </div>
+
+          <!-- Recovering column — v2 only -->
+          <div class="board-col">
+            <div class="board-col-hdr">
+              Recovering <span class="board-col-count">2</span>
+              <span class="sys sys-ts" style="font-size:9px;margin-left:auto;">TS only</span>
+            </div>
+            <div class="board-card">
+              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div>
+              <div class="bc-name">currencyservice</div>
+              <div class="bc-data">avg_err: 0.019 ↓ from 0.061</div>
+              <div class="lc-bar"><div class="lc-p" style="width:10%;"></div><div class="lc-a" style="width:55%;"></div><div class="lc-r" style="width:35%;"></div></div>
+              <div class="bc-foot"><span class="bc-dur">1/2 clean evals</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div>
+            </div>
+            <div class="board-card">
+              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Host Resource Pressure</div>
+              <div class="bc-name">host-d</div>
+              <div class="bc-data">avg_cpu: 0.71 ↓ from 0.94</div>
+              <div class="lc-bar"><div class="lc-p" style="width:8%;"></div><div class="lc-a" style="width:70%;"></div><div class="lc-r" style="width:22%;"></div></div>
+              <div class="bc-foot"><span class="bc-dur">2/3 clean evals</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div>
+            </div>
+            <div class="v1-only">v1 rules recover immediately — no Recovering state</div>
+          </div>
+
+          <!-- Resolved column — both -->
+          <div class="board-col" style="opacity:.75;">
+            <div class="board-col-hdr">
+              Resolved today <span class="board-col-count">9</span>
+            </div>
+            <div class="board-card">
+              <div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> CPU &gt; 85%</div>
+              <div class="bc-name">host-c</div>
+              <div class="bc-foot"><span class="bc-dur">Resolved 1h ago</span></div>
+            </div>
+            <div class="board-card">
+              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div>
+              <div class="bc-name">paymentservice</div>
+              <div class="bc-foot"><span class="bc-dur">Resolved 2h ago</span></div>
+            </div>
+            <div style="font-size:11px;color:var(--g400);text-align:center;padding:6px 0;">+ 7 more</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col2" style="margin-top:14px;">
+    <div class="co c-t"><i>💡</i><div><p><b>The board makes the capability difference legible.</b> Empty Pending/Recovering columns for v1 items aren't a bug — they're visible evidence of what v1 doesn't have. Users understand instantly why Time Series Alerting adds value: the lifecycle. No explanation needed.</p></div></div>
+    <div class="co c-i"><i>ℹ</i><div><p>Snooze applies to both card types from the board. Ack (acknowledge) only appears on v2 cards. v1 cards don't have system-specific row actions in this view. The board is a triage surface; deep actions are in the card detail flyout.</p></div></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+  TAB 5 — RULES: FEATURED SECTIONS
+══════════════════════════════════════════════════════════ -->
+<div id="tab-rules" class="panel content">
+  <div class="sec-hdr">
+    <h1>View 5 — Rules: featured ES|QL section</h1>
+    <p class="sub">v2 rules as a "featured" rule type — not a separate tab. Sections within one page. ES|QL rules are surfaced at the top with distinct styling. Below them, all v1 rule types in the existing list experience.</p>
+  </div>
+
+  <div class="anno">
+    <b>Core idea:</b> Jason mentioned framing v2 as a "first-class ES|QL rule type" — the best one, the only one you'll ever need. One way to express that in the UI: feature it at the top of the rules list, not on a separate tab. The list is one list; the section header creates the visual separation. Drawback: the tables genuinely have different columns, which is why tabs may still be the right answer. This is the alternative to explore.
+  </div>
+
+  <div class="kb" style="min-height:480px;">
+    <div class="km">
+      <div class="km-hdr">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div>
+            <div class="km-title">Rules</div>
+            <div class="km-sub">Manage and monitor all of your detection rules</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:6px;">
+            <button class="btn btn-gh">Settings</button>
+            <button class="btn btn-pri">+ Create rule</button>
+          </div>
+        </div>
+      </div>
+      <div class="km-tabs">
+        <div class="km-tab on">Rules</div>
+        <div class="km-tab">Logs</div>
+      </div>
+      <div class="km-body">
+        <div class="tbar"><div class="tbar-search">Search rules…</div><button class="btn btn-gh btn-sm">Status ▾</button><button class="btn btn-gh btn-sm">Tags ▾</button></div>
+
+        <!-- TIME SERIES section — featured at top -->
+        <div class="rules-sec-hdr">
+          <span class="rules-sec-title ts">📈 Time Series Alerting</span>
+          <span class="sys sys-ts" style="font-size:10px;">ES|QL</span>
+          <span class="rules-sec-count">3 rules · 6 active episodes</span>
+          <div class="rules-sec-spacer"></div>
+          <a href="#" style="font-size:11px;color:var(--b500);">View episodes →</a>
+        </div>
+
+        <div class="rr">
+          <div style="flex:1;min-width:0;">
+            <div class="rr-name">Service Health Monitor</div>
+            <div class="rr-snip">FROM logs-apm.* | STATS avg_err = AVG(error.rate) BY service.name | WHERE avg_err &gt; 0.05</div>
+          </div>
+          <span class="rr-type ts">ES|QL rule</span>
+          <span class="st st-act">3 active</span>
+          <span style="font-size:11px;color:var(--g500);">14 episodes total</span>
+          <div class="rr-acts"><button class="btn btn-gh btn-sm">Episodes →</button><button class="btn btn-gh btn-sm">⋯</button></div>
+        </div>
+        <div class="rr">
+          <div style="flex:1;min-width:0;">
+            <div class="rr-name">Host Resource Pressure</div>
+            <div class="rr-snip">FROM metrics-system.* | STATS avg_cpu = AVG(system.cpu.pct), avg_mem = AVG(system.memory.pct) BY host.name</div>
+          </div>
+          <span class="rr-type ts">ES|QL rule</span>
+          <span class="st st-pend">1 pending</span>
+          <span style="font-size:11px;color:var(--g500);">7 episodes total</span>
+          <div class="rr-acts"><button class="btn btn-gh btn-sm">Episodes →</button><button class="btn btn-gh btn-sm">⋯</button></div>
+        </div>
+        <div class="rr">
+          <div style="flex:1;min-width:0;">
+            <div class="rr-name">Cascading Failure Signal</div>
+            <div class="rr-snip">FROM .rule-events | WHERE @timestamp &gt; NOW() - 5m | STATS signal_types = COUNT_DISTINCT(rule.name) BY host.name</div>
+          </div>
+          <span class="rr-type ts">ES|QL rule</span>
+          <span class="st st-ok">OK</span>
+          <span style="font-size:11px;color:var(--g500);">2 episodes total</span>
+          <div class="rr-acts"><button class="btn btn-gh btn-sm">Episodes →</button><button class="btn btn-gh btn-sm">⋯</button></div>
+        </div>
+
+        <div style="height:10px;"></div>
+
+        <!-- SNAPSHOT section — existing rule types below -->
+        <div class="rules-sec-hdr">
+          <span class="rules-sec-title snap">⚡ Snapshot Alerting</span>
+          <span class="rules-sec-count">18 rules · 14 active</span>
+          <div class="rules-sec-spacer"></div>
+          <a href="#" style="font-size:11px;color:var(--b500);">View alerts →</a>
+        </div>
+
+        <div class="rr">
+          <div style="flex:1;min-width:0;">
+            <div class="rr-name">CPU &gt; 85% — Production Hosts</div>
+            <div class="rr-meta">Every 1m · host-a, host-c</div>
+          </div>
+          <span class="rr-type">Metric Threshold</span>
+          <span class="st st-act">2 active</span>
+          <div class="rr-acts"><button class="btn btn-gh btn-sm">Alerts →</button><button class="btn btn-gh btn-sm">⋯</button></div>
+        </div>
+        <div class="rr">
+          <div style="flex:1;min-width:0;">
+            <div class="rr-name">High Error Rate Anomaly</div>
+            <div class="rr-meta">Every 15m</div>
+          </div>
+          <span class="rr-type">ML Anomaly</span>
+          <span class="st st-ok">OK</span>
+          <div class="rr-acts"><button class="btn btn-gh btn-sm">Alerts →</button><button class="btn btn-gh btn-sm">⋯</button></div>
+        </div>
+        <div class="rr">
+          <div style="flex:1;min-width:0;">
+            <div class="rr-name">Error Count &gt; 50</div>
+            <div class="rr-meta">Every 5m</div>
+          </div>
+          <span class="rr-type">ES Query · ES|QL mode</span>
+          <span class="st st-act">1 active</span>
+          <div class="rr-acts"><button class="btn btn-gh btn-sm">Alerts →</button><button class="btn btn-gh btn-sm">⋯</button></div>
+        </div>
+        <div style="padding:8px 0;font-size:11px;color:var(--g400);">Showing 3 of 18 · <a href="#" style="color:var(--b500);">View all →</a></div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="col2" style="margin-top:14px;">
+    <div class="co c-t"><i>💡</i><div><p><b>What this achieves:</b> One "Rules" tab, no naming battle about the tab. The section headers (Time Series / Snapshot) do the disambiguation. The ES|QL rule type is featured prominently at top — "the best rule type." v1 rules appear below with their existing column experience. Different columns per section is natural since they're different sections, not different table columns.</p></div></div>
+    <div class="co c-w"><i>⚠</i><div><p><b>The problem Jason flagged:</b> Different columns between sections means this isn't one table — it's two tables with a header between them. That's workable visually but can feel like two separate experiences crammed into one scroll. Whether this is better or worse than tabs depends on how different the column sets are. If they're very different (which they are), tabs are probably cleaner.</p></div></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+  TAB 6 — SHARED ACTIONS
+══════════════════════════════════════════════════════════ -->
+<div id="tab-shared" class="panel content">
+  <div class="sec-hdr">
+    <h1>View 6 — Shared actions across systems</h1>
+    <p class="sub">Snooze works for both. What else is shared, what's system-specific, and how to present this in a detail flyout without confusing users.</p>
+  </div>
+
+  <div class="col2">
+    <div>
+      <h2>Action taxonomy</h2>
+      <table style="font-size:12px;margin-bottom:16px;">
+        <thead><tr><th>Action</th><th>Snapshot (v1)</th><th>Time Series (v2)</th></tr></thead>
+        <tbody>
+          <tr><td><b>Snooze</b></td><td style="color:var(--gr700);">✓ (on rule)</td><td style="color:var(--gr700);">✓ (on episode/series)</td></tr>
+          <tr><td><b>View in Discover</b></td><td style="color:var(--gr700);">✓ (.internal.alerts-*)</td><td style="color:var(--gr700);">✓ (.rule-events)</td></tr>
+          <tr><td><b>View rule details</b></td><td style="color:var(--gr700);">✓</td><td style="color:var(--gr700);">✓</td></tr>
+          <tr><td><b>Acknowledge / Ack</b></td><td style="color:var(--g400);">— (not in v1)</td><td style="color:var(--gr700);">✓ (episode action)</td></tr>
+          <tr><td><b>View episode history</b></td><td style="color:var(--g400);">— (no history in v1)</td><td style="color:var(--gr700);">✓</td></tr>
+          <tr><td><b>View lifecycle timeline</b></td><td style="color:var(--g400);">— (no lifecycle)</td><td style="color:var(--gr700);">✓</td></tr>
+          <tr><td><b>Manual recovery trigger</b></td><td style="color:var(--g400);">— (depends on rule type)</td><td style="color:var(--gr700);">✓ (activate/deactivate)</td></tr>
+          <tr><td><b>Rule execution log</b></td><td style="color:var(--gr700);">✓ (event log)</td><td style="color:var(--gr700);">✓ (.rule-events)</td></tr>
+          <tr><td><b>Add to case</b></td><td style="color:var(--gr700);">✓</td><td style="color:var(--am600);">TBD</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <h2>Snooze — the critical shared action</h2>
+      <div class="anno">Snooze operates on different things in v1 vs v2: v1 snoozes the rule itself (all alerts from that rule). v2 snoozes a specific series/episode. The UX of snooze should reflect this: from the mixed "Active Now" view, snoozing a v1 item snoozes the rule, snoozing a v2 item snoozes the episode.</div>
+      <div class="card-sm" style="margin-top:10px;">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;">Snooze confirmation modal</div>
+        <div style="font-size:12px;color:var(--g700);margin-bottom:10px;padding:8px;background:var(--am50);border-radius:var(--r);border:1px solid var(--am200);">
+          <b>Snooze "CPU &gt; 85%"</b> <span class="sys sys-snap" style="font-size:9px;">SNAPSHOT</span><br>
+          <span style="font-size:11px;color:var(--am700);">This will snooze all alerts from this rule for the selected duration. Applies to all 2 currently active alerts.</span>
+        </div>
+        <div style="font-size:12px;color:var(--g700);padding:8px;background:var(--ts-bg);border-radius:var(--r);border:1px solid var(--ts-border);">
+          <b>Snooze "Service Health Monitor · checkoutservice"</b> <span class="sys sys-ts" style="font-size:9px;">TIME SERIES</span><br>
+          <span style="font-size:11px;color:var(--b700);">This will snooze this episode (checkoutservice) only. Other episodes from this rule will continue to fire.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <h2>Detail flyout pattern — progressive disclosure by system</h2>
+  <p>When a user clicks an item in the mixed "Active Now" view or the board, a flyout opens. The top section is shared; the bottom section is system-specific.</p>
+
+  <div class="col2">
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--bd);background:var(--snap-bg);display:flex;align-items:center;gap:8px;">
+        <span class="sys sys-snap">SNAPSHOT</span>
+        <span style="font-size:13px;font-weight:600;">CPU &gt; 85% — host-a</span>
+      </div>
+      <div style="padding:12px 14px;border-bottom:1px solid var(--bd);">
+        <div style="font-size:11px;color:var(--g500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;">Shared</div>
+        <div style="font-size:12px;line-height:2;">
+          <b>Rule:</b> CPU &gt; 85% — Production Hosts<br>
+          <b>Active since:</b> 4h 22m<br>
+          <b>Status:</b> <span class="st st-act">Active</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:5px;"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">View in Discover →</button></div>
+      </div>
+      <div style="padding:12px 14px;">
+        <div style="font-size:11px;color:var(--snap);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;">Snapshot Alerting</div>
+        <div style="font-size:12px;line-height:2;">
+          <b>Rule type:</b> Metric Threshold<br>
+          <b>Threshold:</b> system.cpu.pct &gt; 0.85<br>
+          <b>Observed value:</b> 0.91<br>
+        </div>
+        <div style="margin-top:8px;"><button class="btn btn-gh btn-sm">View rule → /app/rules</button></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--bd);background:var(--ts-bg);display:flex;align-items:center;gap:8px;">
+        <span class="sys sys-ts">TIME SERIES</span>
+        <span style="font-size:13px;font-weight:600;">Service Health · checkoutservice</span>
+      </div>
+      <div style="padding:12px 14px;border-bottom:1px solid var(--bd);">
+        <div style="font-size:11px;color:var(--g500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;">Shared</div>
+        <div style="font-size:12px;line-height:2;">
+          <b>Rule:</b> Service Health Monitor<br>
+          <b>Active since:</b> 2h 14m<br>
+          <b>Status:</b> <span class="st st-act">Active</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:5px;"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">View in Discover →</button></div>
+      </div>
+      <div style="padding:12px 14px;">
+        <div style="font-size:11px;color:var(--ts);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;">Time Series Alerting</div>
+        <div style="font-size:12px;line-height:2;">
+          <b>Episode ID:</b> ep-a1b2c3<br>
+          <b>Lifecycle:</b> <span style="font-size:10px;">Inactive → Pending (2 evals) → Active</span><br>
+          <b>data.avg_err:</b> 0.083 &nbsp; <b>data.error_count:</b> 36
+        </div>
+        <div class="lc-bar" style="margin:8px 0;"><div class="lc-p" style="width:15%;"></div><div class="lc-a" style="width:85%;"></div></div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-gh btn-sm">Ack</button>
+          <button class="btn btn-gh btn-sm">Episode history →</button>
+          <button class="btn btn-gh btn-sm">Rule →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="co c-t" style="margin-top:14px;"><i>💡</i><div><p><b>The flyout pattern is how you handle divergent actions without cluttering the list.</b> The list only shows the shared actions. System-specific actions live one click deeper. Users learn the pattern quickly: everything shared is at the top, system-specific stuff is in the lower section with a colored header matching the system badge. The system badge color (amber/blue) is the consistent visual anchor across all views.</p></div></div>
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + id).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
