@@ -219,6 +219,40 @@ hr { border: none; border-top: 1px solid var(--bd); margin: 22px 0; }
 .rr-type.ts { background: var(--ts-bg); color: var(--ts); border-color: var(--ts-border); }
 .rr-acts  { display: flex; gap: 4px; flex-shrink: 0; }
 
+/* group-by button strip */
+.grp-btn { padding: 5px 11px; border-radius: 14px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--bd); background: #fff; color: var(--g700); transition: all .12s; }
+.grp-btn:hover { border-color: var(--b500); color: var(--b500); }
+.grp-btn.on { background: var(--b500); color: #fff; border-color: var(--b500); }
+
+/* severity dot */
+.sev { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sev-c { background: #bd271e; }
+.sev-h { background: #c77700; }
+.sev-m { background: #006bb8; }
+.sev-l { background: #007871; }
+.sev-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.sev-badge.c { background: #fff0f0; color: #bd271e; border: 1px solid #f5c0be; }
+.sev-badge.h { background: var(--am50); color: var(--am600); border: 1px solid var(--am200); }
+.sev-badge.m { background: var(--b50); color: var(--b700); border: 1px solid var(--b100); }
+.sev-badge.l { background: var(--gr50); color: var(--gr700); border: 1px solid #b3ece9; }
+
+/* severity distribution bar */
+.sev-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 5px 0; gap: 1px; }
+.sev-bar .sc { background: #bd271e; }
+.sev-bar .sh { background: var(--am600); }
+.sev-bar .sm { background: var(--b500); }
+.sev-bar .sl { background: var(--gr500); }
+
+/* scale grouped card */
+.scale-card { background: #fff; border: 1px solid var(--bd); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+.scale-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.sc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sc-rule { font-size: 12px; font-weight: 600; flex: 1; }
+.sc-count { font-size: 12px; font-weight: 700; color: var(--g500); }
+.sc-entities { font-size: 11px; color: var(--g500); margin-bottom: 4px; }
+.sc-foot { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.sc-drill { font-size: 11px; color: var(--b500); cursor: pointer; margin-left: auto; }
+
 /* annotation callout */
 .anno {
   border-left: 3px solid var(--am600); background: var(--am50);
@@ -380,11 +414,23 @@ hr { border: none; border-top: 1px solid var(--bd); margin: 22px 0; }
 <div id="tab-mixed" class="panel content">
   <div class="sec-hdr">
     <h1>View 2 — Active Now (mixed)</h1>
-    <p class="sub">A minimal unified list of everything currently firing. Both systems. Deliberately limited columns. The left colored bar is the system indicator — no separate column needed.</p>
+    <p class="sub">Unified list of everything firing across both systems. Grouped by entity by default — switch grouping with the selector. Left border color = which system.</p>
   </div>
 
   <div class="anno">
-    <b>Core idea:</b> Show the ACTIVE things, not the whole history. Snooze works on both from this view. System-specific actions (ack for TS episodes, rule navigation for Snapshot) live in the flyout that opens when you click a row. The left-border color pattern is borrowed from calendar apps — a lightweight, learned visual shorthand.
+    <b>How grouping works:</b> Entity grouping extracts the groupBy field values from each alert (service.name, host.name) and uses shared values as the group key. Two alerts about "checkoutservice" — one v1, one v2 — appear in the same group because they carry the same entity field. Tags are the fallback: rules tagged "infrastructure" group together regardless of entity. Untagged alerts with no matchable entity field fall to the bottom.
+  </div>
+
+  <!-- Group-by selector -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <span style="font-size:12px;font-weight:600;color:var(--g500);">Group by:</span>
+    <button class="grp-btn on" onclick="setGroup('service',this)">Entity (service)</button>
+    <button class="grp-btn" onclick="setGroup('host',this)">Entity (host)</button>
+    <button class="grp-btn" onclick="setGroup('tag',this)">Tag</button>
+    <button class="grp-btn" onclick="setGroup('severity',this)">Severity</button>
+    <button class="grp-btn" onclick="setGroup('rule',this)">Rule</button>
+    <button class="grp-btn" onclick="setGroup('none',this)">None (flat)</button>
+    <span style="margin-left:auto;font-size:11px;color:var(--g400);">20 active · 4 recovering</span>
   </div>
 
   <div class="kb">
@@ -393,115 +439,31 @@ hr { border: none; border-top: 1px solid var(--bd); margin: 22px 0; }
       <div class="kn-sep"></div>
       <div class="kn-item on">⚠ Alerts</div>
       <div class="kn-sep"></div>
-      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Active Now</div>
-      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Snapshot Alerting</div>
-      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.45);">Time Series</div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.5);font-weight:500;">Active Now</div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.35);">Snapshot Alerting</div>
+      <div class="kn-item" style="font-size:11px;padding-left:22px;color:rgba(255,255,255,.35);">Time Series</div>
     </div>
     <div class="km">
       <div class="km-hdr">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div>
-            <div class="km-title">Active Now</div>
-            <div class="km-sub">20 active · across both alerting systems · <span class="sys sys-snap">SNAPSHOT</span> and <span class="sys sys-ts">TIME SERIES</span></div>
-          </div>
-          <div style="margin-left:auto;display:flex;gap:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="km-title">Active Now</div>
+          <div style="margin-left:auto;display:flex;gap:5px;">
             <button class="btn btn-snz btn-sm">Snooze selected</button>
-            <button class="btn btn-gh btn-sm">Group by ▾</button>
             <button class="btn btn-gh btn-sm">Filter ▾</button>
           </div>
         </div>
+        <div class="km-sub" id="grp-label">Grouped by service · 5 services with active alerts</div>
       </div>
-      <div class="km-body">
-
-        <!-- group header: group by rule name across systems -->
-        <div style="font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.4px;padding:6px 0 4px;">CPU / Memory pressure</div>
-
-        <div class="mix-row">
-          <div class="left-bar snap"></div>
-          <span class="sys sys-snap">SNAP</span>
-          <div style="flex:1;min-width:0;">
-            <div class="mr-name">CPU &gt; 85%</div>
-            <div class="mr-group">host-a, host-c · Metric Threshold · O11y</div>
-          </div>
-          <span class="st st-act">2 active</span>
-          <span class="mr-dur">4h 22m</span>
-          <div class="mr-acts">
-            <button class="btn btn-snz btn-sm">Snooze</button>
-            <button class="btn btn-gh btn-sm">⋯</button>
-          </div>
-        </div>
-
-        <div class="mix-row">
-          <div class="left-bar ts"></div>
-          <span class="sys sys-ts">TS</span>
-          <div style="flex:1;min-width:0;">
-            <div class="mr-name">Host Resource Pressure</div>
-            <div class="mr-group">host-a · avg_cpu: 0.91, avg_mem: 0.73</div>
-          </div>
-          <span class="st st-act">Active</span>
-          <span class="mr-dur">45m</span>
-          <div class="mr-acts">
-            <button class="btn btn-snz btn-sm">Snooze</button>
-            <button class="btn btn-gh btn-sm">Ack</button>
-            <button class="btn btn-gh btn-sm">⋯</button>
-          </div>
-        </div>
-
-        <div style="font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.4px;padding:10px 0 4px;">Error rate / Service health</div>
-
-        <div class="mix-row">
-          <div class="left-bar snap"></div>
-          <span class="sys sys-snap">SNAP</span>
-          <div style="flex:1;min-width:0;">
-            <div class="mr-name">High Error Rate (APM)</div>
-            <div class="mr-group">checkoutservice · APM Error Rate · O11y</div>
-          </div>
-          <span class="st st-act">Active</span>
-          <span class="mr-dur">2h 10m</span>
-          <div class="mr-acts">
-            <button class="btn btn-snz btn-sm">Snooze</button>
-            <button class="btn btn-gh btn-sm">⋯</button>
-          </div>
-        </div>
-
-        <div class="mix-row">
-          <div class="left-bar ts"></div>
-          <span class="sys sys-ts">TS</span>
-          <div style="flex:1;min-width:0;">
-            <div class="mr-name">Service Health Monitor</div>
-            <div class="mr-group">checkoutservice · avg_err: 0.083, error_count: 36</div>
-          </div>
-          <span class="st st-act">Active</span>
-          <span class="mr-dur">2h 14m</span>
-          <div class="mr-acts">
-            <button class="btn btn-snz btn-sm">Snooze</button>
-            <button class="btn btn-gh btn-sm">Ack</button>
-            <button class="btn btn-gh btn-sm">⋯</button>
-          </div>
-        </div>
-
-        <div class="mix-row" style="opacity:.7;">
-          <div class="left-bar ts"></div>
-          <span class="sys sys-ts">TS</span>
-          <div style="flex:1;min-width:0;">
-            <div class="mr-name">Service Health Monitor</div>
-            <div class="mr-group">currencyservice · avg_err: 0.019 (was 0.061) · recovering</div>
-          </div>
-          <span class="st st-rec">Recovering</span>
-          <span class="mr-dur">2h 30m</span>
-          <div class="mr-acts">
-            <button class="btn btn-gh btn-sm">View</button>
-          </div>
-        </div>
-
-        <div style="margin-top:10px;padding:8px 0;font-size:11px;color:var(--g400);border-top:1px solid var(--g100);">Showing 5 of 24 · <a href="#" style="color:var(--b500);">Load more</a> · <a href="#" style="color:var(--b500);">View Snapshot Alerting →</a> · <a href="#" style="color:var(--b500);">View Time Series →</a></div>
+      <div class="km-body" id="grp-body">
+        <!-- injected by JS -->
       </div>
     </div>
   </div>
 
-  <div class="co c-t" style="margin-top:14px;"><i>💡</i><div><p><b>Grouping as the key affordance.</b> The default group-by here is by "entity/topic" (CPU pressure, error rate) not by system. This is what makes the mixed view useful — you can see "all my CPU/memory issues" regardless of which system produced them. Group by Rule, by System, by Service, by Severity are all valid alternatives via the Group By control.</p></div></div>
-
-  <div class="co c-i"><i>ℹ</i><div><p><b>Actions that only appear for one system:</b> "Ack" only shows on Time Series rows (v2 has explicit ack; v1 doesn't surface this from the list). System-specific detail (episode lifecycle, rule event history) lives in the click-through flyout, not this list. The list only surfaces shared + most common actions.</p></div></div>
+  <div style="margin-top:14px;" class="col2">
+    <div class="co c-t"><i>💡</i><div><p><b>Entity grouping mechanism:</b> Reads groupBy field values from both v1 and v2 alerts. v1 stores these in <code>kibana.alert.instance.id</code>; v2 stores them in the rule's groupBy field values on the rule event. Both carry <code>service.name</code> and <code>host.name</code> for compatible O11y rules. Normalization work needed for other field names.</p></div></div>
+    <div class="co c-i"><i>ℹ</i><div><p><b>Fallback chain:</b> Entity field → Tags → "Other" at the bottom. Rules that don't carry a matchable entity field (e.g. some v1 rule types that don't group by service or host) fall into tag-based groups if tagged, or "Other" if not.</p></div></div>
+  </div>
 </div>
 
 
@@ -646,131 +608,44 @@ hr { border: none; border-top: 1px solid var(--bd); margin: 22px 0; }
 <div id="tab-board" class="panel content">
   <div class="sec-hdr">
     <h1>View 4 — Lifecycle board</h1>
-    <p class="sub">A Kanban-style board organized by alert lifecycle state. v1 alerts only appear in "Active" and "Resolved". v2 episodes appear in all columns. The board makes lifecycle gaps between the systems instantly visible.</p>
+    <p class="sub">Kanban by lifecycle state. Cards sorted by severity within each column. Toggle scale mode to see what happens at 847 items — the key design question.</p>
   </div>
 
   <div class="anno">
-    <b>Core idea:</b> Lifecycle IS the primary organizing principle for v2. v1 doesn't have Pending or Recovering — those columns are v2-only. The board makes this structural difference self-evident without explanation. Users naturally understand: "if it's in the Active column, it's from either system; if it's in Pending, it's always v2."
+    <b>The scale problem:</b> At 6 items, individual cards work great. At 100+, the Active column alone becomes an infinite scroll and the board is useless. The answer: at scale the board shows <em>grouped</em> cards — one card per rule (or entity), not one card per alert. Each grouped card shows count + severity distribution. You click through to a filtered list. Toggle below to compare.
+  </div>
+
+  <!-- Scale toggle -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+    <span style="font-size:12px;font-weight:600;color:var(--g500);">View mode:</span>
+    <button class="grp-btn on" onclick="setBoard('detail',this)" id="board-detail-btn">Detailed cards (6 items)</button>
+    <button class="grp-btn" onclick="setBoard('scale',this)" id="board-scale-btn">Scale mode (847 items)</button>
+    <span style="font-size:11px;color:var(--g500);margin-left:8px;" id="board-mode-note">Individual card per alert/episode, sorted by severity</span>
   </div>
 
   <div class="kb" style="min-height:520px;">
     <div class="km">
       <div class="km-hdr">
-        <div class="km-title">Alert lifecycle board</div>
-        <div class="km-sub">v1 (Snapshot) and v2 (Time Series) · All active and recent episodes</div>
-      </div>
-      <div class="km-body" style="overflow-x:auto;">
-        <div class="board" style="min-width:700px;">
-
-          <!-- Pending column — v2 only -->
-          <div class="board-col">
-            <div class="board-col-hdr">
-              Pending <span class="board-col-count">2</span>
-              <span class="sys sys-ts" style="font-size:9px;margin-left:auto;">TS only</span>
-            </div>
-            <div class="board-card">
-              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Host Resource Pressure</div>
-              <div class="bc-name">host-a</div>
-              <div class="bc-data">avg_cpu: 0.91 avg_mem: 0.73</div>
-              <div class="lc-bar"><div class="lc-p" style="width:100%;"></div></div>
-              <div class="bc-foot"><span class="bc-dur">2/3 evals · 45m</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div>
-            </div>
-            <div class="board-card">
-              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Network Anomaly</div>
-              <div class="bc-name">host-b</div>
-              <div class="bc-data">total_out: 512MB</div>
-              <div class="lc-bar"><div class="lc-p" style="width:100%;"></div></div>
-              <div class="bc-foot"><span class="bc-dur">1/2 evals · 12m</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div>
-            </div>
-            <div class="v1-only">v1 rules do not have a pending state</div>
-          </div>
-
-          <!-- Active column — both systems -->
-          <div class="board-col">
-            <div class="board-col-hdr">
-              Active <span class="board-col-count">6</span>
-            </div>
-            <!-- v2 card -->
-            <div class="board-card" style="border-left:3px solid var(--ts);">
-              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div>
-              <div class="bc-name">checkoutservice</div>
-              <div class="bc-data">avg_err: 0.083 count: 36</div>
-              <div class="lc-bar"><div class="lc-p" style="width:15%;"></div><div class="lc-a" style="width:85%;"></div></div>
-              <div class="bc-foot"><span class="bc-dur">2h 14m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
-            </div>
-            <!-- v1 card -->
-            <div class="board-card" style="border-left:3px solid var(--snap);">
-              <div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> CPU &gt; 85%</div>
-              <div class="bc-name">host-a, host-c</div>
-              <div class="bc-data">value: 0.91 (2 instances)</div>
-              <div class="bc-foot"><span class="bc-dur">4h 22m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button></div></div>
-            </div>
-            <!-- v1 card -->
-            <div class="board-card" style="border-left:3px solid var(--snap);">
-              <div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> High Error Rate (APM)</div>
-              <div class="bc-name">checkoutservice</div>
-              <div class="bc-data">error_rate: 8.3%</div>
-              <div class="bc-foot"><span class="bc-dur">2h 10m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button></div></div>
-            </div>
-            <!-- v2 card -->
-            <div class="board-card" style="border-left:3px solid var(--ts);">
-              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Cascading Failure</div>
-              <div class="bc-name">host-a (3 signal types)</div>
-              <div class="bc-data">signal_types: 3</div>
-              <div class="lc-bar"><div class="lc-p" style="width:10%;"></div><div class="lc-a" style="width:90%;"></div></div>
-              <div class="bc-foot"><span class="bc-dur">1h 5m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
-            </div>
-          </div>
-
-          <!-- Recovering column — v2 only -->
-          <div class="board-col">
-            <div class="board-col-hdr">
-              Recovering <span class="board-col-count">2</span>
-              <span class="sys sys-ts" style="font-size:9px;margin-left:auto;">TS only</span>
-            </div>
-            <div class="board-card">
-              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div>
-              <div class="bc-name">currencyservice</div>
-              <div class="bc-data">avg_err: 0.019 ↓ from 0.061</div>
-              <div class="lc-bar"><div class="lc-p" style="width:10%;"></div><div class="lc-a" style="width:55%;"></div><div class="lc-r" style="width:35%;"></div></div>
-              <div class="bc-foot"><span class="bc-dur">1/2 clean evals</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div>
-            </div>
-            <div class="board-card">
-              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Host Resource Pressure</div>
-              <div class="bc-name">host-d</div>
-              <div class="bc-data">avg_cpu: 0.71 ↓ from 0.94</div>
-              <div class="lc-bar"><div class="lc-p" style="width:8%;"></div><div class="lc-a" style="width:70%;"></div><div class="lc-r" style="width:22%;"></div></div>
-              <div class="bc-foot"><span class="bc-dur">2/3 clean evals</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div>
-            </div>
-            <div class="v1-only">v1 rules recover immediately — no Recovering state</div>
-          </div>
-
-          <!-- Resolved column — both -->
-          <div class="board-col" style="opacity:.75;">
-            <div class="board-col-hdr">
-              Resolved today <span class="board-col-count">9</span>
-            </div>
-            <div class="board-card">
-              <div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> CPU &gt; 85%</div>
-              <div class="bc-name">host-c</div>
-              <div class="bc-foot"><span class="bc-dur">Resolved 1h ago</span></div>
-            </div>
-            <div class="board-card">
-              <div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div>
-              <div class="bc-name">paymentservice</div>
-              <div class="bc-foot"><span class="bc-dur">Resolved 2h ago</span></div>
-            </div>
-            <div style="font-size:11px;color:var(--g400);text-align:center;padding:6px 0;">+ 7 more</div>
-          </div>
-
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="km-title">Alert lifecycle board</div>
+          <div style="margin-left:auto;font-size:12px;color:var(--g500);" id="board-sub">6 items · Snapshot + Time Series · sorted by severity</div>
         </div>
+      </div>
+      <div class="km-body" style="overflow-x:auto;" id="board-body">
+        <!-- injected by JS -->
       </div>
     </div>
   </div>
 
   <div class="col2" style="margin-top:14px;">
-    <div class="co c-t"><i>💡</i><div><p><b>The board makes the capability difference legible.</b> Empty Pending/Recovering columns for v1 items aren't a bug — they're visible evidence of what v1 doesn't have. Users understand instantly why Time Series Alerting adds value: the lifecycle. No explanation needed.</p></div></div>
-    <div class="co c-i"><i>ℹ</i><div><p>Snooze applies to both card types from the board. Ack (acknowledge) only appears on v2 cards. v1 cards don't have system-specific row actions in this view. The board is a triage surface; deep actions are in the card detail flyout.</p></div></div>
+    <div class="co c-t"><i>💡</i><div>
+      <p><b>Severity sort within columns:</b> Critical cards float to the top of each column, then High, Medium, Low. This means the board is a triage tool — most urgent things are always at the top of the Active column regardless of how long ago they fired.</p>
+      <p style="margin-top:6px;"><b>Empty columns communicate value:</b> Pending and Recovering are v2-only. Users see this without explanation. The board makes the lifecycle capability gap between the systems self-evident.</p>
+    </div></div>
+    <div class="co c-w"><i>⚠</i><div>
+      <p><b>Scale conclusion:</b> The board concept holds at scale <em>only</em> if the unit is a group (rule or entity), not individual alerts. At 847 items with individual cards, every column is an infinite scroll and the affordance collapses. The scale mode shows that "group by rule" makes the board usable at volume — 12 rule groups instead of 847 cards.</p>
+      <p style="margin-top:6px;">This suggests the board should default to grouped view and offer "expand" to see individuals within a group — not the reverse.</p>
+    </div></div>
   </div>
 </div>
 
@@ -1010,12 +885,214 @@ hr { border: none; border-top: 1px solid var(--bd); margin: 22px 0; }
 </div>
 
 <script>
+// ── Tab switching ──────────────────────────────────────────────
 function show(id, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
   document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
   document.getElementById('tab-' + id).classList.add('on');
   btn.classList.add('on');
   window.scrollTo(0, 0);
+}
+
+// ── Group-by selector (Active Now tab) ────────────────────────
+
+const GRP_LABEL = {
+  service:  'Grouped by service · 3 services with active alerts · 1 service recovering',
+  host:     'Grouped by host · 3 hosts with active alerts · no host match for service-only rules',
+  tag:      'Grouped by rule tag · 3 tag groups + 1 untagged',
+  severity: 'Grouped by severity · critical first',
+  rule:     'Grouped by rule name · 5 rules with active items',
+  none:     'Flat list · newest first · no grouping',
+};
+
+const GRP_HTML = {
+  service: `
+    <div class="grp-hdr">checkoutservice <span class="grp-count">2 active</span> <span class="grp-sys"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> <span class="sys sys-ts" style="font-size:9px;">TS</span></span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">High Error Rate (APM)</div><div class="mr-group">APM Error Rate · service.name: checkoutservice</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">2h 10m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Service Health Monitor</div><div class="mr-group">service.name: checkoutservice · avg_err: 0.083</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">2h 14m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">Ack</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;">currencyservice <span class="grp-count">1 recovering</span> <span class="grp-sys"><span class="sys sys-ts" style="font-size:9px;">TS</span></span></div>
+    <div class="mix-row" style="opacity:.75;"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Service Health Monitor</div><div class="mr-group">service.name: currencyservice · avg_err: 0.019 ↓</div></div><span class="sev-badge m">Medium</span><span class="st st-rec">Recovering</span><span class="mr-dur">2h 30m</span><div class="mr-acts"><button class="btn btn-gh btn-sm">View</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;">paymentservice <span class="grp-count">1 active</span> <span class="grp-sys"><span class="sys sys-snap" style="font-size:9px;">SNAP</span></span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">APM Latency &gt; 3s</div><div class="mr-group">APM Latency · service.name: paymentservice</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">18m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;opacity:.6;">No service match <span class="grp-count">2 active · no service.name field</span></div>
+    <div class="mix-row" style="opacity:.7;"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">CPU &gt; 85%</div><div class="mr-group">Metric Threshold · host.name: host-a, host-c · no service.name</div></div><span class="sev-badge h">High</span><span class="st st-act">2 active</span><span class="mr-dur">4h 22m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+    <div style="padding:8px 0 0;font-size:11px;color:var(--g400);">Switch to "Entity (host)" to group these alerts · <a href="#" style="color:var(--b500);" onclick="switchToHost();return false;">Switch →</a></div>
+    <div style="margin-top:8px;padding:8px 0;font-size:11px;color:var(--g400);border-top:1px solid var(--g100);">Showing 6 of 20 active · <a href="#" style="color:var(--b500);">Load more</a></div>`,
+
+  host: `
+    <div class="grp-hdr">host-a <span class="grp-count">2 active</span> <span class="grp-sys"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> <span class="sys sys-ts" style="font-size:9px;">TS</span></span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">CPU &gt; 85%</div><div class="mr-group">Metric Threshold · host.name: host-a</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">4h 22m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Host Resource Pressure</div><div class="mr-group">host.name: host-a · avg_cpu: 0.91, avg_mem: 0.73</div></div><span class="sev-badge c">Critical</span><span class="st st-pend">Pending 2/3</span><span class="mr-dur">45m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;">host-c <span class="grp-count">1 active</span> <span class="grp-sys"><span class="sys sys-snap" style="font-size:9px;">SNAP</span></span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">CPU &gt; 85%</div><div class="mr-group">Metric Threshold · host.name: host-c</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">4h 22m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;opacity:.6;">No host match <span class="grp-count">3 active · no host.name field</span></div>
+    <div class="mix-row" style="opacity:.7;"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">High Error Rate (APM)</div><div class="mr-group">APM Error Rate · service.name: checkoutservice · no host.name</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">2h 10m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+    <div style="padding:8px 0 0;font-size:11px;color:var(--g400);">Service alerts don't carry host.name — switch to "Entity (service)" to group them · <a href="#" style="color:var(--b500);" onclick="switchToService();return false;">Switch →</a></div>
+    <div style="margin-top:8px;padding:8px 0;font-size:11px;color:var(--g400);border-top:1px solid var(--g100);">Showing 4 of 20 active · <a href="#" style="color:var(--b500);">Load more</a></div>`,
+
+  tag: `
+    <div class="grp-hdr">infrastructure <span class="grp-count">3 active</span> <span class="grp-sys"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> <span class="sys sys-ts" style="font-size:9px;">TS</span></span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">CPU &gt; 85%</div><div class="mr-group">tags: infrastructure, production · host-a, host-c</div></div><span class="sev-badge c">Critical</span><span class="st st-act">2 active</span><span class="mr-dur">4h 22m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Host Resource Pressure</div><div class="mr-group">tags: infrastructure, production · host-a</div></div><span class="sev-badge c">Critical</span><span class="st st-pend">Pending</span><span class="mr-dur">45m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;">services <span class="grp-count">2 active · 1 recovering</span> <span class="grp-sys"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> <span class="sys sys-ts" style="font-size:9px;">TS</span></span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">High Error Rate (APM)</div><div class="mr-group">tags: services, apm · checkoutservice</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">2h 10m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Service Health Monitor</div><div class="mr-group">tags: services, apm · checkoutservice</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">2h 14m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">Ack</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;opacity:.6;">Untagged <span class="grp-count">1 active</span></div>
+    <div class="mix-row" style="opacity:.7;"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Cascading Failure Signal</div><div class="mr-group">no tags · host-a</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">1h 5m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">⋯</button></div></div>
+    <div style="margin-top:8px;padding:8px 0;font-size:11px;color:var(--g400);border-top:1px solid var(--g100);">Showing 5 of 20 active · Tag your rules for better grouping</div>`,
+
+  severity: `
+    <div class="grp-hdr" style="border-left:3px solid #bd271e;padding-left:8px;">🔴 Critical <span class="grp-count">4 active · 1 pending</span></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Service Health Monitor</div><div class="mr-group">checkoutservice · avg_err: 0.083</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">2h 14m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">CPU &gt; 85%</div><div class="mr-group">host-a · Metric Threshold</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">4h 22m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Host Resource Pressure</div><div class="mr-group">host-a</div></div><span class="sev-badge c">Critical</span><span class="st st-pend">Pending</span><span class="mr-dur">45m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;border-left:3px solid var(--am600);padding-left:8px;">🟠 High <span class="grp-count">8 active</span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">High Error Rate (APM)</div><div class="mr-group">checkoutservice</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">2h 10m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Cascading Failure Signal</div><div class="mr-group">host-a</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">1h 5m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
+    <div style="font-size:11px;color:var(--g400);padding:4px 0 6px;">+ 6 more High</div>
+
+    <div class="grp-hdr" style="margin-top:4px;border-left:3px solid var(--b500);padding-left:8px;opacity:.8;">🔵 Medium <span class="grp-count">5 active · 1 recovering</span></div>
+    <div style="font-size:11px;color:var(--g400);padding:4px 0;">+ 5 Medium · <a href="#" style="color:var(--b500);">Expand</a></div>
+
+    <div class="grp-hdr" style="margin-top:4px;border-left:3px solid var(--gr500);padding-left:8px;opacity:.6;">🟢 Low / unset <span class="grp-count">3 active</span></div>
+    <div style="font-size:11px;color:var(--g400);padding:4px 0;">+ 3 Low · <a href="#" style="color:var(--b500);">Expand</a></div>
+
+    <div style="margin-top:8px;padding:8px 0;font-size:11px;color:var(--g400);border-top:1px solid var(--g100);">Showing 5 of 20 active · sorted critical → low</div>`,
+
+  rule: `
+    <div class="grp-hdr">Service Health Monitor <span class="grp-count">3 active · 1 recovering</span> <span class="grp-sys"><span class="sys sys-ts" style="font-size:9px;">TS</span></span></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">checkoutservice</div><div class="mr-group">avg_err: 0.083 · error_count: 36</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">2h 14m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
+    <div class="mix-row" style="opacity:.8;"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">currencyservice</div><div class="mr-group">avg_err: 0.019 ↓ recovering</div></div><span class="sev-badge m">Medium</span><span class="st st-rec">Recovering</span><span class="mr-dur">2h 30m</span><div class="mr-acts"><button class="btn btn-gh btn-sm">View</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;">CPU &gt; 85% <span class="grp-count">2 active</span> <span class="grp-sys"><span class="sys sys-snap" style="font-size:9px;">SNAP</span></span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">host-a</div><div class="mr-group">Metric Threshold · value: 0.91</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">4h 22m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">host-c</div><div class="mr-group">Metric Threshold · value: 0.88</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">4h 22m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+
+    <div class="grp-hdr" style="margin-top:10px;">High Error Rate (APM) <span class="grp-count">1 active</span> <span class="grp-sys"><span class="sys sys-snap" style="font-size:9px;">SNAP</span></span></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">checkoutservice</div><div class="mr-group">APM Error Rate · error_rate: 8.3%</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">2h 10m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+    <div style="margin-top:8px;padding:8px 0;font-size:11px;color:var(--g400);border-top:1px solid var(--g100);">5 rules with active items · <a href="#" style="color:var(--b500);">Show all rules</a></div>`,
+
+  none: `
+    <div style="font-size:11px;color:var(--g500);padding:4px 0 10px;">Sorted by severity, then by duration (oldest first). No grouping.</div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Service Health Monitor · checkoutservice</div><div class="mr-group">avg_err: 0.083</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">2h 14m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">CPU &gt; 85% · host-a</div><div class="mr-group">Metric Threshold · value: 0.91</div></div><span class="sev-badge c">Critical</span><span class="st st-act">Active</span><span class="mr-dur">4h 22m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Host Resource Pressure · host-a</div><div class="mr-group">avg_cpu: 0.91, avg_mem: 0.73</div></div><span class="sev-badge c">Critical</span><span class="st st-pend">Pending</span><span class="mr-dur">45m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+    <div class="mix-row"><div class="left-bar snap"></div><span class="sys sys-snap">SNAP</span><div style="flex:1;min-width:0;"><div class="mr-name">High Error Rate (APM) · checkoutservice</div><div class="mr-group">APM Error Rate</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">2h 10m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button></div></div>
+    <div class="mix-row"><div class="left-bar ts"></div><span class="sys sys-ts">TS</span><div style="flex:1;min-width:0;"><div class="mr-name">Cascading Failure Signal · host-a</div><div class="mr-group">signal_types: 3</div></div><span class="sev-badge h">High</span><span class="st st-act">Active</span><span class="mr-dur">1h 5m</span><div class="mr-acts"><button class="btn btn-snz btn-sm">Snooze</button><button class="btn btn-gh btn-sm">Ack</button></div></div>
+    <div style="margin-top:8px;padding:8px 0;font-size:11px;color:var(--g400);border-top:1px solid var(--g100);">Showing 5 of 20 active · <a href="#" style="color:var(--b500);">Load more</a></div>`,
+};
+
+function setGroup(key, btn) {
+  document.querySelectorAll('.grp-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('grp-label').textContent = GRP_LABEL[key];
+  document.getElementById('grp-body').innerHTML = GRP_HTML[key];
+}
+
+function switchToHost()    { const b = document.querySelector('.grp-btn:nth-child(3)'); setGroup('host', b); }
+function switchToService() { const b = document.querySelector('.grp-btn:nth-child(2)'); setGroup('service', b); }
+
+// ── Board scale toggle ─────────────────────────────────────────
+
+const BOARD_DETAIL = `
+<div class="board" style="min-width:700px;">
+  <div class="board-col">
+    <div class="board-col-hdr">Pending <span class="board-col-count">2</span><span class="sys sys-ts" style="font-size:9px;margin-left:auto;">TS only</span></div>
+    <div class="board-card"><div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Host Resource Pressure</div><div class="bc-name">host-a</div><div class="bc-data">avg_cpu: 0.91 avg_mem: 0.73</div><div class="lc-bar"><div class="lc-p" style="width:100%;"></div></div><div class="bc-foot"><span class="sev-badge c" style="font-size:10px;">Critical</span><span class="bc-dur">2/3 evals · 45m</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div></div>
+    <div class="board-card"><div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Network Anomaly</div><div class="bc-name">host-b</div><div class="bc-data">total_out: 512MB</div><div class="lc-bar"><div class="lc-p" style="width:100%;"></div></div><div class="bc-foot"><span class="sev-badge m" style="font-size:10px;">Medium</span><span class="bc-dur">1/2 evals · 12m</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div></div>
+    <div class="v1-only">v1 has no pending state</div>
+  </div>
+  <div class="board-col">
+    <div class="board-col-hdr">Active <span class="board-col-count">6</span></div>
+    <div class="board-card" style="border-left:3px solid var(--ts);"><div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div><div class="bc-name">checkoutservice</div><div class="bc-data">avg_err: 0.083 count: 36</div><div class="lc-bar"><div class="lc-p" style="width:15%;"></div><div class="lc-a" style="width:85%;"></div></div><div class="bc-foot"><span class="sev-badge c" style="font-size:10px;">Critical</span><span class="bc-dur">2h 14m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button><button class="btn btn-gh btn-sm">Ack</button></div></div></div>
+    <div class="board-card" style="border-left:3px solid var(--snap);"><div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> CPU &gt; 85%</div><div class="bc-name">host-a</div><div class="bc-data">value: 0.91</div><div class="bc-foot"><span class="sev-badge c" style="font-size:10px;">Critical</span><span class="bc-dur">4h 22m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button></div></div></div>
+    <div class="board-card" style="border-left:3px solid var(--snap);"><div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> High Error Rate (APM)</div><div class="bc-name">checkoutservice</div><div class="bc-data">error_rate: 8.3%</div><div class="bc-foot"><span class="sev-badge h" style="font-size:10px;">High</span><span class="bc-dur">2h 10m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button></div></div></div>
+    <div class="board-card" style="border-left:3px solid var(--ts);"><div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Cascading Failure</div><div class="bc-name">host-a (3 signal types)</div><div class="bc-data">signal_types: 3</div><div class="lc-bar"><div class="lc-p" style="width:10%;"></div><div class="lc-a" style="width:90%;"></div></div><div class="bc-foot"><span class="sev-badge h" style="font-size:10px;">High</span><span class="bc-dur">1h 5m</span><div class="bc-actions"><button class="btn btn-snz btn-sm">Snz</button><button class="btn btn-gh btn-sm">Ack</button></div></div></div>
+  </div>
+  <div class="board-col">
+    <div class="board-col-hdr">Recovering <span class="board-col-count">2</span><span class="sys sys-ts" style="font-size:9px;margin-left:auto;">TS only</span></div>
+    <div class="board-card"><div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div><div class="bc-name">currencyservice</div><div class="bc-data">avg_err: 0.019 ↓ from 0.061</div><div class="lc-bar"><div class="lc-p" style="width:10%;"></div><div class="lc-a" style="width:55%;"></div><div class="lc-r" style="width:35%;"></div></div><div class="bc-foot"><span class="sev-badge m" style="font-size:10px;">Medium</span><span class="bc-dur">1/2 clean evals</span><div class="bc-actions"><button class="btn btn-gh btn-sm">View</button></div></div></div>
+    <div class="v1-only">v1 recovers immediately — no recovering state</div>
+  </div>
+  <div class="board-col" style="opacity:.7;">
+    <div class="board-col-hdr">Resolved today <span class="board-col-count">9</span></div>
+    <div class="board-card"><div class="bc-rule"><span class="sys sys-snap" style="font-size:9px;">SNAP</span> CPU &gt; 85%</div><div class="bc-name">host-c</div><div class="bc-foot"><span class="sev-badge l" style="font-size:10px;">Low</span><span class="bc-dur">Resolved 1h ago</span></div></div>
+    <div class="board-card"><div class="bc-rule"><span class="sys sys-ts" style="font-size:9px;">TS</span> Service Health Monitor</div><div class="bc-name">paymentservice</div><div class="bc-foot"><span class="sev-badge m" style="font-size:10px;">Medium</span><span class="bc-dur">Resolved 2h ago</span></div></div>
+    <div style="font-size:11px;color:var(--g400);text-align:center;padding:6px 0;">+ 7 more</div>
+  </div>
+</div>`;
+
+const BOARD_SCALE = `
+<div style="background:var(--am50);border:1px solid var(--am200);border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--am700);">
+  <b>Scale mode — 847 items.</b> Each card represents a rule group, not an individual alert. Click "Expand" to see individual alerts within a group. Cards sorted by worst severity within each column.
+</div>
+<div class="board" style="min-width:700px;">
+  <div class="board-col">
+    <div class="board-col-hdr">Pending <span class="board-col-count">89</span><span class="sys sys-ts" style="font-size:9px;margin-left:auto;">TS only</span></div>
+    <div class="scale-card"><div class="sc-head"><span class="sev-badge c">Critical</span><span class="sc-rule">Host Resource Pressure</span><span class="sc-count">23 hosts</span></div><div class="sev-bar"><div class="sc" style="width:27%;"></div><div class="sh" style="width:38%;"></div><div class="sm" style="width:20%;"></div><div class="sl" style="width:15%;"></div></div><div class="sc-entities">Most critical: prod-db-1, prod-api-3, prod-cache-7…</div><div class="sc-foot"><button class="btn btn-snz btn-sm">Snooze all</button><span class="sc-drill">Expand 23 →</span></div></div>
+    <div class="scale-card"><div class="sc-head"><span class="sev-badge m">Medium</span><span class="sc-rule">Network Anomaly</span><span class="sc-count">66 hosts</span></div><div class="sev-bar"><div class="sm" style="width:100%;"></div></div><div class="sc-entities">host-001 through host-066 · EU-West region</div><div class="sc-foot"><button class="btn btn-snz btn-sm">Snooze all</button><span class="sc-drill">Expand 66 →</span></div></div>
+  </div>
+  <div class="board-col">
+    <div class="board-col-hdr">Active <span class="board-col-count">503</span></div>
+    <div class="scale-card" style="border-left:3px solid var(--ts);"><div class="sc-head"><span class="sev-badge c">Critical</span><span class="sc-rule">Service Health Monitor</span><span class="sc-count">156 episodes</span></div><div class="sev-bar"><div class="sc" style="width:15%;"></div><div class="sh" style="width:42%;"></div><div class="sm" style="width:30%;"></div><div class="sl" style="width:13%;"></div></div><div class="sc-entities">checkoutservice, paymentservice, cartservice… (+153)</div><div class="sc-foot"><button class="btn btn-snz btn-sm">Snooze all</button><span class="sc-drill">Expand 156 →</span></div></div>
+    <div class="scale-card" style="border-left:3px solid var(--snap);"><div class="sc-head"><span class="sev-badge c">Critical</span><span class="sc-rule">CPU &gt; 85%</span><span class="sc-count">203 hosts</span></div><div class="sev-bar"><div class="sc" style="width:11%;"></div><div class="sh" style="width:55%;"></div><div class="sm" style="width:25%;"></div><div class="sl" style="width:9%;"></div></div><div class="sc-entities">prod-db-1 (0.97), prod-api-3 (0.95), prod-cache-7 (0.93)…</div><div class="sc-foot"><button class="btn btn-snz btn-sm">Snooze all</button><span class="sc-drill">Expand 203 →</span></div></div>
+    <div class="scale-card" style="border-left:3px solid var(--snap);"><div class="sc-head"><span class="sev-badge h">High</span><span class="sc-rule">High Error Rate (APM)</span><span class="sc-count">87 services</span></div><div class="sev-bar"><div class="sh" style="width:60%;"></div><div class="sm" style="width:40%;"></div></div><div class="sc-entities">checkoutservice, currencyservice, recommendationservice…</div><div class="sc-foot"><button class="btn btn-snz btn-sm">Snooze all</button><span class="sc-drill">Expand 87 →</span></div></div>
+    <div class="scale-card" style="border-left:3px solid var(--ts);"><div class="sc-head"><span class="sev-badge h">High</span><span class="sc-rule">Cascading Failure Signal</span><span class="sc-count">57 hosts</span></div><div class="sev-bar"><div class="sh" style="width:100%;"></div></div><div class="sc-entities">Multiple signal types per host · EU-West, US-East</div><div class="sc-foot"><button class="btn btn-snz btn-sm">Snooze all</button><span class="sc-drill">Expand 57 →</span></div></div>
+  </div>
+  <div class="board-col">
+    <div class="board-col-hdr">Recovering <span class="board-col-count">144</span><span class="sys sys-ts" style="font-size:9px;margin-left:auto;">TS only</span></div>
+    <div class="scale-card"><div class="sc-head"><span class="sev-badge m">Medium</span><span class="sc-rule">Service Health Monitor</span><span class="sc-count">91 episodes</span></div><div class="sev-bar"><div class="sh" style="width:20%;"></div><div class="sm" style="width:60%;"></div><div class="sl" style="width:20%;"></div></div><div class="sc-entities">avg 1.4 clean evals of 2 needed · trending toward recovery</div><div class="sc-foot"><span class="sc-drill">Expand 91 →</span></div></div>
+    <div class="scale-card"><div class="sc-head"><span class="sev-badge h">High</span><span class="sc-rule">Host Resource Pressure</span><span class="sc-count">53 hosts</span></div><div class="sev-bar"><div class="sh" style="width:55%;"></div><div class="sm" style="width:45%;"></div></div><div class="sc-entities">avg_cpu trending down · prod-db-1, prod-db-2, prod-db-3…</div><div class="sc-foot"><span class="sc-drill">Expand 53 →</span></div></div>
+    <div class="v1-only">v1 recovers immediately — no recovering state</div>
+  </div>
+  <div class="board-col" style="opacity:.75;">
+    <div class="board-col-hdr">Resolved today <span class="board-col-count">111</span></div>
+    <div class="scale-card"><div class="sc-head"><span class="sc-rule">All rule types</span><span class="sc-count">111</span></div><div class="sev-bar"><div class="sc" style="width:8%;"></div><div class="sh" style="width:32%;"></div><div class="sm" style="width:40%;"></div><div class="sl" style="width:20%;"></div></div><div class="sc-entities">Last resolved: Service Health Monitor · paymentservice (2m ago)</div><div class="sc-foot"><span class="sc-drill">View resolved list →</span></div></div>
+  </div>
+</div>`;
+
+function setBoard(mode, btn) {
+  document.querySelectorAll('.grp-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  if (mode === 'detail') {
+    document.getElementById('board-body').innerHTML = BOARD_DETAIL;
+    document.getElementById('board-sub').textContent = '6 items · Snapshot + Time Series · sorted by severity';
+    document.getElementById('board-mode-note').textContent = 'Individual card per alert/episode, sorted by severity';
+  } else {
+    document.getElementById('board-body').innerHTML = BOARD_SCALE;
+    document.getElementById('board-sub').textContent = '847 items · grouped by rule · severity sorted within columns';
+    document.getElementById('board-mode-note').textContent = 'One card per rule group. Severity distribution bar shows breakdown. Click Expand for individual alerts.';
+  }
+}
+
+// ── Add group header styles ──────────────────────────────────
+const style = document.createElement('style');
+style.textContent = `
+  .grp-hdr { font-size:11px; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.4px; padding:8px 0 4px; display:flex; align-items:center; gap:6px; }
+  .grp-count { font-weight:400; font-style:italic; text-transform:none; letter-spacing:0; }
+  .grp-sys { margin-left:auto; display:flex; gap:3px; }
+`;
+document.head.appendChild(style);
+
+// ── Init ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // init Active Now with service grouping
+  document.getElementById('grp-body').innerHTML = GRP_HTML.service;
+  // init Board with detail view
+  document.getElementById('board-body').innerHTML = BOARD_DETAIL;
+});
+// also run immediately in case DOMContentLoaded already fired
+if (document.readyState !== 'loading') {
+  document.getElementById('grp-body').innerHTML = GRP_HTML.service;
+  document.getElementById('board-body').innerHTML = BOARD_DETAIL;
 }
 </script>
 </body>
