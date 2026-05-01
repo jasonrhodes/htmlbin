@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>v1 + v2 Coexistence — IA Proposal v2</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1d1e24;
+  --gray-50: #f7f8fc;
+  --gray-100: #eef0f4;
+  --gray-200: #d3dae6;
+  --gray-400: #98a2b3;
+  --gray-500: #69707d;
+  --gray-700: #343741;
+  --gray-800: #1d1e24;
+  --blue-50: #e6f1ff;
+  --blue-100: #cce0ff;
+  --blue-500: #0077cc;
+  --blue-700: #005d99;
+  --green-50: #e6f9f7;
+  --green-500: #00bfb3;
+  --green-700: #007871;
+  --amber-50: #fff8e6;
+  --amber-200: #fcd883;
+  --amber-600: #c77700;
+  --red-50: #fff0f0;
+  --red-200: #f5c0be;
+  --red-500: #bd271e;
+  --purple-50: #f5e6ff;
+  --purple-500: #a855f7;
+  --border: #d3dae6;
+  --r: 4px;
+}
+
+body { font-family: 'Inter','Helvetica Neue',Arial,sans-serif; font-size: 14px; color: var(--ink); background: var(--gray-50); line-height: 1.5; }
+
+/* ─ TOP BAR ─ */
+.topbar { background: var(--gray-800); color: #fff; height: 46px; display: flex; align-items: center; padding: 0 20px; gap: 8px; position: sticky; top: 0; z-index: 200; }
+.topbar .logo { font-weight: 700; font-size: 15px; margin-right: 16px; }
+.topbar .bc { font-size: 13px; color: rgba(255,255,255,.5); display: flex; gap: 5px; }
+.topbar .bc span { color: rgba(255,255,255,.85); }
+.topbar .draft { margin-left: auto; background: var(--amber-600); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 10px; }
+
+/* ─ TABS ─ */
+.tabbar { background: #fff; border-bottom: 1px solid var(--border); display: flex; padding: 0 20px; overflow-x: auto; }
+.tb { padding: 12px 15px; border: none; background: none; font-size: 13px; font-weight: 500; color: var(--gray-500); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tb:hover { color: var(--gray-700); }
+.tb.on { color: var(--blue-500); border-bottom-color: var(--blue-500); }
+.tnum { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: var(--gray-200); color: var(--gray-500); font-size: 10px; font-weight: 700; margin-right: 5px; }
+.tb.on .tnum { background: var(--blue-50); color: var(--blue-500); }
+
+.panel { display: none; }
+.panel.on { display: block; }
+.content { padding: 28px 30px; max-width: 1080px; margin: 0 auto; }
+
+/* ─ TYPE ─ */
+h1 { font-size: 21px; font-weight: 700; margin-bottom: 5px; }
+h2 { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+h3 { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+.sub { color: var(--gray-500); font-size: 13px; margin-bottom: 22px; }
+p { color: var(--gray-700); line-height: 1.6; margin-bottom: 10px; }
+
+/* ─ CALLOUT ─ */
+.callout { padding: 13px 15px; border-radius: var(--r); border: 1px solid; margin-bottom: 16px; font-size: 13px; display: flex; gap: 10px; }
+.callout i { font-size: 15px; flex-shrink: 0; font-style: normal; margin-top: 1px; }
+.callout p { margin: 0; color: inherit; }
+.callout b { font-weight: 600; }
+.c-info  { background: var(--blue-50);   border-color: var(--blue-100);  color: var(--blue-700); }
+.c-warn  { background: var(--amber-50);  border-color: var(--amber-200); color: var(--amber-600); }
+.c-ok    { background: var(--green-50);  border-color: #b3ece9;          color: var(--green-700); }
+.c-tip   { background: var(--purple-50); border-color: #d4b0f5;          color: #6b21a8; }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+.row { display: flex; gap: 18px; margin-bottom: 20px; }
+.row > * { flex: 1; min-width: 0; }
+.stack > * + * { margin-top: 14px; }
+
+/* ─ CARD ─ */
+.card { background: #fff; border: 1px solid var(--border); border-radius: var(--r); padding: 18px; }
+.card-lbl { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 10px; }
+
+/* ─ TABLE ─ */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--gray-50); font-weight: 600; padding: 8px 10px; border-bottom: 2px solid var(--border); text-align: left; }
+td { padding: 7px 10px; border-bottom: 1px solid var(--gray-100); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--gray-50); }
+
+/* ─ KIBANA CHROME MOCKUP ─ */
+.kb-shell { display: flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; background: #fff; height: auto; }
+
+/* left nav */
+.kb-nav { width: 200px; flex-shrink: 0; background: #1b1c21; color: #fff; display: flex; flex-direction: column; font-size: 13px; }
+.kb-nav-head { padding: 12px 14px 8px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.kb-nav-head .prod { font-weight: 700; font-size: 13px; color: rgba(255,255,255,.9); }
+.kb-nav-head .sol  { font-size: 11px; color: rgba(255,255,255,.45); margin-left: auto; }
+.kb-nav-item { padding: 7px 14px; color: rgba(255,255,255,.7); display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; border-left: 2px solid transparent; }
+.kb-nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+.kb-nav-item.active { background: rgba(255,255,255,.1); color: #fff; border-left-color: var(--blue-500); font-weight: 500; }
+.kb-nav-item.active-soft { background: rgba(255,255,255,.06); color: rgba(255,255,255,.9); }
+.kb-nav-sep { height: 1px; background: rgba(255,255,255,.08); margin: 6px 0; }
+.kb-nav-section { padding: 14px 14px 4px; font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: rgba(255,255,255,.35); }
+.kb-nav-badge { margin-left: auto; font-size: 10px; font-weight: 700; background: rgba(255,255,255,.12); color: rgba(255,255,255,.6); padding: 1px 6px; border-radius: 8px; }
+.kb-nav-badge.new { background: var(--blue-500); color: #fff; }
+.kb-nav-sub { padding-left: 26px; color: rgba(255,255,255,.55); font-size: 12px; padding-top: 4px; padding-bottom: 4px; border-left: 2px solid transparent; }
+.kb-nav-sub:hover { color: #fff; background: rgba(255,255,255,.05); }
+.kb-nav-sub.active { color: var(--blue-500); border-left-color: var(--blue-500); }
+.kb-nav-removed { text-decoration: line-through; opacity: .4; padding: 7px 14px; font-size: 13px; color: rgba(255,255,255,.5); }
+.kb-nav-highlight { background: rgba(0,119,204,.2) !important; color: #79c0ff !important; border-left: 2px solid var(--blue-500); }
+
+/* main area */
+.kb-main { flex: 1; overflow: hidden; min-height: 360px; }
+.kb-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); background: #fff; }
+.kb-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.kb-desc  { font-size: 13px; color: var(--gray-500); }
+.kb-tabs  { display: flex; border-bottom: 1px solid var(--border); padding: 0 20px; background: #fff; }
+.kb-tab   { padding: 9px 14px; font-size: 13px; font-weight: 500; color: var(--gray-500); border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px; white-space: nowrap; }
+.kb-tab:hover { color: var(--gray-700); }
+.kb-tab.on  { color: var(--blue-500); border-bottom-color: var(--blue-500); }
+.kb-tab.tbd { color: var(--amber-600); border-bottom-color: var(--amber-200); font-style: italic; }
+.kb-body  { padding: 16px 20px; }
+
+/* toolbar row */
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.search-box { flex: 1; height: 34px; border: 1px solid var(--border); border-radius: var(--r); padding: 0 10px; font-size: 13px; color: var(--gray-500); display: flex; align-items: center; }
+.btn { padding: 6px 13px; border-radius: var(--r); font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid; white-space: nowrap; }
+.btn-pri  { background: var(--blue-500); color: #fff; border-color: var(--blue-500); }
+.btn-pri:hover { background: var(--blue-700); }
+.btn-sec  { background: #fff; color: var(--blue-500); border-color: var(--blue-500); }
+.btn-sec:hover { background: var(--blue-50); }
+.btn-ghost { background: #fff; color: var(--gray-700); border-color: var(--border); }
+.btn-ghost:hover { background: var(--gray-100); }
+.btn-warn { background: var(--amber-50); color: var(--amber-600); border-color: var(--amber-200); font-weight: 600; }
+
+/* list rows */
+.rule-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--gray-100); }
+.rule-row:last-child { border-bottom: none; }
+.rule-row:hover { background: var(--gray-50); margin: 0 -8px; padding: 9px 8px; }
+.rule-name { font-weight: 500; color: var(--blue-500); cursor: pointer; font-size: 13px; }
+.rule-type { font-size: 11px; background: var(--gray-100); color: var(--gray-500); padding: 1px 7px; border-radius: 10px; border: 1px solid var(--border); flex-shrink: 0; }
+.rule-type.v2 { background: var(--blue-50); color: var(--blue-500); border-color: var(--blue-100); }
+.rule-meta { font-size: 11px; color: var(--gray-500); }
+.rule-status { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; white-space: nowrap; }
+.st-ok       { background: var(--green-50); color: var(--green-700); }
+.st-warn     { background: var(--amber-50); color: var(--amber-600); }
+.st-idle     { background: var(--gray-100); color: var(--gray-500); }
+.st-pending  { background: var(--purple-50); color: var(--purple-500); }
+.st-recovery { background: var(--blue-50); color: var(--blue-500); }
+.rule-actions { margin-left: auto; display: flex; gap: 5px; flex-shrink: 0; }
+.esql-snip { font-size: 11px; font-family: 'SF Mono','Cascadia Code','Fira Code',monospace; color: var(--gray-500); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* episode cols */
+.ep-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--gray-100); }
+.ep-row:last-child { border-bottom: none; }
+.ep-name { font-weight: 500; color: var(--blue-500); cursor: pointer; font-size: 13px; }
+.ep-meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+.ep-data { font-size: 11px; font-family: 'SF Mono','Cascadia Code','Fira Code',monospace; color: var(--gray-700); margin-top: 3px; }
+
+/* timeline bar */
+.lifecycle-bar { display: flex; gap: 0; border-radius: var(--r); overflow: hidden; height: 5px; width: 100px; flex-shrink: 0; }
+.lc-pend { background: var(--purple-500); }
+.lc-act  { background: var(--amber-600); }
+.lc-rec  { background: var(--blue-500); }
+.lc-done { background: var(--gray-200); }
+
+/* naming option cards */
+.opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.opt { border: 2px solid var(--border); border-radius: var(--r); padding: 15px; cursor: pointer; transition: border-color .12s; }
+.opt:hover { border-color: var(--blue-500); }
+.opt.rec { border-color: var(--green-500); }
+.opt.rec::before { content: "★ option to discuss first"; display: block; font-size: 10px; font-weight: 700; color: var(--green-700); margin-bottom: 8px; letter-spacing: .3px; text-transform: uppercase; }
+.opt-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.opt-row  { font-size: 12px; margin-bottom: 3px; }
+.opt-row .lbl { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; width: 90px; }
+.opt-row .lbl.v1c { color: var(--amber-600); }
+.opt-row .lbl.v2c { color: var(--blue-500); }
+.opt-pro  { font-size: 11px; color: var(--green-700); margin-top: 6px; }
+.opt-con  { font-size: 11px; color: var(--amber-600); }
+.opt-pro::before { content: "✓ "; font-weight: 700; }
+.opt-con::before { content: "△ "; font-weight: 700; }
+
+/* highlight/strikethrough in navs */
+.removed { opacity: .3; text-decoration: line-through; }
+.added   { color: #79c0ff !important; }
+.added::after { content: " ✦"; font-size: 10px; }
+
+/* diff callout */
+.diff-list { list-style: none; font-size: 13px; line-height: 2; }
+.diff-list li::before { margin-right: 8px; font-weight: 700; }
+.diff-list .add::before { content: "+"; color: var(--green-700); }
+.diff-list .rem::before { content: "−"; color: var(--red-500); }
+.diff-list .chg::before { content: "~"; color: var(--amber-600); }
+
+/* esql block */
+.esql { background: #1d2433; color: #c9d1d9; font-family: 'SF Mono','Cascadia Code',monospace; font-size: 12px; line-height: 1.8; padding: 12px 14px; border-radius: var(--r); overflow-x: auto; margin-bottom: 10px; }
+.kw { color: #ff7b72; }
+.fn { color: #79c0ff; }
+.cm { color: #8b949e; font-style: italic; }
+.str { color: #a5d6ff; }
+
+/* col layout */
+.col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.col2-3 { display: grid; grid-template-columns: 2fr 3fr; gap: 18px; }
+
+/* nav comparison layout */
+.nav-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.compare-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 6px 10px; margin-bottom: -1px; border-radius: var(--r) var(--r) 0 0; }
+.lbl-before { background: var(--red-50); color: var(--red-500); }
+.lbl-after  { background: var(--green-50); color: var(--green-700); }
+
+/* section header */
+.sec-hdr { border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 22px; }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <span class="logo">elastic</span>
+  <div class="bc">
+    <span>v1 + v2 Coexistence Proposal</span>
+  </div>
+  <span class="draft">DRAFT v2 · May 2026</span>
+</nav>
+
+<div class="tabbar">
+  <button class="tb on"   onclick="show('model',this)"><span class="tnum">0</span>Corrected model</button>
+  <button class="tb"      onclick="show('rules',this)"><span class="tnum">1</span>/app/rules</button>
+  <button class="tb"      onclick="show('alerts',this)"><span class="tnum">2</span>/observability/alerts</button>
+  <button class="tb"      onclick="show('nav',this)"><span class="tnum">3</span>O11y nav</button>
+  <button class="tb"      onclick="show('naming',this)"><span class="tnum">4</span>Naming</button>
+</div>
+
+<!-- ══════════════════ TAB 0 — CORRECTED MODEL ══════════════════ -->
+<div id="tab-model" class="panel on content">
+  <div class="sec-hdr">
+    <h1>Tab 0 — Corrected mental model</h1>
+    <p class="sub">What v1 and v2 actually are, what they share, and where they genuinely differ. Starting over from here.</p>
+  </div>
+
+  <div class="callout c-warn">
+    <i>⚠</i>
+    <div><p><b>What the first prototype got wrong:</b> Framed v1 as "Rules &amp; Connectors" and v2 as "Alerting" — implying only v2 does alerting. In reality both are complete alerting systems with rules, alerts, and connectors. The naming problem is harder because of this.</p></div>
+  </div>
+
+  <h2>What both systems share</h2>
+  <div class="row" style="margin-bottom:20px;">
+    <div class="card">
+      <p style="font-size:13px;margin:0;"><b>Rules</b> — configured detection logic that runs on a schedule and produces alerts when conditions are met.</p>
+    </div>
+    <div class="card">
+      <p style="font-size:13px;margin:0;"><b>Alerts</b> — the output when a rule's condition is met. Both systems produce something called an alert.</p>
+    </div>
+    <div class="card">
+      <p style="font-size:13px;margin:0;"><b>Connectors / Actions</b> — how alerts turn into notifications (Slack, email, PagerDuty, etc.).</p>
+    </div>
+  </div>
+
+  <h2>Where they genuinely differ</h2>
+  <table style="margin-bottom:22px;">
+    <thead><tr><th>Dimension</th><th>v1</th><th>v2</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Rule model</b></td>
+        <td>Catalog of specialized rule types (Metric Threshold, Log Threshold, APM Latency, ML Anomaly, ES Query with 3 modes including ES|QL…). You pick a type and fill in parameters.</td>
+        <td>One model: any ES|QL query. You write the detection logic. No "type" picker. Note: v1's ES Query has an ES|QL mode, so ES|QL alone doesn't distinguish them.</td>
+      </tr>
+      <tr>
+        <td><b>Alert storage</b></td>
+        <td>Single mutable document per group, updated in place on every execution. Only current state survives.</td>
+        <td>Append-only rule event document written per execution. Full history queryable. No overwriting.</td>
+      </tr>
+      <tr>
+        <td><b>Lifecycle tracking</b></td>
+        <td>Per-rule-type, opaque to the user. Each rule type implements its own lifecycle.</td>
+        <td>Explicit episode state (Inactive → Pending → Active → Recovering → Inactive). Configurable thresholds for each transition. Not all v2 rules use this — signal-kind rules write events without episode tracking.</td>
+      </tr>
+      <tr>
+        <td><b>Data on alert docs</b></td>
+        <td>Each rule type decides what fields land on the alert document. If you want different fields, you can't change it.</td>
+        <td>User controls via ES|QL <code>KEEP</code>. Every field the query computes lands in <code>data.*</code> on the rule event. User decides what's stored.</td>
+      </tr>
+      <tr>
+        <td><b>Recovery condition</b></td>
+        <td>Per-rule-type, fixed.</td>
+        <td>User-specified: <code>no_breach</code> (group disappears from results) or a custom recovery query with its own threshold.</td>
+      </tr>
+      <tr>
+        <td><b>Notification routing</b></td>
+        <td>Actions configured per-rule. Each rule has its own action (connector + frequency).</td>
+        <td>Action policies are global — one policy can match episodes from many rules simultaneously. Decoupled from rules.</td>
+      </tr>
+      <tr>
+        <td><b>Rules on rules</b></td>
+        <td>Not possible.</td>
+        <td>Natural consequence of append-only events: query <code>.rule-events</code> in a second rule to create higher-order detections.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Scope of this proposal</h2>
+  <div class="callout c-info">
+    <i>ℹ</i>
+    <div>
+      <p><b>Focused on Observability.</b> Rules are global (→ <code>/app/rules</code>). Episodes/alerts live in O11y for now. Security is out of scope.</p>
+      <p style="margin-top:6px;"><b>Two surfaces to redesign:</b> (1) <code>/app/rules</code> — extend with a second tab for v2 rules; (2) <code>/app/observability/alerts</code> — extend with a second tab for v2 episodes.</p>
+    </div>
+  </div>
+
+  <div class="callout c-warn">
+    <i>⚠</i>
+    <div><p><b>Naming is unresolved and hard.</b> Both systems do alerting. Both have rules. ES|QL doesn't cleanly distinguish them. Tab 4 presents the naming problem honestly with options — not a recommendation yet.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB 1 — /app/rules ══════════════════ -->
+<div id="tab-rules" class="panel content">
+  <div class="sec-hdr">
+    <h1>Tab 1 — <code>/app/rules</code></h1>
+    <p class="sub">The existing standalone rules app. Add a second tab for v2 rules without changing the v1 tab at all.</p>
+  </div>
+
+  <h2>Current state</h2>
+  <div class="kb-shell" style="margin-bottom:20px;">
+    <div class="kb-main">
+      <div class="kb-header">
+        <div class="kb-title">Rules</div>
+        <div class="kb-desc">Manage and monitor all of your rules in one place.</div>
+      </div>
+      <div class="kb-tabs">
+        <div class="kb-tab on">Rules</div>
+        <div class="kb-tab">Logs</div>
+        <div style="margin-left:auto;display:flex;align-items:center;padding:0 0 8px;gap:6px;">
+          <button class="btn btn-ghost">Settings</button>
+          <button class="btn btn-pri">Create rule</button>
+        </div>
+      </div>
+      <div class="kb-body">
+        <div class="toolbar"><div class="search-box">Search rules…</div><button class="btn btn-ghost">Type ▾</button><button class="btn btn-ghost">Status ▾</button></div>
+        <div class="rule-row"><div class="flex-col"><div class="rule-name">CPU &gt; 85% — Production Hosts</div><div class="rule-meta">Every 1m</div></div><span class="rule-type">Metric Threshold</span><span class="rule-status st-ok">Active: 3</span><div class="rule-actions"><button class="btn btn-ghost">⋯</button></div></div>
+        <div class="rule-row"><div class="flex-col"><div class="rule-name">High Error Rate Anomaly</div><div class="rule-meta">Every 15m</div></div><span class="rule-type">ML Anomaly</span><span class="rule-status st-idle">OK</span><div class="rule-actions"><button class="btn btn-ghost">⋯</button></div></div>
+        <div class="rule-row"><div class="flex-col"><div class="rule-name">Error Count &gt; 50 (ES|QL)</div><div class="rule-meta">Every 5m</div></div><span class="rule-type">ES Query · ES|QL</span><span class="rule-status st-warn">Active: 1</span><div class="rule-actions"><button class="btn btn-ghost">⋯</button></div></div>
+        <div class="rule-row"><div class="flex-col"><div class="rule-name">Log threshold — fatal errors</div><div class="rule-meta">Every 5m</div></div><span class="rule-type">Log Threshold</span><span class="rule-status st-idle">OK</span><div class="rule-actions"><button class="btn btn-ghost">⋯</button></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Proposed: add v2 tab</h2>
+  <div class="callout c-info">
+    <i>ℹ</i>
+    <div><p>Minimal change: add one tab between "Rules" and "Logs". The v1 Rules tab is unchanged. The new tab shows v2 rules, which look different: no rule type column (they're all "ES|QL"), shows query excerpt, shows episode count. "Create" button on the v2 tab opens the v2 ES|QL authoring flow — not the rule type picker modal.</p></div>
+  </div>
+
+  <div class="kb-shell" style="margin-bottom:16px;">
+    <div class="kb-main">
+      <div class="kb-header">
+        <div class="kb-title">Rules</div>
+        <div class="kb-desc">Manage and monitor all of your rules in one place.</div>
+      </div>
+      <div class="kb-tabs">
+        <div class="kb-tab">Rules</div>
+        <div class="kb-tab on tbd" style="font-style:normal;color:var(--blue-500);border-bottom-color:var(--blue-500);">[v2 tab name] <span style="font-size:10px;vertical-align:middle;opacity:.6;">▸ see Tab 4</span></div>
+        <div class="kb-tab">Logs</div>
+        <div style="margin-left:auto;display:flex;align-items:center;padding:0 0 8px;gap:6px;">
+          <button class="btn btn-ghost">Settings</button>
+          <button class="btn btn-pri">Create rule</button>
+        </div>
+      </div>
+      <div class="kb-body">
+        <div class="toolbar">
+          <div class="search-box">Search…</div>
+          <button class="btn btn-ghost">Status ▾</button>
+          <button class="btn btn-ghost">Tags ▾</button>
+        </div>
+        <!-- v2 rules list — different columns from v1 -->
+        <div class="rule-row">
+          <div style="flex:1;min-width:0;">
+            <div class="rule-name">Service Health Monitor</div>
+            <div class="esql-snip">FROM logs-apm.* | STATS avg_err = AVG(error.rate) BY service.name | WHERE avg_err &gt; 0.05</div>
+          </div>
+          <span class="rule-type v2">ES|QL</span>
+          <span class="rule-status st-warn">3 active</span>
+          <span style="font-size:11px;color:var(--gray-500);flex-shrink:0;">episodes: 7</span>
+          <div class="rule-actions"><button class="btn btn-ghost">⋯</button></div>
+        </div>
+        <div class="rule-row">
+          <div style="flex:1;min-width:0;">
+            <div class="rule-name">Host Resource Pressure</div>
+            <div class="esql-snip">FROM metrics-system.* | STATS avg_cpu = AVG(system.cpu.pct), avg_mem = AVG(system.memory.pct) BY host.name</div>
+          </div>
+          <span class="rule-type v2">ES|QL</span>
+          <span class="rule-status st-ok">1 active</span>
+          <span style="font-size:11px;color:var(--gray-500);flex-shrink:0;">episodes: 14</span>
+          <div class="rule-actions"><button class="btn btn-ghost">⋯</button></div>
+        </div>
+        <div class="rule-row">
+          <div style="flex:1;min-width:0;">
+            <div class="rule-name">Cascading Failure Signal</div>
+            <div class="esql-snip">FROM .rule-events | WHERE @timestamp &gt; NOW() - 5m | STATS signal_types = COUNT_DISTINCT(rule.name) BY host.name</div>
+          </div>
+          <span class="rule-type v2">ES|QL</span>
+          <span class="rule-status st-idle">0 active</span>
+          <span style="font-size:11px;color:var(--gray-500);flex-shrink:0;">episodes: 2</span>
+          <div class="rule-actions"><button class="btn btn-ghost">⋯</button></div>
+        </div>
+        <div style="padding:6px 0;font-size:12px;color:var(--gray-400);">3 rules · Last executed: just now</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col2">
+    <div class="card">
+      <div class="card-lbl">v2 tab — differences from v1 rules list</div>
+      <ul class="diff-list">
+        <li class="chg">Rule type column → replaced with "ES|QL" badge (all v2 rules are the same type)</li>
+        <li class="add">ES|QL query excerpt shown inline</li>
+        <li class="add">Episode count column (total episodes ever, not just active)</li>
+        <li class="chg">"Create rule" button → opens ES|QL authoring flyout, not rule type picker modal</li>
+        <li class="chg">Status column shows active episode count, not v1 alert count</li>
+        <li class="rem">No "rule type" filter (all the same type)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-lbl">v1 tab — no changes</div>
+      <p style="font-size:13px;color:var(--gray-500);margin:0;">The existing "Rules" tab is completely unchanged. Existing v1 rules management continues to work as-is. No migration required. No visual redesign.</p>
+      <p style="font-size:12px;color:var(--gray-500);margin-top:10px;">Note: The "ES Query · ES|QL" rule type remains in the v1 tab, not the v2 tab. They are different things even though both involve ES|QL.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <h2>Create rule: v2 path vs v1 path</h2>
+  <div class="col2">
+    <div class="card">
+      <div class="card-lbl">v1 — "Create rule" on Rules tab</div>
+      <p style="font-size:13px;color:var(--gray-700);">Opens the <b>Rule Type picker modal</b>. User selects from a catalog: Metric Threshold, Log Threshold, APM Latency, ML Anomaly, ES Query, etc.</p>
+    </div>
+    <div class="card">
+      <div class="card-lbl">v2 — "Create rule" on [v2] tab</div>
+      <p style="font-size:13px;color:var(--gray-700);">Opens the <b>v2 rule authoring flyout</b> (or Discover → Create Alert Rule flow). No type picker — starts with the ES|QL editor. Can also be reached from Discover.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB 2 — /observability/alerts ══════════════════ -->
+<div id="tab-alerts" class="panel content">
+  <div class="sec-hdr">
+    <h1>Tab 2 — <code>/app/observability/alerts</code></h1>
+    <p class="sub">The O11y alerts page (primary navigation item). Add a second tab for v2 episodes.</p>
+  </div>
+
+  <h2>Current state</h2>
+  <div class="kb-shell" style="margin-bottom:20px;">
+    <div class="kb-nav">
+      <div class="kb-nav-head"><span class="prod">Observability</span></div>
+      <div class="kb-nav-sep"></div>
+      <div class="kb-nav-item"><span>⊙</span> Discover</div>
+      <div class="kb-nav-item"><span>⊞</span> Dashboards</div>
+      <div class="kb-nav-item"><span>⚙</span> Workflows</div>
+      <div class="kb-nav-item active"><span>⚠</span> Alerts</div>
+      <div class="kb-nav-item"><span>⊟</span> Cases</div>
+      <div class="kb-nav-item"><span>◎</span> SLOs</div>
+    </div>
+    <div class="kb-main">
+      <div class="kb-header">
+        <div class="kb-title">Alerts</div>
+      </div>
+      <div class="kb-tabs">
+        <div class="kb-tab on">Alerts</div>
+      </div>
+      <div class="kb-body">
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">Filter controls · Time range picker · Alert summary widget</div>
+        <div class="rule-row"><div style="flex:1;"><div class="rule-name">CPU &gt; 85% — host-a</div><div class="rule-meta">Metric Threshold · host.name: host-a · Active for 2h 14m</div></div><span class="rule-status st-warn">Active</span></div>
+        <div class="rule-row"><div style="flex:1;"><div class="rule-name">CPU &gt; 85% — host-c</div><div class="rule-meta">Metric Threshold · host.name: host-c · Active for 45m</div></div><span class="rule-status st-warn">Active</span></div>
+        <div class="rule-row"><div style="flex:1;"><div class="rule-name">High Error Rate Anomaly</div><div class="rule-meta">ML Anomaly · Recovered 15m ago</div></div><span class="rule-status st-ok">Recovered</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Proposed: add v2 tab for episodes</h2>
+  <div class="callout c-info">
+    <i>ℹ</i>
+    <div><p>Add a second tab for v2 episodes alongside "Alerts". Both tabs are on the same page. The v1 Alerts tab is completely unchanged. The v2 tab shows episodes with their lifecycle state, data fields, and episode history. What to call the tab is an open naming question (Tab 4).</p></div>
+  </div>
+
+  <div class="kb-shell" style="margin-bottom:16px;">
+    <div class="kb-nav">
+      <div class="kb-nav-head"><span class="prod">Observability</span></div>
+      <div class="kb-nav-sep"></div>
+      <div class="kb-nav-item"><span>⊙</span> Discover</div>
+      <div class="kb-nav-item"><span>⊞</span> Dashboards</div>
+      <div class="kb-nav-item"><span>⚙</span> Workflows</div>
+      <div class="kb-nav-item active"><span>⚠</span> Alerts</div>
+      <div class="kb-nav-item"><span>⊟</span> Cases</div>
+      <div class="kb-nav-item"><span>◎</span> SLOs</div>
+    </div>
+    <div class="kb-main">
+      <div class="kb-header">
+        <div class="kb-title">Alerts</div>
+      </div>
+      <div class="kb-tabs">
+        <div class="kb-tab">Alerts</div>
+        <div class="kb-tab on" style="color:var(--blue-500);border-bottom-color:var(--blue-500);">[v2 tab name] <span style="font-size:10px;opacity:.6;">▸ Tab 4</span></div>
+        <div style="margin-left:auto;display:flex;align-items:center;padding:0 0 8px;gap:6px;">
+          <button class="btn btn-ghost">Manage rules ↗</button>
+        </div>
+      </div>
+      <div class="kb-body">
+        <!-- v2 episodes list -->
+        <div class="toolbar">
+          <div class="search-box">Filter episodes…</div>
+          <button class="btn btn-ghost">Status ▾</button>
+          <button class="btn btn-ghost">Severity ▾</button>
+          <button class="btn btn-ghost">Rule ▾</button>
+        </div>
+        <div class="ep-row">
+          <div style="flex:1;min-width:0;">
+            <div class="ep-name">Service Health Monitor · checkoutservice</div>
+            <div class="ep-meta">Started 2h 14m ago · Rule: Service Health Monitor</div>
+            <div class="ep-data">data.service: checkoutservice · data.avg_err: 0.083 · data.error_count: 36</div>
+          </div>
+          <div style="flex-shrink:0;text-align:right;">
+            <span class="rule-status st-warn">Active</span>
+            <div class="lifecycle-bar" style="margin-top:5px;margin-left:auto;">
+              <div class="lc-pend" style="width:15%;"></div>
+              <div class="lc-act"  style="width:85%;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">pending → active</div>
+          </div>
+        </div>
+        <div class="ep-row">
+          <div style="flex:1;min-width:0;">
+            <div class="ep-name">Host Resource Pressure · host-a</div>
+            <div class="ep-meta">Started 45m ago · Rule: Host Resource Pressure</div>
+            <div class="ep-data">data.host: host-a · data.avg_cpu: 0.91 · data.avg_mem: 0.73</div>
+          </div>
+          <div style="flex-shrink:0;text-align:right;">
+            <span class="rule-status st-pending">Pending (2/3)</span>
+            <div class="lifecycle-bar" style="margin-top:5px;margin-left:auto;">
+              <div class="lc-pend" style="width:100%;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">pending…</div>
+          </div>
+        </div>
+        <div class="ep-row">
+          <div style="flex:1;min-width:0;">
+            <div class="ep-name">Service Health Monitor · currencyservice</div>
+            <div class="ep-meta">Recovering since 8m ago · Rule: Service Health Monitor</div>
+            <div class="ep-data">data.service: currencyservice · data.avg_err: 0.019 (was 0.061)</div>
+          </div>
+          <div style="flex-shrink:0;text-align:right;">
+            <span class="rule-status st-recovery">Recovering (1/2)</span>
+            <div class="lifecycle-bar" style="margin-top:5px;margin-left:auto;">
+              <div class="lc-pend" style="width:10%;"></div>
+              <div class="lc-act"  style="width:60%;"></div>
+              <div class="lc-rec"  style="width:30%;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">active → recovering</div>
+          </div>
+        </div>
+        <div style="padding:6px 0;font-size:12px;color:var(--gray-400);">3 active · 1 recovering · Updated 30s ago</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col2">
+    <div class="card">
+      <div class="card-lbl">v2 tab — what's different</div>
+      <ul class="diff-list">
+        <li class="add">Lifecycle status (Pending / Active / Recovering) with thresholds visible</li>
+        <li class="add">Visual lifecycle bar showing which phase the episode is in</li>
+        <li class="add">Data fields from ES|QL KEEP displayed inline (<code>data.*</code>)</li>
+        <li class="add">"Manage rules" button links to v2 tab on <code>/app/rules</code></li>
+        <li class="chg">No rule-type-based filter (all episodes come from v2 ES|QL rules)</li>
+        <li class="add">Filter by rule name, severity, status, grouping field values</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-lbl">v1 tab — no changes</div>
+      <p style="font-size:13px;color:var(--gray-500);margin:0;">The existing "Alerts" tab is completely unchanged. Existing O11y alert management continues to work as-is.</p>
+      <p style="font-size:12px;color:var(--gray-500);margin-top:10px;">The "Rules" sub-link from the existing O11y Alerts page (breadcrumb to <code>/alerts/rules</code>) can redirect to <code>/app/rules</code> or stay as its own O11y-filtered rules view — TBD.</p>
+    </div>
+  </div>
+
+  <hr>
+  <h2>Episode detail view (when you click an episode)</h2>
+  <div class="callout c-tip">
+    <i>💡</i>
+    <div><p>The episode detail is where v2's advantages are most visible: full event history, all <code>data.*</code> fields queryable, lifecycle timeline, custom recovery condition visible, and a link to view raw events in Discover. This view doesn't exist in the prototype yet — flag it as a separate design problem.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB 3 — O11y NAV ══════════════════ -->
+<div id="tab-nav" class="panel content">
+  <div class="sec-hdr">
+    <h1>Tab 3 — O11y nav changes</h1>
+    <p class="sub">Current nav buries v2 under Stack Management → V2 Alerting Preview. Proposed: remove it, integrate v2 into existing surfaces.</p>
+  </div>
+
+  <h2>Current vs. proposed O11y nav (Stack Management section)</h2>
+  <div class="nav-compare">
+    <div>
+      <div class="compare-lbl lbl-before">Current</div>
+      <div class="kb-shell">
+        <div class="kb-nav" style="width:100%;">
+          <div class="kb-nav-section">… (primary nav items above) …</div>
+          <div class="kb-nav-sep"></div>
+          <div class="kb-nav-section">Stack Management</div>
+          <div class="kb-nav-item kb-nav-highlight" style="font-size:12px;">⚠ V2 Alerting Preview</div>
+          <div class="kb-nav-sub" style="padding-left:28px;font-size:12px;">Rules (management)</div>
+          <div class="kb-nav-sub" style="padding-left:28px;font-size:12px;">Episodes (management)</div>
+          <div class="kb-nav-sub" style="padding-left:28px;font-size:12px;">Action Policies (mgmt)</div>
+          <div class="kb-nav-sep"></div>
+          <div class="kb-nav-item" style="font-size:12px;">📋 Alerts and Insights</div>
+          <div class="kb-nav-sub">Rules → /app/rules</div>
+          <div class="kb-nav-sub">Connectors</div>
+          <div class="kb-nav-sub">Reporting</div>
+          <div class="kb-nav-sub">Watcher</div>
+          <div class="kb-nav-sub">Maintenance Windows</div>
+        </div>
+      </div>
+      <div class="callout c-warn" style="margin-top:12px;margin-bottom:0;">
+        <i>⚠</i>
+        <div><p>V2 Alerting Preview is buried, inconsistently named, and exposes separate management:rules/episodes/action_policies apps. Totally separate from the primary Alerts nav item and from /app/rules.</p></div>
+      </div>
+    </div>
+    <div>
+      <div class="compare-lbl lbl-after">Proposed</div>
+      <div class="kb-shell">
+        <div class="kb-nav" style="width:100%;">
+          <div class="kb-nav-section">… (primary nav items — no change) …</div>
+          <div class="kb-nav-sep"></div>
+          <div class="kb-nav-section">Stack Management</div>
+          <div class="kb-nav-removed" style="padding:7px 14px;font-size:12px;">⚠ V2 Alerting Preview — removed</div>
+          <div class="kb-nav-sep"></div>
+          <div class="kb-nav-item" style="font-size:12px;">📋 Alerts and Insights</div>
+          <div class="kb-nav-sub">Rules → /app/rules (v1 + v2 tabs)</div>
+          <div class="kb-nav-sub added">Action Policies</div>
+          <div class="kb-nav-sub">Connectors</div>
+          <div class="kb-nav-sub">Maintenance Windows</div>
+          <div class="kb-nav-sub">Reporting</div>
+          <div class="kb-nav-sub">Watcher</div>
+        </div>
+      </div>
+      <div class="callout c-ok" style="margin-top:12px;margin-bottom:0;">
+        <i>✓</i>
+        <div>
+          <p><b>Changes:</b></p>
+          <ul class="diff-list">
+            <li class="rem">Remove "V2 Alerting Preview" section entirely</li>
+            <li class="rem">Remove management:rules, management:episodes, management:action_policies separate apps</li>
+            <li class="add">Add "Action Policies" to existing "Alerts and Insights" section</li>
+            <li class="chg">"Rules" in "Alerts and Insights" now → /app/rules with both v1 and v2 tabs</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <h2>Primary nav "Alerts" item — no change needed</h2>
+  <div class="callout c-ok">
+    <i>✓</i>
+    <div><p>The top-level <b>Alerts</b> nav item (with warning icon) continues to point to <code>/app/observability/alerts</code>. That page now has two tabs (v1 + v2). No nav change needed here — the entry point is already correct. The v2 tab just needs to exist on the destination page.</p></div>
+  </div>
+
+  <h2>Management section (for completeness)</h2>
+  <div class="col2">
+    <div class="card">
+      <div class="card-lbl">Current Management nav</div>
+      <ul style="font-size:13px;color:var(--gray-500);padding-left:16px;line-height:2.2;">
+        <li><b>V2 Alerting Preview</b> (separate section, order:1) — Rules, Episodes, Action Policies</li>
+        <li>Alerts and Insights — Rules, Connectors, Alerts</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Proposed Management nav</div>
+      <ul style="font-size:13px;color:var(--gray-700);padding-left:16px;line-height:2.2;">
+        <li><span style="text-decoration:line-through;color:var(--gray-500);">V2 Alerting Preview</span> — removed</li>
+        <li>Alerts and Insights — Rules (now has v2 tab), Action Policies (new), Connectors, Maintenance Windows</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout c-info">
+    <i>ℹ</i>
+    <div><p>Management navigation is secondary for O11y users who use the solution nav. The main change is removing the separate "V2 Alerting Preview" section — v2 is now accessed through the same surfaces as v1.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB 4 — NAMING ══════════════════ -->
+<div id="tab-naming" class="panel content">
+  <div class="sec-hdr">
+    <h1>Tab 4 — Naming</h1>
+    <p class="sub">The tab labels for v2 content on <code>/app/rules</code> and <code>/app/observability/alerts</code>. No good answer yet — this is a brainstorm, not a proposal.</p>
+  </div>
+
+  <div class="callout c-warn">
+    <i>⚠</i>
+    <div>
+      <p><b>Why naming is hard here:</b> Both systems do alerting. Both have rules. ES|QL alone doesn't distinguish them (v1 ES Query has an ES|QL mode). "Custom" implies v2 is the exception. "Classic" implies v1 is outdated. "New" is temporary. Any version-based name ("v2") is internal jargon. Whatever we pick needs to work in two contexts: the Rules tab label AND the Alerts tab label.</p>
+    </div>
+  </div>
+
+  <h2>What we're actually naming</h2>
+  <div class="col2" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-lbl">On /app/rules — two tabs</div>
+      <div class="kb-tabs" style="margin:-6px;border-bottom:1px solid var(--border);padding:0 8px;">
+        <div class="kb-tab on">Rules</div>
+        <div class="kb-tab" style="font-style:italic;color:var(--amber-600);">[v2 rules name]</div>
+        <div class="kb-tab">Logs</div>
+      </div>
+      <p style="font-size:12px;color:var(--gray-500);margin-top:10px;margin-bottom:0;">The label for the second tab on the rules page.</p>
+    </div>
+    <div class="card">
+      <div class="card-lbl">On /observability/alerts — two tabs</div>
+      <div class="kb-tabs" style="margin:-6px;border-bottom:1px solid var(--border);padding:0 8px;">
+        <div class="kb-tab on">Alerts</div>
+        <div class="kb-tab" style="font-style:italic;color:var(--amber-600);">[v2 alerts name]</div>
+      </div>
+      <p style="font-size:12px;color:var(--gray-500);margin-top:10px;margin-bottom:0;">The label for the second tab on the alerts page.</p>
+    </div>
+  </div>
+
+  <h2>Option inventory</h2>
+  <div class="opt-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+
+    <div class="opt">
+      <div class="opt-title">A — ES|QL</div>
+      <div class="opt-row"><span class="lbl v1c">rules tab:</span> "Rules"</div>
+      <div class="opt-row"><span class="lbl v2c">v2 rules:</span> "ES|QL Rules"</div>
+      <div class="opt-row"><span class="lbl v1c">alerts tab:</span> "Alerts"</div>
+      <div class="opt-row"><span class="lbl v2c">v2 alerts:</span> "Episodes"</div>
+      <div class="opt-pro">Technically accurate. "ES|QL Rules" reflects what v2 rules really are.</div>
+      <div class="opt-con">v1 ES Query has an ES|QL mode — not strictly a differentiator. "Episodes" is internal jargon.</div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-title">B — Query</div>
+      <div class="opt-row"><span class="lbl v1c">rules tab:</span> "Rules"</div>
+      <div class="opt-row"><span class="lbl v2c">v2 rules:</span> "Query Rules"</div>
+      <div class="opt-row"><span class="lbl v1c">alerts tab:</span> "Alerts"</div>
+      <div class="opt-row"><span class="lbl v2c">v2 alerts:</span> "Alert Activity"</div>
+      <div class="opt-pro">"Query Rules" reflects how you create them (you write a query). "Activity" hints at append-only stream.</div>
+      <div class="opt-con">v1 ES Query is also query-based. "Activity" sounds like a log, not an alert triage view.</div>
+    </div>
+
+    <div class="opt rec">
+      <div class="opt-title">C — ES|QL / Tracked</div>
+      <div class="opt-row"><span class="lbl v1c">rules tab:</span> "Rules"</div>
+      <div class="opt-row"><span class="lbl v2c">v2 rules:</span> "ES|QL Rules"</div>
+      <div class="opt-row"><span class="lbl v1c">alerts tab:</span> "Alerts"</div>
+      <div class="opt-row"><span class="lbl v2c">v2 alerts:</span> "Tracked Alerts"</div>
+      <div class="opt-pro">"Tracked Alerts" captures episode lifecycle without jargon. Distinguishes from v1 which doesn't track state over time the same way.</div>
+      <div class="opt-con">All alerts are "tracked" in some sense. Still has the ES|QL collision problem.</div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-title">D — Honest temp</div>
+      <div class="opt-row"><span class="lbl v1c">rules tab:</span> "Rules"</div>
+      <div class="opt-row"><span class="lbl v2c">v2 rules:</span> "New Rules ✦"</div>
+      <div class="opt-row"><span class="lbl v1c">alerts tab:</span> "Alerts"</div>
+      <div class="opt-row"><span class="lbl v2c">v2 alerts:</span> "New Alerts ✦"</div>
+      <div class="opt-pro">Honest. Communicates "this is the new thing" without committing to a final name during preview.</div>
+      <div class="opt-con">"New" is temporary. Will need to change before GA. Creates churn.</div>
+    </div>
+
+  </div>
+
+  <h2>The deeper problem: consistent naming across contexts</h2>
+  <div class="callout c-tip">
+    <i>💡</i>
+    <div><p><b>The tab label is just the surface.</b> The real naming question is: what do we call the whole v2 system in a sentence? "Go to [?] to see your v2 rules." "Your v1 alerts are in Alerts. Your [?] are in [?]." Whatever word we pick for the tabs also has to work in breadcrumbs, docs, error messages, and the migration UX. The tab label is the tip of the iceberg.</p></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Context</th><th>Option A (ES|QL)</th><th>Option C (Tracked)</th><th>Option D (New)</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Tab label (rules page)</td>
+        <td>"ES|QL Rules"</td>
+        <td>"ES|QL Rules"</td>
+        <td>"New Rules ✦"</td>
+      </tr>
+      <tr>
+        <td>Tab label (alerts page)</td>
+        <td>"Episodes"</td>
+        <td>"Tracked Alerts"</td>
+        <td>"New Alerts ✦"</td>
+      </tr>
+      <tr>
+        <td>Breadcrumb</td>
+        <td>Rules &gt; ES|QL Rules &gt; [rule name]</td>
+        <td>Rules &gt; ES|QL Rules &gt; [rule name]</td>
+        <td>Rules &gt; [rule name]</td>
+      </tr>
+      <tr>
+        <td>In-app help copy</td>
+        <td>"Create an ES|QL rule to detect…"</td>
+        <td>"Create an ES|QL rule to detect…"</td>
+        <td>"Create a rule in the new alerting system…"</td>
+      </tr>
+      <tr>
+        <td>Cross-link from v1</td>
+        <td>"This rule type is also available as an ES|QL rule →"</td>
+        <td>"This rule type is also available with lifecycle tracking →"</td>
+        <td>"Try this rule in the new alerting system →"</td>
+      </tr>
+      <tr>
+        <td>Nav item in Stack Mgmt</td>
+        <td>"Alerts and Insights" (unchanged)</td>
+        <td>"Alerts and Insights" (unchanged)</td>
+        <td>"Alerts and Insights" (unchanged)</td>
+      </tr>
+      <tr>
+        <td>Docs reference</td>
+        <td>"ES|QL alerting" / "ES|QL rules"</td>
+        <td>"query-based alerting" / "tracked alerts"</td>
+        <td>"new alerting" / "alerting v2"</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <div class="callout c-info" style="margin-top:0;">
+    <i>ℹ</i>
+    <div>
+      <p><b>Natasha's candidates (from her naming doc):</b> The leading option was "Rule-based Monitoring and Alerting" but concern was it implies v1 and v2 are complementary. Other candidates: Condition Monitoring, Lifecycle Alerting, Stateful Alerting, Adaptive Alerting, Rules and Signals. None of these directly address the tab-label context — they're section-level names, not distinction-within-a-page names.</p>
+      <p style="margin-top:6px;"><b>One angle not in Natasha's list:</b> lean into the <em>output difference</em> — v1 produces "alerts" (current state), v2 produces "alert events" (history). Tab names: "Alerts" vs "Alert Events" or "Alert History". This emphasizes the append-only/queryable aspect which is a genuine user benefit.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + id).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
