@@ -215,19 +215,19 @@
     <div>
       <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#e67e22;font-weight:700;margin-bottom:0.5rem;">&#10097; In review</div>
 
-      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#c0392b;font-weight:600;margin-bottom:0.2rem;">Maintenance Windows</div>
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#c0392b;font-weight:600;margin-bottom:0.2rem;">Maintenance Windows &amp; Action Policies</div>
       <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
         <li><span class="pr">#266692</span> Suppress episodes during active maintenance window &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
         <li><span class="pr">#267771</span> Maintenance window suppression in dispatcher &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
         <li><span class="pr">#268006</span> Single_rule type discriminator for ActionPolicy &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
+        <li><span class="pr">#267594</span> Filter groupBy field suggestions by action policy matcher &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
       </ul>
 
-      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#2980b9;font-weight:600;margin-bottom:0.2rem;">Episodes &amp; Group-by</div>
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#2980b9;font-weight:600;margin-bottom:0.2rem;">Episodes</div>
       <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
         <li><span class="pr">#267672</span> Display grouping values across alerting experience &nbsp;<span style="color:#999;">&mdash; antonio</span></li>
         <li><span class="pr">#267440</span> Persist episode table filters to URL &nbsp;<span style="color:#999;">&mdash; antonio</span></li>
         <li><span class="pr">#267925</span> Fix single episode tag bug &nbsp;<span style="color:#999;">&mdash; antonio</span></li>
-        <li><span class="pr">#267594</span> Filter groupBy field suggestions by matcher &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
       </ul>
 
       <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#8e44ad;font-weight:600;margin-bottom:0.2rem;">Rule Authoring</div>
@@ -278,8 +278,7 @@
 
     <div class="pillar blue">
       <h3>Episodes &amp; Group-by</h3>
-      <p>Grouping values now displayed in badges across episodes table and detail view (<span class="pr">#267672</span>). Episode table filters persisted to URL (<span class="pr">#267440</span>). GroupBy field suggestions scoped to current matcher (<span class="pr">#267594</span>).</p>
-      <div class="demo-tag">&#9654; demo: group by improvements</div>
+      <p>Grouping values now displayed in badges across episodes table and detail view (<span class="pr">#267672</span>). Episode table filters persisted to URL (<span class="pr">#267440</span>).</p>
     </div>
 
     <div class="pillar teal">
@@ -295,8 +294,8 @@
     </div>
 
     <div class="pillar orange">
-      <h3>Dispatcher Hardening</h3>
-      <p>Concurrent fetch_episodes + fetch_policies (<span class="pr">rna#467</span>). Data-anchored watermark bounding fetch_episodes. <code>_source</code> dropped after JSON_EXTRACT for query efficiency. Orphan task fix merged.</p>
+      <h3>Dispatcher &amp; Action Policies</h3>
+      <p>Concurrent fetch_episodes + fetch_policies (<span class="pr">rna#467</span>). Data-anchored watermark bounding fetch_episodes. <code>_source</code> dropped after JSON_EXTRACT. GroupBy field suggestions scoped to the current <em>action policy matcher</em> condition (<span class="pr">#267594</span>).</p>
     </div>
 
     <div class="pillar gray">
@@ -519,12 +518,6 @@
       <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#c0392b;font-weight:700;margin-bottom:0.3rem;">Dispatcher &middot; Action Policies</div>
       <h3 style="font-size:1.1rem;margin-bottom:0.3rem;">Maintenance window suppression</h3>
       <p style="font-size:0.95rem;color:#555;"><strong>Kevin D</strong> &mdash; episode suppression during active maintenance windows, end-to-end through the dispatcher pipeline.</p>
-    </div>
-
-    <div class="pillar blue">
-      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#2980b9;font-weight:700;margin-bottom:0.3rem;">Episodes &middot; Rule Authoring</div>
-      <h3 style="font-size:1.1rem;margin-bottom:0.3rem;">Group by field &mdash; improvements</h3>
-      <p style="font-size:0.95rem;color:#555;">Grouping values displayed in episode badges + detail view. Field suggestions scoped to active matcher condition.</p>
     </div>
 
     <div class="pillar teal">
