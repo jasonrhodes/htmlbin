@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RnA Weekly — May 7, 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f6f8;
+    color: #1a1a1a;
+  }
+
+  .slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    padding: 4rem 6rem;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .slide.active { display: flex; }
+
+  /* Nav */
+  .nav {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 2rem;
+    font-size: 0.75rem;
+    color: #999;
+    z-index: 100;
+    user-select: none;
+  }
+  .nav span { margin: 0 0.5rem; }
+  .nav-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: #666;
+  }
+  .nav-btn:hover { background: #eee; }
+
+  /* Typography */
+  h1 { font-size: 2.8rem; font-weight: 700; line-height: 1.15; margin-bottom: 0.5rem; color: #1a1a1a; }
+  h2 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 1.5rem; color: #2c3e50; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: #2c3e50; }
+  .subtitle { font-size: 1.2rem; color: #666; margin-bottom: 0.25rem; }
+  .date { font-size: 1rem; color: #999; margin-top: 0.5rem; }
+  p { font-size: 1.1rem; line-height: 1.6; color: #444; max-width: 52rem; }
+
+  /* Pillar cards */
+  .pillar {
+    border-left: 4px solid #2980b9;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border-radius: 0 6px 6px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .pillar.red    { border-left-color: #c0392b; }
+  .pillar.orange { border-left-color: #e67e22; }
+  .pillar.green  { border-left-color: #27ae60; }
+  .pillar.blue   { border-left-color: #2980b9; }
+  .pillar.purple { border-left-color: #8e44ad; }
+  .pillar.gray   { border-left-color: #95a5a6; }
+  .pillar.teal   { border-left-color: #16a085; }
+  .pillar h3 { margin-bottom: 0.3rem; font-size: 1rem; }
+  .pillar p  { font-size: 0.9rem; line-height: 1.4; color: #555; }
+
+  /* Demo teaser */
+  .demo-tag {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    background: #2c3e50;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    margin-bottom: 1rem;
+  }
+  .badge-red    { background: #c0392b; color: #fff; }
+  .badge-blue   { background: #2980b9; color: #fff; }
+  .badge-green  { background: #27ae60; color: #fff; }
+  .badge-orange { background: #e67e22; color: #fff; }
+  .badge-purple { background: #8e44ad; color: #fff; }
+  .badge-gray   { background: #7f8c8d; color: #fff; }
+  .badge-teal   { background: #16a085; color: #fff; }
+  .badge-dark   { background: #2c3e50; color: #fff; }
+
+  /* Callout */
+  .callout { margin-top: 1.25rem; padding: 0.75rem 1rem; border-radius: 0 4px 4px 0; max-width: 56rem; }
+  .callout-warn    { background: #fff8e1; border-left: 4px solid #e67e22; }
+  .callout-info    { background: #e8f4fd; border-left: 4px solid #2980b9; }
+  .callout-success { background: #e8f8e8; border-left: 4px solid #27ae60; }
+
+  /* Two-col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 56rem; margin-top: 1rem; }
+
+  code { background: #e8ecf0; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; color: #2980b9; }
+
+  /* PR chips */
+  .pr {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.78rem;
+    background: #eef3f8;
+    color: #2980b9;
+    padding: 0.08rem 0.38rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 960px) {
+    .slide { padding: 2rem 1.5rem; }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: Title -->
+<!-- ============================================================ -->
+<div class="slide active" id="s1">
+  <h1>RnA Weekly</h1>
+  <p class="subtitle">Rules &amp; Alerts Program Update</p>
+  <p class="date">May 7, 2026</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: Shipped this week + In review -->
+<!-- ============================================================ -->
+<div class="slide" id="s2">
+  <div class="badge badge-green">THIS WEEK</div>
+  <h2 style="margin-bottom:1rem;">Merged &amp; in review</h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem 3rem;max-width:66rem;">
+
+    <!-- MERGED -->
+    <div>
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#27ae60;font-weight:700;margin-bottom:0.5rem;">&#10003; Merged</div>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#8e44ad;font-weight:600;margin-bottom:0.2rem;">Workflow Integration</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
+        <li><span class="pr">#267924</span> Create workflow extension service &nbsp;<span style="color:#999;">&mdash; antonio</span></li>
+      </ul>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#2980b9;font-weight:600;margin-bottom:0.2rem;">Engine / Reliability</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
+        <li><span class="pr">rna#449</span> Fix: orphan rule tasks fire forever &nbsp;<span style="color:#999;">&mdash; christos</span></li>
+        <li><span class="pr">rna#460</span> Fix: handle error from evaluateKql &nbsp;<span style="color:#999;">&mdash; christos</span></li>
+        <li><span class="pr">rna#425</span> Flatten ES|QL params in Discover flyout &nbsp;<span style="color:#999;">&mdash; jason</span></li>
+      </ul>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#16a085;font-weight:600;margin-bottom:0.2rem;">Decisions</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
+        <li><span class="pr">rna#462</span> <strong style="color:#16a085;">Severity ADR merged</strong> &nbsp;<span style="color:#999;">&mdash; christos</span></li>
+        <li><span class="pr">rna#454</span> Rule Doctor feature documentation &nbsp;<span style="color:#999;">&mdash; dominique</span></li>
+      </ul>
+
+    </div>
+
+    <!-- IN REVIEW -->
+    <div>
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#e67e22;font-weight:700;margin-bottom:0.5rem;">&#10097; In review</div>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#c0392b;font-weight:600;margin-bottom:0.2rem;">Maintenance Windows</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
+        <li><span class="pr">#266692</span> Suppress episodes during active maintenance window &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
+        <li><span class="pr">#267771</span> Maintenance window suppression in dispatcher &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
+        <li><span class="pr">#268006</span> Single_rule type discriminator for ActionPolicy &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
+      </ul>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#2980b9;font-weight:600;margin-bottom:0.2rem;">Episodes &amp; Group-by</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
+        <li><span class="pr">#267672</span> Display grouping values across alerting experience &nbsp;<span style="color:#999;">&mdash; antonio</span></li>
+        <li><span class="pr">#267440</span> Persist episode table filters to URL &nbsp;<span style="color:#999;">&mdash; antonio</span></li>
+        <li><span class="pr">#267925</span> Fix single episode tag bug &nbsp;<span style="color:#999;">&mdash; antonio</span></li>
+        <li><span class="pr">#267594</span> Filter groupBy field suggestions by matcher &nbsp;<span style="color:#999;">&mdash; kevin</span></li>
+      </ul>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#8e44ad;font-weight:600;margin-bottom:0.2rem;">Rule Authoring</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
+        <li><span class="pr">#265347</span> v2 creation &amp; edit flows (prototype) &nbsp;<span style="color:#999;">&mdash; joana</span></li>
+        <li><span class="pr">#264857</span> ES|QL BASE/CONDITION highlights + Discover flyout &nbsp;<span style="color:#999;">&mdash; joana</span></li>
+        <li><span class="pr">#267982</span> Compose Discover flyout for v2 rule authoring &nbsp;<span style="color:#999;">&mdash; jason</span></li>
+        <li><span class="pr">#267779</span> Create rule panel set up &nbsp;<span style="color:#999;">&mdash; ana</span></li>
+      </ul>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#16a085;font-weight:600;margin-bottom:0.2rem;">Policy Execution History</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
+        <li><span class="pr">#266775</span> Policy Execution History API + UI &nbsp;<span style="color:#999;">&mdash; miguel</span></li>
+        <li><span class="pr">#267866</span> Alert activity timeline widget to rule details &nbsp;<span style="color:#999;">&mdash; bailey</span></li>
+        <li><span class="pr">#264802</span> Rule Details overview + alert summary charts &nbsp;<span style="color:#999;">&mdash; bailey</span></li>
+      </ul>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#e67e22;font-weight:600;margin-bottom:0.2rem;">Dispatcher</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.5rem;">
+        <li><span class="pr">#267719</span> Drop <code>_source</code> after JSON_EXTRACT in fetch_episodes &nbsp;<span style="color:#999;">&mdash; faisal</span></li>
+        <li><span class="pr">#265856</span> Bound fetch_episodes with data-anchored watermark &nbsp;<span style="color:#999;">&mdash; faisal</span></li>
+      </ul>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#2c3e50;font-weight:600;margin-bottom:0.2rem;">AI / Rule Doctor</div>
+      <ul style="list-style:none;font-size:0.84rem;line-height:1.55;color:#444;margin-bottom:0.4rem;">
+        <li><span class="pr">#266668</span> Rule Doctor: Run API + deduplication workflow &nbsp;<span style="color:#999;">&mdash; dominique</span></li>
+        <li><span class="pr">#261820</span> View rule events in Discover from rule details &nbsp;<span style="color:#999;">&mdash; dominique</span></li>
+      </ul>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: In progress -->
+<!-- ============================================================ -->
+<div class="slide" id="s3">
+  <div class="badge badge-orange">IN PROGRESS</div>
+  <h2>Where we&rsquo;re spending energy now</h2>
+  <p style="margin-bottom:0.75rem;">Seven active fronts &mdash; demos for several of these later today.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.5rem;max-width:64rem;">
+
+    <div class="pillar red">
+      <h3>Maintenance Windows</h3>
+      <p>Episode suppression during active windows wired through both the alerting model (<span class="pr">#266692</span>) and dispatcher (<span class="pr">#267771</span>). Single-rule discriminator for fine-grained policy matching in review.</p>
+      <div class="demo-tag">&#9654; demo: kevin</div>
+    </div>
+
+    <div class="pillar blue">
+      <h3>Episodes &amp; Group-by</h3>
+      <p>Grouping values now displayed in badges across episodes table and detail view (<span class="pr">#267672</span>). Episode table filters persisted to URL (<span class="pr">#267440</span>). GroupBy field suggestions scoped to current matcher (<span class="pr">#267594</span>).</p>
+      <div class="demo-tag">&#9654; demo: group by improvements</div>
+    </div>
+
+    <div class="pillar purple">
+      <h3>Rule Authoring &mdash; Discover</h3>
+      <p>End-to-end create &amp; edit prototype in review (<span class="pr">#265347</span>). ES|QL BASE/CONDITION highlighting + flyout context menu (<span class="pr">#264857</span>). Compose Discover flyout implementation underway (<span class="pr">#267982</span>).</p>
+      <div class="demo-tag">&#9654; demo: joana</div>
+    </div>
+
+    <div class="pillar teal">
+      <h3>Episode View &mdash; Table &amp; Detail</h3>
+      <p>Timeline widget, alert summary charts, and rule details overview all in review (bailey). Workflow extension service merged — first step toward triggering actions from episodes. <span class="pr">rna-program#445</span></p>
+      <div class="demo-tag">&#9654; demo: antonio</div>
+    </div>
+
+    <div class="pillar green">
+      <h3>Policy Execution History</h3>
+      <p>Action policy execution history API + UI (<span class="pr">#266775</span>) and execution history API for all rules (<span class="pr">rna#423</span>) both in review. A new observability surface for policy health.</p>
+      <div class="demo-tag">&#9654; demo: miguel</div>
+    </div>
+
+    <div class="pillar orange">
+      <h3>Dispatcher Hardening</h3>
+      <p>Concurrent fetch_episodes + fetch_policies (<span class="pr">rna#467</span>). Data-anchored watermark bounding fetch_episodes. <code>_source</code> dropped after JSON_EXTRACT for query efficiency. Orphan task fix merged.</p>
+    </div>
+
+    <div class="pillar gray">
+      <h3>AI / Rule Doctor</h3>
+      <p>Run API + deduplication workflow in review (<span class="pr">#266668</span>). Feature documentation merged. View rule events from rule details page (<span class="pr">#261820</span>).</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: Severity ADR + Workflow service -->
+<!-- ============================================================ -->
+<div class="slide" id="s4">
+  <div class="badge badge-teal">THIS WEEK — NOTABLE</div>
+  <h2>Severity ADR &amp; Workflow extension service</h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem 2.5rem;max-width:66rem;margin-top:0.5rem;">
+
+    <!-- Severity ADR -->
+    <div>
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#16a085;font-weight:700;margin-bottom:0.6rem;">Severity ADR &mdash; closed <span class="pr">rna#462</span></div>
+
+      <div class="pillar teal" style="padding:0.75rem 1rem;margin-bottom:0.75rem;">
+        <h3 style="font-size:0.9rem;">Decision: first-class severity</h3>
+        <p style="font-size:0.85rem;">We&rsquo;ve landed the architecture decision for <strong>critical / high / medium / low</strong> severity as a first-class concept. Convention, engine integration, and routing strategy are decided.</p>
+      </div>
+
+      <div class="pillar green" style="padding:0.75rem 1rem;margin-bottom:0.75rem;">
+        <h3 style="font-size:0.9rem;">What this unblocks</h3>
+        <p style="font-size:0.85rem;">Action policy routing by severity level. UI surfacing of severity in episodes table and rule details. Rule authoring forms can expose the severity field with clear semantics.</p>
+      </div>
+
+      <div class="pillar gray" style="padding:0.75rem 1rem;">
+        <h3 style="font-size:0.9rem;">Also closed this week</h3>
+        <p style="font-size:0.85rem;"><span class="pr">rna#449</span> Orphan rule tasks (fire forever bug) fixed. <span class="pr">rna#460</span> evaluateKql error handling. <span class="pr">rna#275</span> YAML &harr; GUI sync.</p>
+      </div>
+    </div>
+
+    <!-- Workflow extension service -->
+    <div>
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#8e44ad;font-weight:700;margin-bottom:0.6rem;">Workflow extension service &mdash; merged <span class="pr">#267924</span></div>
+
+      <div class="pillar purple" style="padding:0.75rem 1rem;margin-bottom:0.75rem;">
+        <h3 style="font-size:0.9rem;">New WorkflowExtensionsService</h3>
+        <p style="font-size:0.85rem;">The alerting v2 plugin now has a service for registering workflow triggers and steps. This is the foundation for the workflow integration epic (<span class="pr">rna#445</span>) &mdash; enabling episode-driven workflow automation.</p>
+      </div>
+
+      <div class="pillar blue" style="padding:0.75rem 1rem;margin-bottom:0.75rem;">
+        <h3 style="font-size:0.9rem;">What&rsquo;s next</h3>
+        <p style="font-size:0.85rem;">Consumers register triggers via the service. Episodes can emit workflow events. Initial target: incident management and escalation flows triggered by episode state changes.</p>
+      </div>
+
+      <div class="pillar orange" style="padding:0.75rem 1rem;">
+        <h3 style="font-size:0.9rem;">Closed in rna-program</h3>
+        <p style="font-size:0.85rem;"><span class="pr">rna#446</span> Create a workflow service &mdash; done. <span class="pr">rna#445</span> Epic continues; this was the foundational step.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: Milestones & roadmap (Tia) -->
+<!-- ============================================================ -->
+<div class="slide" id="s5">
+  <div class="badge badge-blue">MILESTONES &amp; ROADMAP</div>
+  <h2>M2 progress &amp; roadmap</h2>
+  <p class="subtitle" style="font-size:0.9rem;color:#999;margin-bottom:1.5rem;">Tia Liu</p>
+
+  <div style="max-width:70rem;margin-top:0.5rem;">
+    <img src="../../../rna-weekly-2026-04-30/artifacts/release-strategy.png" style="width:100%;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.08);" alt="Release strategy: M1 internal, M2 experimental, M3 GA serverless, M4 GA stateful" />
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: Demos -->
+<!-- ============================================================ -->
+<div class="slide" id="s6">
+  <h1>Demos &amp; Discussions</h1>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.5rem;max-width:66rem;margin-top:1.75rem;">
+
+    <div class="pillar red">
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#c0392b;font-weight:700;margin-bottom:0.3rem;">Dispatcher &middot; Action Policies</div>
+      <h3 style="font-size:1.1rem;margin-bottom:0.3rem;">Maintenance window suppression</h3>
+      <p style="font-size:0.95rem;color:#555;"><strong>Kevin D</strong> &mdash; episode suppression during active maintenance windows, end-to-end through the dispatcher pipeline.</p>
+    </div>
+
+    <div class="pillar blue">
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#2980b9;font-weight:700;margin-bottom:0.3rem;">Episodes &middot; Rule Authoring</div>
+      <h3 style="font-size:1.1rem;margin-bottom:0.3rem;">Group by field &mdash; improvements</h3>
+      <p style="font-size:0.95rem;color:#555;">Grouping values displayed in episode badges + detail view. Field suggestions scoped to active matcher condition.</p>
+    </div>
+
+    <div class="pillar purple">
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#8e44ad;font-weight:700;margin-bottom:0.3rem;">Rule Management &middot; Discover</div>
+      <h3 style="font-size:1.1rem;margin-bottom:0.3rem;">Rule edit &amp; author end-to-end in Discover</h3>
+      <p style="font-size:0.95rem;color:#555;"><strong>Joana</strong> &mdash; the full create &amp; edit flow prototype: empty state, builders hub, Discover flyout, quick edit, and rule detail actions.</p>
+    </div>
+
+    <div class="pillar teal">
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#16a085;font-weight:700;margin-bottom:0.3rem;">Episodes &middot; View</div>
+      <h3 style="font-size:1.1rem;margin-bottom:0.3rem;">Episode view &mdash; table &amp; details</h3>
+      <p style="font-size:0.95rem;color:#555;"><strong>Antonio</strong> &mdash; grouping values in the table, episode detail improvements, and filters persisted to URL.</p>
+    </div>
+
+    <div class="pillar green">
+      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:#27ae60;font-weight:700;margin-bottom:0.3rem;">Action Policies &middot; Observability</div>
+      <h3 style="font-size:1.1rem;margin-bottom:0.3rem;">Policy Execution History API + UI</h3>
+      <p style="font-size:0.95rem;color:#555;"><strong>Miguel</strong> &mdash; the new execution history surface for action policies: what fired, when, and what happened.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Navigation -->
+<!-- ============================================================ -->
+<div class="nav">
+  <button class="nav-btn" onclick="go(-1)">&larr;</button>
+  <span id="counter">1 / 6</span>
+  <button class="nav-btn" onclick="go(1)">&rarr;</button>
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function show(idx) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(slides.length - 1, idx));
+    slides[current].classList.add('active');
+    document.getElementById('counter').textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  window.go = function(dir) { show(current + dir); };
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+  });
+})();
+</script>
+</body>
+</html>
