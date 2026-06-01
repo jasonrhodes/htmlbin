@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rule Execution Matrix — v2 Alerting</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0f1117;
+  --surface:  #181c27;
+  --surface2: #1e2235;
+  --border:   #2a2f3d;
+  --border2:  #1e2230;
+  --text:     #e2e8f0;
+  --muted:    #64748b;
+  --subtle:   #94a3b8;
+
+  --green:     #22c55e;
+  --green-bg:  rgba(34,197,94,.10);
+  --green-bd:  rgba(34,197,94,.35);
+  --blue:      #38bdf8;
+  --blue-bg:   rgba(56,189,248,.10);
+  --blue-bd:   rgba(56,189,248,.35);
+  --amber:     #f59e0b;
+  --amber-bg:  rgba(245,158,11,.10);
+  --amber-bd:  rgba(245,158,11,.35);
+
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+}
+
+/* ─────────────────────────────────── DECK */
+.deck {
+  position: relative;
+  width: 100%; height: 100vh;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 52px 72px;
+  opacity: 0;
+  transition: opacity .5s ease;
+  pointer-events: none;
+  overflow: hidden;
+}
+.slide.active  { opacity: 1; pointer-events: auto; z-index: 2; }
+.slide.past    { opacity: 0; z-index: 1; }
+
+/* ─────────────────────────────────── BUILD */
+.build {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .4s ease, transform .4s ease;
+}
+.build.shown {
+  opacity: 1;
+  transform: none;
+}
+
+/* ─────────────────────────────────── CHROME */
+.slide-counter {
+  position: fixed; bottom: 22px; right: 32px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); z-index: 100; pointer-events: none;
+  letter-spacing: .06em;
+}
+.slide-counter span { color: var(--subtle); }
+
+.nav-hint {
+  position: fixed; bottom: 22px; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); z-index: 100;
+  pointer-events: none; letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────────── EYEBROW / LABELS */
+.eyebrow {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 32px;
+}
+
+.scenario-label {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--muted); letter-spacing: .08em;
+  text-transform: uppercase; margin-bottom: 16px;
+  text-align: center;
+}
+
+/* ─────────────────────────────────── RULE CONFIG (FULL) */
+.rule-config-full {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%; max-width: 860px;
+}
+.rc-header {
+  padding: 9px 18px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted);
+}
+.rc-body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+.rc-item {
+  padding: 18px 20px;
+  border-right: 1px solid var(--border2);
+}
+.rc-item:last-child { border-right: none; }
+.rc-label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted);
+  margin-bottom: 8px; font-family: var(--mono);
+}
+.rc-value {
+  font-family: var(--mono); font-size: 13px;
+  font-weight: 600; line-height: 1.5;
+}
+.rc-value.alert    { color: #f87171; }
+.rc-value.recovery { color: var(--green); }
+.rc-value.initial  { color: var(--subtle); }
+
+/* ─────────────────────────────────── RULE CONFIG (STRIP) */
+.rule-config-strip {
+  display: flex; gap: 24px;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 18px;
+  margin-bottom: 28px;
+  font-family: var(--mono); font-size: 11px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.rcs-item { display: flex; gap: 8px; align-items: center; }
+.rcs-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.rcs-val { font-weight: 600; }
+.rcs-val.alert    { color: #f87171; }
+.rcs-val.recovery { color: var(--green); }
+.rcs-val.initial  { color: var(--subtle); }
+.rcs-divider { width: 1px; height: 18px; background: var(--border); }
+
+/* ─────────────────────────────────── THE QUESTION */
+.question {
+  font-size: 22px; font-weight: 600;
+  color: #fff; line-height: 1.45;
+  max-width: 820px; margin-top: 36px;
+  text-align: center;
+}
+
+/* ─────────────────────────────────── SCENARIO CTX */
+.scenario-ctx {
+  display: flex; gap: 20px; align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.ctx-item {
+  display: flex; flex-direction: column; gap: 3px;
+  align-items: center;
+}
+.ctx-label {
+  font-family: var(--mono); font-size: 9px;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted);
+}
+.ctx-pill {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  padding: 4px 10px; border-radius: 5px;
+  border: 1px solid var(--border);
+}
+.ctx-pill.match    { color: var(--green); border-color: var(--green-bd); background: var(--green-bg); }
+.ctx-pill.no-match { color: var(--muted); border-color: var(--border); background: var(--surface); }
+.ctx-pill.absent   { color: #f87171; border-color: rgba(248,113,113,.3); background: rgba(248,113,113,.07); }
+
+/* ─────────────────────────────────── NARRATION */
+.narration {
+  font-size: 15px; font-weight: 500;
+  color: var(--text); text-align: center;
+  max-width: 720px; line-height: 1.55;
+  margin: 0 0 14px;
+  height: 7em;
+  overflow: visible;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+
+/* ─────────────────────────────────── METADATA FADE */
+.rule-config-strip, .scenario-label, .scenario-ctx {
+  transition: opacity .5s ease;
+}
+.slide.builds-active .rule-config-strip,
+.slide.builds-active .scenario-label,
+.slide.builds-active .scenario-ctx {
+  opacity: 0.55;
+}
+
+/* ─────────────────────────────────── SCENARIO TABLE */
+.scenario-wrap {
+  width: 100%; max-width: 1000px;
+}
+.scenario-axis-note {
+  font-size: 11px; font-style: italic;
+  color: var(--muted); margin-top: 8px;
+  font-family: var(--sans);
+  text-align: center;
+}
+
+/* Dim previously-revealed builds to focus the newest one (scenario slides only) */
+.slide:has(.narration) .build.shown.not-focus {
+  opacity: 0.35;
+}
+
+/* Hide 'none' row ax-cell until its sibling cells start revealing */
+.st tbody tr:not(.build):has(.cell.build) .ax-cell {
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+.st tbody tr:not(.build):has(.cell.build.shown) .ax-cell {
+  opacity: 1;
+}
+
+table.st {
+  width: 100%; border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+table.st col.ax  { width: 150px; }
+table.st col.col { width: auto; }
+
+table.st thead th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 600; color: var(--subtle);
+  letter-spacing: .05em; text-transform: uppercase;
+  text-align: left; border-bottom: 1px solid var(--border);
+}
+table.st thead th.corner {
+  color: var(--muted); font-size: 9px;
+  line-height: 1.5; vertical-align: bottom;
+}
+table.st thead th.corner span { display: block; }
+
+table.st tbody tr { border-top: 1px solid var(--border2); }
+table.st tbody tr:first-child { border-top: none; }
+
+table.st td.ax-cell {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 14px;
+  font-family: var(--mono); font-size: 11px;
+  font-weight: 600; color: var(--subtle);
+  vertical-align: top;
+}
+table.st td.ax-cell.note {
+  font-weight: 400; font-style: italic;
+  color: var(--muted); font-size: 10px;
+}
+
+table.st td.cell {
+  padding: 14px 16px; vertical-align: top;
+  min-height: 80px;
+}
+
+.q-run {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--muted); margin-bottom: 8px;
+  font-style: italic;
+}
+
+.outcome {
+  border-left: 3px solid transparent;
+  border-radius: 5px;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.outcome.green { border-color: var(--green-bd); background: var(--green-bg); }
+.outcome.blue  { border-color: var(--blue-bd);  background: var(--blue-bg); }
+.outcome.amber { border-color: var(--amber-bd); background: var(--amber-bg); }
+.outcome.proposed {
+  border-color: var(--green-bd);
+  background: rgba(34,197,94,.06);
+  box-shadow: 0 0 0 1px var(--green-bd);
+}
+
+.outcome code {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text); display: block;
+}
+.outcome .badge {
+  display: inline-block; font-family: var(--mono);
+  font-size: 9px; font-weight: 600;
+  padding: 2px 6px; border-radius: 3px;
+  letter-spacing: .04em; text-transform: uppercase;
+  align-self: flex-start;
+}
+.outcome .badge.amber { background: rgba(245,158,11,.18); color: var(--amber); }
+.outcome .desc { font-size: 11px; color: var(--subtle); }
+.outcome .proposed-tag {
+  font-size: 9px; font-family: var(--mono);
+  color: var(--green); opacity: .8;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+
+/* ─────────────────────────────────── PROPOSAL CARDS */
+.proposals-wrap {
+  width: 100%; max-width: 920px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+.proposal-card {
+  border: 1px solid var(--amber-bd);
+  border-radius: 10px; overflow: hidden;
+  background: var(--surface);
+}
+.proposal-card-head {
+  background: var(--amber-bg);
+  padding: 12px 20px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--amber-bd);
+}
+.proposal-card-head .badge {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 3px 8px; border-radius: 4px;
+  background: rgba(245,158,11,.25); color: var(--amber);
+  letter-spacing: .06em; text-transform: uppercase;
+  flex-shrink: 0;
+}
+.proposal-card-head .question-text {
+  font-size: 13px; color: var(--subtle); font-style: italic;
+  line-height: 1.4;
+}
+.proposal-card-body { padding: 18px 20px; }
+.proposal-answer {
+  font-size: 15px; font-weight: 600; color: var(--text);
+  margin-bottom: 8px; line-height: 1.4;
+}
+.proposal-answer code {
+  font-family: var(--mono); font-size: 13px;
+  background: rgba(255,255,255,.06);
+  padding: 1px 5px; border-radius: 3px;
+}
+.proposal-rationale {
+  font-size: 12px; color: var(--muted);
+  line-height: 1.6; font-style: italic;
+}
+.proposal-rationale code {
+  font-family: var(--mono); font-size: 11px;
+  background: rgba(255,255,255,.05);
+  padding: 1px 4px; border-radius: 3px;
+  font-style: normal;
+}
+
+/* ─────────────────────────────────── RESOLVED LABEL */
+.resolved-label {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--green); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 12px;
+  opacity: .8;
+}
+
+/* ─────────────────────────────────── LINKS SLIDE */
+.links-wrap {
+  display: flex; flex-direction: column;
+  align-items: stretch; gap: 20px;
+  max-width: 600px; width: 100%;
+}
+.links-heading {
+  font-size: 28px; font-weight: 700; color: #fff;
+  margin-bottom: 12px; text-align: center;
+}
+.link-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  width: 100%;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color .2s, background .2s;
+}
+.link-item:hover {
+  border-color: var(--subtle);
+  background: var(--surface2);
+}
+.link-item-icon {
+  font-size: 22px; flex-shrink: 0;
+}
+.link-item-label {
+  font-size: 15px; font-weight: 600; color: var(--text);
+  margin-bottom: 2px;
+}
+.link-item-desc {
+  font-size: 11px; color: var(--muted);
+}
+
+/* ─────────────────────────────────── SLIDE 1 SPECIFIC */
+#s1 .main-title {
+  font-size: 42px; font-weight: 700;
+  color: #fff; line-height: 1.15;
+  margin-bottom: 8px; letter-spacing: -.01em;
+}
+#s1 .subtitle {
+  font-size: 14px; color: var(--muted);
+  font-family: var(--mono); letter-spacing: .06em;
+  margin-bottom: 48px;
+}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ════════════════════════════════ SLIDE 1: Rule config -->
+<div class="slide active" id="s1" data-slide="1">
+  <div class="eyebrow">v2 Alerting · ES|QL Rule Execution</div>
+  <div class="main-title">Rule Execution Matrix</div>
+  <div class="subtitle">EXECUTION SEMANTICS REFERENCE</div>
+  <div class="rule-config-full">
+    <div class="rc-header">rule configuration baseline</div>
+    <div class="rc-body">
+      <div class="rc-item">
+        <div class="rc-label">Alert condition</div>
+        <div class="rc-value alert">WHERE avg_cpu &gt; 90%</div>
+      </div>
+      <div class="rc-item">
+        <div class="rc-label">Recovery condition</div>
+        <div class="rc-value recovery">WHERE avg_cpu &lt; 80%<br><span style="font-size:10px;font-weight:400;opacity:.6">(only when recovery_strategy: query)</span></div>
+      </div>
+      <div class="rc-item">
+        <div class="rc-label">Initial breach fired</div>
+        <div class="rc-value initial">host.name = abc<br>avg_cpu = 92%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SLIDE 2: Question -->
+<div class="slide" id="s2" data-slide="2">
+  <div class="rule-config-strip">
+    <div class="rcs-item"><span class="rcs-label">alert</span><span class="rcs-val alert">avg_cpu &gt; 90%</span></div>
+    <div class="rcs-divider"></div>
+    <div class="rcs-item"><span class="rcs-label">recovery</span><span class="rcs-val recovery">avg_cpu &lt; 80%</span></div>
+    <div class="rcs-divider"></div>
+    <div class="rcs-item"><span class="rcs-label">initial breach</span><span class="rcs-val initial">abc @ 92%</span></div>
+  </div>
+  <div class="question">
+    Given this rule and a firing alert episode for host 'abc', how do the recovery strategy and no data strategy options intersect?
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SLIDE 3: Scenario B (happy path — 78%) -->
+<div class="slide" id="s3" data-slide="3">
+  <div class="rule-config-strip">
+    <div class="rcs-item"><span class="rcs-label">alert</span><span class="rcs-val alert">avg_cpu &gt; 90%</span></div>
+    <div class="rcs-divider"></div>
+    <div class="rcs-item"><span class="rcs-label">recovery</span><span class="rcs-val recovery">avg_cpu &lt; 80%</span></div>
+    <div class="rcs-divider"></div>
+    <div class="rcs-item"><span class="rcs-label">initial breach</span><span class="rcs-val initial">abc @ 92%</span></div>
+  </div>
+  <div class="scenario-label">Scenario A · avg_cpu = 78%</div>
+  <div class="scenario-ctx">
+    <div class="ctx-item">
+      <div class="ctx-label">breach query</div>
+      <div class="ctx-pill no-match">host absent</div>
+    </div>
+    <div class="ctx-item">
+      <div class="ctx-label">recovery query</div>
+      <div class="ctx-pill match">match <small style="opacity:.7">78% &lt; 80%</small></div>
+    </div>
+    <div class="ctx-item">
+      <div class="ctx-label">has_data query</div>
+      <div class="ctx-pill match">host present</div>
+    </div>
+  </div>
+  <div class="narration" id="narr-3"></div>
+  <div class="scenario-wrap">
+    <table class="st">
+      <colgroup><col class="ax"><col class="col"><col class="col"><col class="col"></colgroup>
+      <thead><tr>
+        <th class="corner"><span>no_data_strategy ↓</span><span>recovery_strategy →</span></th>
+        <th>no_breach</th><th>query</th><th>none</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td class="ax-cell note">irrelevant</td>
+          <td class="cell build" data-i="1"
+            data-narration="Host 'abc' isn't present in the breach query results, and it'll be there in the has_data query check (or we'll assume it's there if no_data_strategy is 'none'), so this will always be a status: 'recovered' event. The director will calculate the episode.status from there.">
+            <div class="outcome green">
+              <code>status: 'recovered'</code>
+              <code>episode.status: 'recovering' | 'inactive'</code>
+            </div>
+          </td>
+          <td class="cell build" data-i="2"
+            data-narration="This time, the recovery query returns host 'abc' in its results, so the has_data check isn't even needed. Another status: 'recovered' event in this flow.">
+            <div class="outcome green">
+              <code>status: 'recovered'</code>
+              <code>episode.status: 'recovering' | 'inactive'</code>
+            </div>
+          </td>
+          <td class="cell build" data-i="3"
+            data-narration="With host 'abc' not present in the breach query results and no recovery query to run, we would assume a 'recovered' event, but the user has opted out of recovery altogether. Not much we can do here (see UNKNOWN_E proposal later).">
+            <div class="outcome amber">
+              <span class="badge amber">UNKNOWN_E</span>
+              <span class="desc">Group present, not breaching, no recovery configured</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="scenario-axis-note">no_data_strategy is moot here — 'none' skips the has_data check and assumes presence; since data IS present, all strategies arrive at the same outcome</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SLIDE 4: Scenario A (limbo — 85%) -->
+<div class="slide" id="s4" data-slide="4">
+  <div class="rule-config-strip">
+    <div class="rcs-item"><span class="rcs-label">alert</span><span class="rcs-val alert">avg_cpu &gt; 90%</span></div>
+    <div class="rcs-divider"></div>
+    <div class="rcs-item"><span class="rcs-label">recovery</span><span class="rcs-val recovery">avg_cpu &lt; 80%</span></div>
+    <div class="rcs-divider"></div>
+    <div class="rcs-item"><span class="rcs-label">initial breach</span><span class="rcs-val initial">abc @ 92%</span></div>
+  </div>
+  <div class="scenario-label">Scenario B · avg_cpu = 85%</div>
+  <div class="scenario-ctx">
+    <div class="ctx-item">
+      <div class="ctx-label">breach query</div>
+      <div class="ctx-pill no-match">host absent</div>
+    </div>
+    <div class="ctx-item">
+      <div class="ctx-label">recovery query</div>
+      <div class="ctx-pill no-match">host absent</div>
+    </div>
+    <div class="ctx-item">
+      <div class="ctx-label">has_data query</div>
+      <div class="ctx-pill match">host present</div>
+    </div>
+  </div>
+  <div class="narration" id="narr-4"></div>
+  <div class="scenario-wrap">
+    <table class="st">
+      <colgroup><col class="ax"><col class="col"><col class="col"><col class="col"></colgroup>
+      <thead><tr>
+        <th class="corner"><span>no_data_strategy ↓</span><span>recovery_strategy →</span></th>
+        <th>no_breach</th><th>query</th><th>none</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td class="ax-cell note">irrelevant</td>
+          <td class="cell build" data-i="1"
+            data-narration="At 85%, host 'abc' isn't present in the breach query results, so this follows the same path as when the value was 78%, with a status: 'recovered' event.">
+            <div class="outcome green">
+              <code>status: 'recovered'</code>
+              <code>episode.status: 'recovering' | 'inactive'</code>
+            </div>
+          </td>
+          <td class="cell build" data-i="2"
+            data-narration="The recovery query (&lt; 80%) won't find host 'abc' here. The has_data check will confirm that this host is reporting data, which leaves us in 'limbo', between the breach and recovery thresholds. This is UNKNOWN_D.">
+            <div class="outcome amber">
+              <span class="badge amber">UNKNOWN_D</span>
+              <span class="desc">Limbo — 85% is between thresholds</span>
+            </div>
+          </td>
+          <td class="cell build" data-i="3"
+            data-narration="Without running a recovery query, we're in the same place as when the value was 78% — it looks like a recovery but the user has opted out of recovery.">
+            <div class="outcome amber">
+              <span class="badge amber">UNKNOWN_E</span>
+              <span class="desc">Group present, not breaching, no recovery configured</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="scenario-axis-note">no_data_strategy is moot here — 'none' skips the has_data check and assumes presence; since data IS present, all strategies arrive at the same outcome</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SLIDE 5: Scenario C (host absent) -->
+<div class="slide" id="s5" data-slide="5">
+  <div class="rule-config-strip">
+    <div class="rcs-item"><span class="rcs-label">alert</span><span class="rcs-val alert">avg_cpu &gt; 90%</span></div>
+    <div class="rcs-divider"></div>
+    <div class="rcs-item"><span class="rcs-label">recovery</span><span class="rcs-val recovery">avg_cpu &lt; 80%</span></div>
+    <div class="rcs-divider"></div>
+    <div class="rcs-item"><span class="rcs-label">initial breach</span><span class="rcs-val initial">abc @ 92%</span></div>
+  </div>
+  <div class="scenario-label">Scenario C · host.name = abc absent from all queries</div>
+  <div class="scenario-ctx">
+    <div class="ctx-item">
+      <div class="ctx-label">breach query</div>
+      <div class="ctx-pill absent">host absent</div>
+    </div>
+    <div class="ctx-item">
+      <div class="ctx-label">recovery query</div>
+      <div class="ctx-pill absent">host absent</div>
+    </div>
+    <div class="ctx-item">
+      <div class="ctx-label">has_data query</div>
+      <div class="ctx-pill absent">host absent</div>
+    </div>
+  </div>
+  <div class="narration" id="narr-5"></div>
+  <div class="scenario-wrap">
+    <table class="st">
+      <colgroup><col class="ax"><col class="col"><col class="col"><col class="col"></colgroup>
+      <thead><tr>
+        <th class="corner"><span>no_data_strategy ↓</span><span>recovery_strategy →</span></th>
+        <th>no_breach</th><th>query</th><th>none</th>
+      </tr></thead>
+      <tbody>
+        <tr class="build" data-i="1"
+          data-narration="Our host 'abc' isn't present in the breach or recovery results. When it's also not in the has_data check, 'last_known_status' tells the director to write status: 'no_data', but to keep the episode.status the same as whatever it was in the last run. This means alert episodes could become 'stuck' in pending, active, or recovering with this strategy selected.">
+          <td class="ax-cell">last_known_status</td>
+          <td class="cell" colspan="3">
+            <div class="outcome blue">
+              <code>status: 'no_data' (new)</code>
+              <code>episode.status: '[last known status]'</code>
+            </div>
+          </td>
+        </tr>
+        <tr class="build" data-i="2"
+          data-narration="The 'emit' strategy means the user wants to be notified of the data disappearance. Here, the rule event uses status: 'no_data' and episode.status: 'no_data', which becomes a filter and routing value available to the dispatcher in action policy decisions.">
+          <td class="ax-cell">emit</td>
+          <td class="cell" colspan="3">
+            <div class="outcome blue">
+              <code>status: 'no_data' (new)</code>
+              <code>episode.status: 'no_data' (new)</code>
+            </div>
+          </td>
+        </tr>
+        <tr class="build" data-i="3"
+          data-narration="When the user specifies 'recover' for no_data_strategy, the director writes a status: 'recovered' event and calculates the episode.status from the rule configuration. Note: another logic option here would be to write status: 'no_data', episode.status: 'inactive', which would 'force-recover' the episode immediately. That seems violent, though.">
+          <td class="ax-cell">recover</td>
+          <td class="cell" colspan="3">
+            <div class="outcome green">
+              <code>status: 'recovered'</code>
+              <code>episode.status: 'recovering' | 'inactive'</code>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="ax-cell">none</td>
+          <td class="cell build" data-i="4"
+            data-narration="When users opt out of any no_data_strategy, the system assumes the host would have been in the data if a has_data check occurred. This means this whole row acts the same as if the value were between the thresholds. Here, it results in a recovery.">
+            <div class="outcome green">
+              <code>status: 'recovered'</code>
+              <code>episode.status: 'recovering' | 'inactive'</code>
+            </div>
+          </td>
+          <td class="cell build" data-i="5"
+            data-narration="Here, it results in the 'limbo' state again.">
+            <div class="outcome amber">
+              <span class="badge amber">UNKNOWN_D</span>
+              <span class="desc">Can't distinguish between thresholds vs. no data without has_data query</span>
+            </div>
+          </td>
+          <td class="cell build" data-i="6"
+            data-narration="And here, it results in the phantom recovery state once more.">
+            <div class="outcome amber">
+              <span class="badge amber">UNKNOWN_E</span>
+              <span class="desc">No recovery configured, no no_data detection</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SLIDE 6: UNKNOWN_D proposal + A resolved -->
+<div class="slide" id="s6" data-slide="6">
+  <div class="scenario-label" style="color:var(--amber)">Proposed Resolution</div>
+  <div class="proposals-wrap">
+    <div class="proposal-card build" data-i="1">
+      <div class="proposal-card-head">
+        <span class="badge">UNKNOWN_D</span>
+        <span class="question-text">Limbo: group present in has_data query but meets neither the breach nor recovery threshold</span>
+      </div>
+      <div class="proposal-card-body">
+        <div class="proposal-answer">Write <code>status: 'breach'</code>. Episode status unchanged.</div>
+        <div class="proposal-rationale">The value didn't meet the recovery condition — the only options are to reuse an existing status or invent a new one. Reusing <code>breach</code> is honest: the episode is still active and nothing has changed. Inventing a new status requires threading it through the state machine and all downstream consumers.</div>
+      </div>
+    </div>
+
+    <div class="build" data-i="2" style="width:100%">
+      <div class="resolved-label">↓ Scenario B with UNKNOWN_D resolved</div>
+      <table class="st">
+        <colgroup><col class="ax"><col class="col"><col class="col"><col class="col"></colgroup>
+        <thead><tr>
+          <th class="corner"><span>no_data_strategy ↓</span><span>recovery_strategy →</span></th>
+          <th>no_breach</th><th>query</th><th>none</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td class="ax-cell note">irrelevant</td>
+            <td class="cell">
+              <div class="outcome green">
+                <code>status: 'recovered'</code>
+                <code>episode.status: 'recovering' | 'inactive'</code>
+              </div>
+            </td>
+            <td class="cell">
+              <div class="outcome proposed">
+                <span class="proposed-tag">↳ proposed</span>
+                <code>status: 'breach'</code>
+                <code style="color:var(--muted)">episode.status: unchanged</code>
+              </div>
+            </td>
+            <td class="cell">
+              <div class="outcome amber">
+                <span class="badge amber">UNKNOWN_E</span>
+                <span class="desc">group present, not breaching, no recovery configured</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SLIDE 7: UNKNOWN_E proposal + A fully resolved -->
+<div class="slide" id="s7" data-slide="7">
+  <div class="scenario-label" style="color:var(--amber)">Proposed Resolution</div>
+  <div class="proposals-wrap">
+    <div class="proposal-card build" data-i="1">
+      <div class="proposal-card-head">
+        <span class="badge">UNKNOWN_E</span>
+        <span class="question-text">No recovery configured: group stopped breaching but is still present (or ambiguously absent with no_data_strategy: none)</span>
+      </div>
+      <div class="proposal-card-body">
+        <div class="proposal-answer">Write no event. Episode drifts out of lookback windows over time.</div>
+        <div class="proposal-rationale">Users who set <code>recovery_strategy: none</code> explicitly opted out of automatic recovery. Adding a silent auto-recovery would violate their intent. Additionally, writing <code>breach</code> events in perpetuity to keep the episode alive would not be scalable.</div>
+      </div>
+    </div>
+
+    <div class="build" data-i="2" style="width:100%">
+      <div class="resolved-label">↓ Scenario B — both unknowns resolved</div>
+      <table class="st">
+        <colgroup><col class="ax"><col class="col"><col class="col"><col class="col"></colgroup>
+        <thead><tr>
+          <th class="corner"><span>no_data_strategy ↓</span><span>recovery_strategy →</span></th>
+          <th>no_breach</th><th>query</th><th>none</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td class="ax-cell note">irrelevant</td>
+            <td class="cell">
+              <div class="outcome green">
+                <code>status: 'recovered'</code>
+                <code>episode.status: 'recovering' | 'inactive'</code>
+              </div>
+            </td>
+            <td class="cell">
+              <div class="outcome proposed">
+                <span class="proposed-tag">↳ proposed</span>
+                <code>status: 'breach'</code>
+                <code style="color:var(--muted)">episode.status: unchanged</code>
+              </div>
+            </td>
+            <td class="cell">
+              <div class="outcome proposed">
+                <span class="proposed-tag">↳ proposed</span>
+                <code style="color:var(--subtle)">no event written</code>
+                <code style="color:var(--muted);font-size:10px">episode drifts out of lookback</code>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SLIDE 8: Links -->
+<div class="slide" id="s8" data-slide="8">
+  <div class="links-wrap">
+    <div class="links-heading">Explore further</div>
+    <a class="link-item" href="execution-matrix-b.html">
+      <div class="link-item-icon">⊞</div>
+      <div>
+        <div class="link-item-label">Full Execution Matrix</div>
+        <div class="link-item-desc">All combinations × all sub-cases — tabbed by scenario, with proposed resolutions</div>
+      </div>
+    </a>
+    <a class="link-item" href="schema-diff.html">
+      <div class="link-item-icon">⟺</div>
+      <div>
+        <div class="link-item-label">Schema Diff</div>
+        <div class="link-item-desc">Side-by-side comparison of cnasikas' proposal vs. the proposed schema changes</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+</div><!-- end deck -->
+
+<div class="slide-counter"><span id="curr">1</span> <span style="opacity:.3">/</span> <span>8</span></div>
+<div class="nav-hint" id="nav-hint">click or space to advance · ← → to navigate</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+let curr = 0;
+
+function getBuildItems(slide) {
+  return Array.from(slide.querySelectorAll('.build'))
+    .sort((a, b) => (+(a.dataset.i||0)) - (+(b.dataset.i||0)));
+}
+
+function shownCount(slide) {
+  return slide.querySelectorAll('.build.shown').length;
+}
+
+function setFocus(slide) {
+  if (!slide.querySelector('.narration')) return;
+  const items = getBuildItems(slide);
+  const shown = items.filter(el => el.classList.contains('shown'));
+  items.forEach(el => el.classList.remove('not-focus'));
+  if (shown.length > 1) {
+    shown.slice(0, -1).forEach(el => el.classList.add('not-focus'));
+  }
+}
+
+function updateNarration(slide) {
+  const box = slide.querySelector('.narration');
+  if (!box) return;
+  const shown = Array.from(slide.querySelectorAll('.build.shown'))
+    .sort((a, b) => (+(a.dataset.i||0)) - (+(b.dataset.i||0)));
+  slide.classList.toggle('builds-active', shown.length > 0);
+  if (!shown.length) { box.textContent = ''; box.style.opacity = '0'; return; }
+  const text = shown[shown.length - 1].dataset.narration || '';
+  box.textContent = text;
+  box.style.opacity = text ? '1' : '0';
+}
+
+function goToSlide(n) {
+  slides[curr].classList.remove('active');
+  slides[curr].classList.add('past');
+  curr = n;
+  slides[curr].classList.remove('past');
+  slides[curr].classList.add('active');
+  document.getElementById('curr').textContent = curr + 1;
+}
+
+function advance() {
+  const slide = slides[curr];
+  const items = getBuildItems(slide);
+  const shown = shownCount(slide);
+  if (shown < items.length) {
+    items[shown].classList.add('shown');
+    setFocus(slide);
+    updateNarration(slide);
+  } else if (curr < slides.length - 1) {
+    goToSlide(curr + 1);
+  }
+}
+
+function back() {
+  const slide = slides[curr];
+  const items = getBuildItems(slide);
+  const shown = shownCount(slide);
+  if (shown > 0) {
+    items[shown - 1].classList.remove('shown');
+    setFocus(slide);
+    updateNarration(slide);
+  } else if (curr > 0) {
+    goToSlide(curr - 1);
+    const newSlide = slides[curr];
+    getBuildItems(newSlide).forEach(el => el.classList.add('shown'));
+    setFocus(newSlide);
+    updateNarration(newSlide);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); advance(); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp'  || e.key === 'Backspace') { e.preventDefault(); back(); }
+});
+
+document.querySelector('.deck').addEventListener('click', () => advance());
+
+let hinted = false;
+function hideHint() {
+  if (!hinted) { hinted = true; document.getElementById('nav-hint').style.opacity = '0'; }
+}
+document.addEventListener('keydown', hideHint);
+document.querySelector('.deck').addEventListener('click', hideHint);
+</script>
+</body>
+</html>

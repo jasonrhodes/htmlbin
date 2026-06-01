@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schema Diff — v2 Alerting</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --border:   #30363d;
+  --border2:  #21262d;
+  --text:     #e6edf3;
+  --muted:    #7d8590;
+  --subtle:   #8b949e;
+
+  --green:        #3fb950;
+  --green-bg:     rgba(63,185,80,.10);
+  --green-border: rgba(63,185,80,.35);
+  --red:          #f85149;
+  --red-bg:       rgba(248,81,73,.09);
+  --red-border:   rgba(248,81,73,.35);
+  --amber:        #d29922;
+  --amber-bg:     rgba(210,153,34,.09);
+  --amber-border: rgba(210,153,34,.35);
+  --purple:       #bc8cff;
+  --purple-bg:    rgba(188,140,255,.09);
+  --purple-border:rgba(188,140,255,.30);
+
+  /* syntax */
+  --syn-key:     #79c0ff;
+  --syn-str:     #a5d6ff;
+  --syn-value:   #ffa657;
+  --syn-comment: #484f58;
+  --syn-type:    #7ee787;
+  --syn-pipe:    #6e7681;
+  --syn-colon:   #6e7681;
+  --syn-sep:     #30363d;
+
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 28px 20px 60px;
+  min-width: 960px;
+  zoom: 1.1;
+}
+
+/* ── header ── */
+h1 { font-family: var(--mono); font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.meta { font-size: 11px; color: var(--muted); margin-bottom: 24px; }
+.meta a { color: var(--subtle); text-decoration: none; }
+.meta a:hover { color: var(--text); }
+
+/* ── split layout ── */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.pane {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pane-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pane-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--subtle);
+  letter-spacing: .03em;
+}
+
+.pane-date {
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: auto;
+  font-family: var(--mono);
+}
+
+/* ── code block ── */
+.code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  padding: 12px 0;
+  overflow-x: auto;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  padding: 0 14px;
+  min-height: 1.6em;
+  position: relative;
+}
+
+.line:hover { background: rgba(255,255,255,.025); }
+
+.line.removed  { background: var(--red-bg);    border-left: 2px solid var(--red-border); }
+.line.added    { background: var(--green-bg);  border-left: 2px solid var(--green-border); }
+.line.changed  { background: var(--amber-bg);  border-left: 2px solid var(--amber-border); }
+.line.moved    { background: var(--purple-bg); border-left: 2px solid var(--purple-border); }
+.line.normal   { border-left: 2px solid transparent; }
+.line.blank    { border-left: 2px solid transparent; }
+
+.ln {
+  color: var(--syn-comment);
+  font-size: 10px;
+  min-width: 26px;
+  user-select: none;
+  flex-shrink: 0;
+  padding-right: 10px;
+  text-align: right;
+}
+
+.content { flex: 1; white-space: pre; }
+
+.badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 8px;
+  flex-shrink: 0;
+  font-family: var(--sans);
+  letter-spacing: .03em;
+  align-self: center;
+  text-transform: uppercase;
+}
+.badge.removed { background: rgba(248,81,73,.2);   color: var(--red); }
+.badge.added   { background: rgba(63,185,80,.2);   color: var(--green); }
+.badge.changed { background: rgba(210,153,34,.2);  color: var(--amber); }
+.badge.moved   { background: rgba(188,140,255,.2); color: var(--purple); }
+
+/* ── syntax colors ── */
+.k  { color: var(--syn-key); }
+.v  { color: var(--syn-value); }
+.s  { color: var(--syn-str); }
+.c  { color: var(--syn-comment); font-style: italic; }
+.t  { color: var(--syn-type); font-style: italic; }
+.p  { color: var(--syn-pipe); }
+.co { color: var(--syn-colon); }
+.e  { color: var(--syn-value); opacity: .6; }   /* enum options */
+.h  { color: var(--syn-comment); }               /* section header comment */
+
+/* ── diff summary ── */
+.summary {
+  margin-top: 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.summary-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 9px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--subtle);
+  letter-spacing: .03em;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.summary-table th {
+  background: var(--surface);
+  padding: 8px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border2);
+}
+
+.summary-table td {
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--border2);
+  vertical-align: top;
+}
+.summary-table tr:last-child td { border-bottom: none; }
+
+.summary-table td:first-child { width: 90px; }
+.summary-table td code {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--subtle);
+}
+.summary-table td .arrow { color: var(--muted); margin: 0 6px; }
+
+td.tag-cell { width: 90px; }
+.tag {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--sans);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.tag.removed { background: rgba(248,81,73,.15); color: var(--red); }
+.tag.added   { background: rgba(63,185,80,.15);  color: var(--green); }
+.tag.changed { background: rgba(210,153,34,.15); color: var(--amber); }
+.tag.moved   { background: rgba(188,140,255,.15);color: var(--purple); }
+
+.note { color: var(--muted); font-size: 10.5px; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<h1>Schema Diff — v2 Alerting Rule Query Shape</h1>
+<p class="meta">
+  Left: <a href="https://github.com/elastic/rna-program/discussions/409#discussioncomment-17020826">cnasikas proposal, 2026-05-21</a>
+  &nbsp;·&nbsp;
+  Right: proposed schema incorporating decisions through 2026-05-30
+</p>
+
+<div class="split">
+
+  <!-- ══ LEFT: cnasikas ══ -->
+  <div class="pane">
+    <div class="pane-header">
+      <span class="pane-label">cnasikas</span>
+      <span class="pane-date">2026-05-21</span>
+    </div>
+    <div class="code" id="left"></div>
+  </div>
+
+  <!-- ══ RIGHT: proposed ══ -->
+  <div class="pane">
+    <div class="pane-header">
+      <span class="pane-label">proposed</span>
+      <span class="pane-date">2026-05-30</span>
+    </div>
+    <div class="code" id="right"></div>
+  </div>
+
+</div>
+
+<!-- ══ DIFF SUMMARY ══ -->
+<div class="summary">
+  <div class="summary-header">diff summary</div>
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>type</th>
+        <th>cnasikas</th>
+        <th></th>
+        <th>proposed</th>
+        <th>notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tag changed">renamed</span></td>
+        <td><code>query.mode</code></td>
+        <td class="arrow">→</td>
+        <td><code>query.format</code></td>
+        <td>avoids collision with other "mode" keys in alerting schema</td>
+      </tr>
+      <tr>
+        <td><span class="tag changed">changed</span></td>
+        <td><code>query.mode</code> is immutable</td>
+        <td class="arrow">→</td>
+        <td><code>query.format</code> is immutable</td>
+        <td>immutability preserved; changing format mid-run would require handling in-flight episode state transitions</td>
+      </tr>
+      <tr>
+        <td><span class="tag changed">renamed</span></td>
+        <td><code>breach.pipeline</code></td>
+        <td class="arrow">→</td>
+        <td><code>breach.segment</code></td>
+        <td>emphasises the partial/non-complete nature of the field</td>
+      </tr>
+      <tr>
+        <td><span class="tag moved">moved</span></td>
+        <td><code>query.recovery.source</code></td>
+        <td class="arrow">→</td>
+        <td>top-level <code>recovery_strategy</code></td>
+        <td>strategy is a rule-level concern, not a query-shape concern; adds <code>none</code> option</td>
+      </tr>
+      <tr>
+        <td><span class="tag removed">removed</span></td>
+        <td><code>recovery.source: no_data</code></td>
+        <td class="arrow">→</td>
+        <td><em>not present</em></td>
+        <td>composability issue: single discriminator prevented combining custom recovery query with no_data recovery; see <a href="execution-matrix-b.html" style="color:inherit">execution matrix</a></td>
+      </tr>
+      <tr>
+        <td><span class="tag moved">moved</span></td>
+        <td><code>query.no_data.behavior</code></td>
+        <td class="arrow">→</td>
+        <td>top-level <code>no_data_strategy</code></td>
+        <td>renamed values: last_status → last_known_status (emit unchanged); adds recover and none</td>
+      </tr>
+      <tr>
+        <td><span class="tag removed">removed</span></td>
+        <td><code>query.no_data.source</code></td>
+        <td class="arrow">→</td>
+        <td><em>not present</em></td>
+        <td>absence detection is implicit (group missing from base/breach output); custom no_data queries not supported in current proposal</td>
+      </tr>
+      <tr>
+        <td><span class="tag removed">removed</span></td>
+        <td><code>query.no_data.timeframe</code></td>
+        <td class="arrow">→</td>
+        <td><em>not present</em></td>
+        <td>deferred; may belong in <code>state_transition</code> alongside <code>pending_count</code>, or top-level as <code>no_data_timeframe</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag removed">removed</span></td>
+        <td><code>query.no_data</code> block</td>
+        <td class="arrow">→</td>
+        <td><em>not present</em></td>
+        <td>entire sub-block removed; all no_data concerns handled by top-level <code>no_data_strategy</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag added">added</span></td>
+        <td><em>not present</em></td>
+        <td class="arrow">→</td>
+        <td>top-level <code>recovery_strategy: none</code></td>
+        <td>both fields are optional; <code>none</code> is the default — omitting them is equivalent</td>
+      </tr>
+      <tr>
+        <td><span class="tag added">added</span></td>
+        <td><em>not present</em></td>
+        <td class="arrow">→</td>
+        <td>top-level <code>no_data_strategy: none</code></td>
+        <td>same as above — explicit is clearer but omitting is equivalent</td>
+      </tr>
+      <tr>
+        <td><span class="tag changed">renamed</span></td>
+        <td><code>query.no_data.query</code> (standalone)</td>
+        <td class="arrow">→</td>
+        <td><code>query.has_data.query</code> (standalone)</td>
+        <td>name clarifies purpose — this query detects data <em>presence</em>; <code>no_data</code> was misleading since it's not the query run when data is absent</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+// ── schema definitions ──────────────────────────────────────────
+// Each line: [text, diffType, badge?]
+// diffType: 'normal' | 'removed' | 'added' | 'changed' | 'moved' | 'blank'
+
+const LEFT = [
+  ["# cnasikas proposal — 2026-05-21", "normal"],
+  ["", "blank"],
+  ["kind: alert | signal", "normal"],
+  ["metadata:", "normal"],
+  ["  name: <string>", "normal"],
+  ["schedule:", "normal"],
+  ["  every: <duration>", "normal"],
+  ["grouping:", "normal"],
+  ["  fields: [<string>]", "normal"],
+  ["state_transition: { ... }", "normal"],
+  ["", "blank"],
+  ["query:                      # unified detection block", "normal"],
+  ["  mode: composed | standalone   # immutable", "changed", "renamed + changed"],
+  ["", "blank"],
+  ["  # ── composed mode ─────────────────────────────────", "normal"],
+  ["  base: <esql_string>       # required", "normal"],
+  ["", "blank"],
+  ["  breach:                   # required", "normal"],
+  ["    pipeline: <esql_fragment>", "changed", "renamed"],
+  ["", "blank"],
+  ["  recovery:                 # optional", "normal"],
+  ["    source: query | no_breach | no_data", "moved", "moved to top level"],
+  ["    pipeline: <esql_fragment>  # if source: query", "changed", "renamed"],
+  ["", "blank"],
+  ["  no_data:                  # optional", "removed", "removed"],
+  ["    source: absence | query", "removed", "removed"],
+  ["    pipeline: <esql_fragment>  # if source: query", "removed", "removed"],
+  ["    behavior: emit | last_status", "moved", "moved + renamed"],
+  ["    timeframe: <duration>", "removed", "removed"],
+  ["", "blank"],
+  ["  # ── standalone mode ────────────────────────────────", "normal"],
+  ["  breach:                   # required", "normal"],
+  ["    query: <esql_string>", "normal"],
+  ["", "blank"],
+  ["  recovery:                 # optional", "normal"],
+  ["    source: query | no_breach | no_data", "moved", "moved to top level"],
+  ["    query: <esql_string>    # if source: query", "normal"],
+  ["", "blank"],
+  ["  no_data:                  # optional", "removed", "removed"],
+  ["    source: query           # 'absence' disallowed here", "removed", "removed"],
+  ["    query: <esql_string>", "removed", "removed"],
+  ["    behavior: emit | last_status", "moved", "moved + renamed"],
+  ["    timeframe: <duration>", "removed", "removed"],
+];
+
+const RIGHT = [
+  ["# proposed schema — 2026-05-30", "normal"],
+  ["", "blank"],
+  ["kind: alert | signal", "normal"],
+  ["metadata:", "normal"],
+  ["  name: <string>", "normal"],
+  ["schedule:", "normal"],
+  ["  every: <duration>", "normal"],
+  ["grouping:", "normal"],
+  ["  fields: [<string>]", "normal"],
+  ["state_transition: { ... }", "normal"],
+  ["", "blank"],
+  ["recovery_strategy: no_breach | query | none", "moved", "moved from query.recovery.source"],
+  ["no_data_strategy: last_known_status | emit", "moved", "moved from query.no_data.behavior"],
+  ["               | recover | none", "moved"],
+  ["", "blank"],
+  ["query:                      # query structure only", "normal"],
+  ["  format: composed | standalone  # immutable", "changed", "renamed"],
+  ["", "blank"],
+  ["  # ── composed mode ─────────────────────────────────", "normal"],
+  ["  base: <esql_string>       # required", "normal"],
+  ["", "blank"],
+  ["  breach:                   # required", "normal"],
+  ["    segment: <esql_fragment>", "changed", "renamed"],
+  ["", "blank"],
+  ["  recovery:                 # if recovery_strategy: query", "normal"],
+  ["    segment: <esql_fragment>   # no 'source' field", "changed", "renamed"],
+  ["", "blank"],
+  ["  # no no_data block", "removed"],
+  ["", "blank"],
+  ["  # ── standalone mode ────────────────────────────────", "normal"],
+  ["  breach:                   # required", "normal"],
+  ["    query: <esql_string>", "normal"],
+  ["", "blank"],
+  ["  recovery:                 # if recovery_strategy: query", "normal"],
+  ["    query: <esql_string>    # no 'source' field", "normal"],
+  ["", "blank"],
+  ["  has_data:                 # if no_data_strategy != none", "added", "renamed from standalone no_data"],
+  ["    query: <esql_string>", "added"],
+];
+
+// ── syntax highlighter ──────────────────────────────────────────
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function hlLine(raw) {
+  const e = esc(raw);
+  // blank
+  if (!raw.trim()) return '&nbsp;';
+  // full-line comment
+  if (/^\s*#/.test(raw)) {
+    const indent = raw.match(/^(\s*)/)[1];
+    return indent + `<span class="c">${e.trim()}</span>`;
+  }
+  // key: rest
+  const m = e.match(/^(\s*)([\w_.-]+)(\s*:\s*)(.*)/);
+  if (m) {
+    const [, ind, key, colon, rest] = m;
+    return ind + `<span class="k">${key}</span><span class="co">${colon}</span>` + hlValue(rest);
+  }
+  // continuation value lines (start with |, spaces, enum options)
+  if (/^\s+\|/.test(raw)) {
+    const ind = raw.match(/^(\s*)/)[1];
+    return ind + `<span class="p">|</span> ` + hlValue(e.trim().slice(2));
+  }
+  return `<span class="e">${e}</span>`;
+}
+
+function hlValue(v) {
+  if (!v) return '';
+  // inline comment: split on first ' # ' or '   #'
+  const ci = v.search(/\s{2,}#|\s+#\s/);
+  let val = v, comment = '';
+  if (ci > 0) { val = v.slice(0, ci); comment = `<span class="c">${v.slice(ci)}</span>`; }
+
+  let out = '';
+  if (/^&lt;/.test(val.trim())) {
+    out = `<span class="t">${val}</span>`;
+  } else if (/^'/.test(val.trim())) {
+    out = `<span class="s">${val}</span>`;
+  } else if (/\|/.test(val)) {
+    out = val.split('|').map((p, i) =>
+      i === 0 ? `<span class="e">${p.trim()}</span>` :
+      `<span class="p"> | </span><span class="e">${p.trim()}</span>`
+    ).join('');
+  } else {
+    out = `<span class="v">${val}</span>`;
+  }
+  return out + comment;
+}
+
+// ── renderer ────────────────────────────────────────────────────
+function render(lines, containerId) {
+  const el = document.getElementById(containerId);
+  let html = '';
+  lines.forEach(([text, type, badge], i) => {
+    const lineNum = i + 1;
+    const cls = type || 'normal';
+    const badgeHtml = badge
+      ? `<span class="badge ${cls}">${badge}</span>`
+      : '';
+    html += `<div class="line ${cls}">` +
+      `<span class="ln">${lineNum}</span>` +
+      `<span class="content">${hlLine(text)}</span>` +
+      badgeHtml +
+      `</div>`;
+  });
+  el.innerHTML = html;
+}
+
+render(LEFT,  'left');
+render(RIGHT, 'right');
+</script>
+
+</body>
+</html>
