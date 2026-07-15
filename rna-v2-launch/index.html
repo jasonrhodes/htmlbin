@@ -333,6 +333,17 @@
       <h3>Rules on rules</h3>
       <p>Alert output lands in a searchable data stream. Write a second rule that queries it &mdash; "fire when 3+ hosts breach memory thresholds simultaneously." One incident, not three pages.</p>
     </div>
+
+    <div class="card card-today">
+      <div class="card-label">Today</div>
+      <h3>"I have to configure the same notification on every single rule"</h3>
+      <p>Actions are configured per-rule. Changing an escalation policy means editing dozens of rules one at a time. There's no way to share notification logic across rules or route alerts based on content.</p>
+    </div>
+    <div class="card card-new">
+      <div class="card-label">With v2</div>
+      <h3>Action policies</h3>
+      <p>Notification routing is decoupled from rules entirely. Define an action policy once &mdash; with matching, grouping, and throttling &mdash; and attach it to as many rules as you need. Change it in one place, every rule picks it up.</p>
+    </div>
   </div>
 
   <!-- CALLOUT -->
