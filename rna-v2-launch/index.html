@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The New Alerting in Kibana</title>
+<style>
+  :root {
+    --bg: #fafbfc;
+    --card: #fff;
+    --text: #1a1c21;
+    --muted: #69707d;
+    --accent: #0077cc;
+    --accent-light: #e6f2ff;
+    --green: #017d73;
+    --green-light: #e6f9f7;
+    --orange: #f5a623;
+    --orange-light: #fef6e6;
+    --border: #d3dae6;
+    --divider: #eef1f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 3rem 2rem 4rem; }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 4rem 2rem 3rem;
+    background: linear-gradient(135deg, #003b6b 0%, #0077cc 60%, #00bfb3 100%);
+    color: #fff;
+  }
+  .hero-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 0.3rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+  .hero p {
+    font-size: 1.15rem;
+    max-width: 640px;
+    margin: 0 auto;
+    opacity: 0.92;
+    line-height: 1.7;
+  }
+
+  /* Section headers */
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  h2 {
+    font-size: 1.8rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+  .section-intro {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 640px;
+    margin-bottom: 2rem;
+  }
+
+  /* Pain/Gain cards */
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    position: relative;
+  }
+  .card-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .card-today .card-label { color: #bd271e; }
+  .card-new .card-label { color: var(--green); }
+  .card-today { border-left: 3px solid #bd271e; }
+  .card-new { border-left: 3px solid var(--green); }
+  .card h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .card p { font-size: 0.92rem; color: var(--muted); line-height: 1.55; }
+
+  /* Feature highlights */
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+  }
+  .feature {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem;
+  }
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+  .feature-icon.blue { background: var(--accent-light); color: var(--accent); }
+  .feature-icon.green { background: var(--green-light); color: var(--green); }
+  .feature-icon.orange { background: var(--orange-light); color: var(--orange); }
+  .feature h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .feature p { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
+  /* Big quote / callout */
+  .callout {
+    background: linear-gradient(135deg, #003b6b 0%, #0077cc 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 2.5rem 3rem;
+    margin: 2.5rem 0 3rem;
+    text-align: center;
+  }
+  .callout p {
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.5;
+    max-width: 580px;
+    margin: 0 auto;
+  }
+
+  /* External alerts section */
+  .external-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+    margin-bottom: 3rem;
+  }
+  .external-text h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .external-text p { font-size: 0.92rem; color: var(--muted); margin-bottom: 1rem; }
+  .vendor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .vendor-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Timeline */
+  .timeline {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+  }
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--divider);
+    align-items: start;
+  }
+  .timeline-row:last-child { border-bottom: none; }
+  .timeline-date {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .timeline-content { font-size: 0.9rem; color: var(--muted); }
+  .timeline-content strong { color: var(--text); }
+  .badge-exp {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    background: var(--orange-light);
+    color: #946300;
+    border: 1px solid #f5d88a;
+  }
+  .badge-ga {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    background: var(--green-light);
+    color: var(--green);
+    border: 1px solid #a3e0db;
+  }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    padding: 2rem 0;
+  }
+  .cta h2 { margin-bottom: 1rem; }
+  .cta p { font-size: 1rem; color: var(--muted); max-width: 520px; margin: 0 auto 1.5rem; }
+  .cta-btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .cta-btn:hover { background: #005fa3; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 1.8rem; }
+    .comparison-grid, .features, .external-section { grid-template-columns: 1fr; }
+    .container { padding: 2rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Experimental &middot; Available Now</div>
+  <h1>A new way to think about<br>alerting in Elastic</h1>
+  <p>A ground-up redesign of alerting in Elastic. One query language for all alert logic. Full alert history you can search. Smarter noise control. And rules that can watch other rules.</p>
+</div>
+
+<div class="container">
+
+  <div style="background: var(--accent-light); border: 1px solid #b3d9ff; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 3rem; font-size: 0.92rem; color: #1a1c21;">
+    <strong>v1 is not going away.</strong> v2 runs alongside your existing rules and alerts. Enabling it changes nothing about v1. There is no forced migration &mdash; teams move rules at their own pace, when they&rsquo;re ready.
+  </div>
+
+  <!-- SECTION 1: The problems this solves -->
+  <div class="section-label">Why we built this</div>
+  <h2>Real problems we've heard from you</h2>
+  <p class="section-intro">If any of these feel familiar, you're not alone. Every one of these drove a design decision in the new alerting experience.</p>
+
+  <div class="comparison-grid">
+    <div class="card card-today">
+      <div class="card-label">Today</div>
+      <h3>"I need a new detection, but there's no rule type for it"</h3>
+      <p>Every alerting use case requires a hand-built rule type shipped by Elastic. New detection logic means waiting for a release.</p>
+    </div>
+    <div class="card card-new">
+      <div class="card-label">With v2</div>
+      <h3>Any ES|QL query is a rule</h3>
+      <p>Write your detection as an ES|QL query. No executor plugins, no waiting for Elastic to ship a new rule type. If you can query it, you can alert on it.</p>
+    </div>
+
+    <div class="card card-today">
+      <div class="card-label">Today</div>
+      <h3>"The alert fired, but I can't see what value triggered it"</h3>
+      <p>What gets stored in an alert is decided by the rule type's executor, not by you. Getting one more field means asking Elastic to change the rule type code.</p>
+    </div>
+    <div class="card card-new">
+      <div class="card-label">With v2</div>
+      <h3>You control the payload</h3>
+      <p>Your ES|QL query <em>is</em> the alert payload. Whatever fields you select end up in the event &mdash; and they accumulate as a time series across the life of the episode, not a single snapshot.</p>
+    </div>
+
+    <div class="card card-today">
+      <div class="card-label">Today</div>
+      <h3>"It keeps flapping and I can't make it stop"</h3>
+      <p>No custom recovery logic. The system decides when an alert is "recovered." Noisy signals become noisy pages with no way to add hysteresis.</p>
+    </div>
+    <div class="card card-new">
+      <div class="card-label">With v2</div>
+      <h3>Custom recovery, delayed activation</h3>
+      <p>Define a separate recovery query with a different threshold than firing. Require N consecutive breaches before activation. You decide when something is truly a problem &mdash; and when it's truly fixed.</p>
+    </div>
+
+    <div class="card card-today">
+      <div class="card-label">Today</div>
+      <h3>"Three alerts fired for the same incident, but the system doesn't know that"</h3>
+      <p>Alerts can't see other alerts. Correlating multiple signals into one incident happens in your head or in an external tool. The system has no way to say "these are the same incident."</p>
+    </div>
+    <div class="card card-new">
+      <div class="card-label">With v2</div>
+      <h3>Rules on rules</h3>
+      <p>Alert output lands in a searchable data stream. Write a second rule that queries it &mdash; "fire when 3+ hosts breach memory thresholds simultaneously." One incident, not three pages.</p>
+    </div>
+  </div>
+
+  <!-- CALLOUT -->
+  <div class="callout">
+    <p>Every rule evaluation is retained and searchable.<br>Ask "why did I get paged?" or "why <em>didn't</em> I get paged?" &mdash; and get a real answer.</p>
+  </div>
+
+  <!-- SECTION 2: Key capabilities -->
+  <div class="section-label">What's new</div>
+  <h2>Built from first principles</h2>
+  <p class="section-intro">A new engine with new primitives &mdash; running alongside v1, not replacing it.</p>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon blue">&#x2630;</div>
+      <h3>ES|QL-native rules</h3>
+      <p>One language for all alert logic. Thresholds, absence checks, aggregations, correlations &mdash; all expressible in ES|QL. Three authoring modes: visual builder, ES|QL editor, or AI-assisted.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon green">&#x23F1;</div>
+      <h3>Episode lifecycle</h3>
+      <p>Alerts have a real state machine: Pending &rarr; Active &rarr; Recovering &rarr; Inactive. Configurable thresholds at each transition. Signal vs. Alert mode for different use cases.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon orange">&#x1F4E8;</div>
+      <h3>Action policies</h3>
+      <p>Notification routing decoupled from rules. One policy can serve many rules. Match, group, and throttle independently. Four throttle strategies. No more per-rule action configuration.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon blue">&#x1F50D;</div>
+      <h3>Full audit trail</h3>
+      <p>Every evaluation writes to <code>.rule-events</code>. Every dispatch decision writes to <code>.alert-actions</code>. Query both in Discover. "Why did this fire?" has an answer.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon green">&#x1F517;</div>
+      <h3>Rules on rules</h3>
+      <p>Rule events are just data. Write a meta-rule that queries them &mdash; blast radius detection, escalation chains, cross-service correlation &mdash; all in ES|QL.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon orange">&#x1F916;</div>
+      <h3>AI-assisted authoring</h3>
+      <p>Describe what you want to detect in plain language. The agent builds the ES|QL query, configures thresholds, and wires up the action policy. Edit and refine from there.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3: External alerts -->
+  <div class="section-label">Coming next</div>
+  <h2>Bring your external alerts in</h2>
+  <p class="section-intro">Unify alerts from any source into the same experience &mdash; same lifecycle, same queries, same action policies.</p>
+
+  <div class="external-section">
+    <div class="external-text">
+      <h3>Push alerts from any system</h3>
+      <p>Send alerts from CloudWatch, Prometheus, Datadog, PagerDuty, or any monitoring tool into v2 via a simple HTTP endpoint. External alerts get the same episode lifecycle, the same action policies, and the same searchability as Elastic-native alerts.</p>
+      <p>Define field mappings once. Every subsequent alert is normalized automatically. Mix external and internal alerts in the same rules-on-rules queries.</p>
+      <p style="font-size: 0.82rem; color: var(--accent); font-weight: 600;">API available now (experimental) &middot; UI mapping wizard coming soon</p>
+    </div>
+    <div>
+      <div style="font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.75rem;">Works with alerts from</div>
+      <div class="vendor-grid">
+        <div class="vendor-tag">CloudWatch</div>
+        <div class="vendor-tag">Prometheus</div>
+        <div class="vendor-tag">Datadog</div>
+        <div class="vendor-tag">PagerDuty</div>
+        <div class="vendor-tag">Grafana</div>
+        <div class="vendor-tag">Azure Monitor</div>
+        <div class="vendor-tag">CrowdStrike</div>
+        <div class="vendor-tag">ServiceNow</div>
+        <div class="vendor-tag">Splunk</div>
+        <div class="vendor-tag">Nagios</div>
+        <div class="vendor-tag">Defender</div>
+        <div class="vendor-tag">Any HTTP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: Timeline -->
+  <div class="section-label">Availability</div>
+  <h2>Where we are and where we're going</h2>
+
+  <div class="timeline">
+    <div class="timeline-row">
+      <div class="timeline-date">Now</div>
+      <div class="timeline-content">
+        <strong>Serverless &mdash; all regions</strong> &nbsp;<span class="badge-exp">Experimental</span><br>
+        Full v2 engine available in Elastic Cloud Serverless. Enable via advanced settings &mdash; no YAML required.
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-date">July 28</div>
+      <div class="timeline-content">
+        <strong>Stateful 9.5</strong> &nbsp;<span class="badge-exp">Experimental</span><br>
+        v2 ships as an experimental feature in Kibana 9.5. Enable with a feature flag alongside your existing v1 setup.
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-date">Q3&ndash;Q4</div>
+      <div class="timeline-content">
+        <strong>General Availability</strong> &nbsp;<span class="badge-ga">GA target</span><br>
+        RBAC, performance at scale, full v1&rarr;v2 migration tooling, expanded pre-built rules, and external alert ingestion UI.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: Side by side quick ref -->
+  <div class="section-label">At a glance</div>
+  <h2>v1 vs v2</h2>
+
+  <div style="overflow-x: auto; margin-bottom: 3rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border);">
+          <th style="text-align: left; padding: 0.6rem 0.75rem; color: var(--muted); font-weight: 600; width: 28%;">Capability</th>
+          <th style="text-align: left; padding: 0.6rem 0.75rem; color: #bd271e; font-weight: 600; width: 36%;">Alerting v1</th>
+          <th style="text-align: left; padding: 0.6rem 0.75rem; color: var(--green); font-weight: 600; width: 36%;">Alerting v2</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid var(--divider);">
+          <td style="padding: 0.6rem 0.75rem; font-weight: 600;">Rule logic</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Fixed rule types with hard-coded executors</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Any ES|QL query</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--divider);">
+          <td style="padding: 0.6rem 0.75rem; font-weight: 600;">Alert data</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Executor decides what's stored</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">You choose via <code>KEEP</code> &mdash; full time series per episode</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--divider);">
+          <td style="padding: 0.6rem 0.75rem; font-weight: 600;">History</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Updated in place &mdash; latest value only</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Append-only &mdash; full evaluation history</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--divider);">
+          <td style="padding: 0.6rem 0.75rem; font-weight: 600;">Recovery</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">System-defined, no custom logic</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Custom recovery query + delayed activation</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--divider);">
+          <td style="padding: 0.6rem 0.75rem; font-weight: 600;">Notifications</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Per-action on each rule</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Action policies: match, group, throttle across rules</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--divider);">
+          <td style="padding: 0.6rem 0.75rem; font-weight: 600;">Rules on rules</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Not possible</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Alert output is queryable data &mdash; meta-rules, escalation chains</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--divider);">
+          <td style="padding: 0.6rem 0.75rem; font-weight: 600;">Audit trail</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Limited &mdash; hard to answer "why did this fire?"</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Full &mdash; query <code>.rule-events</code> and <code>.alert-actions</code> in Discover</td>
+        </tr>
+        <tr>
+          <td style="padding: 0.6rem 0.75rem; font-weight: 600;">External alerts</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Manual via connectors (outbound only)</td>
+          <td style="padding: 0.6rem 0.75rem; color: var(--muted);">Push API &mdash; ingest from any source, same lifecycle</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <h2>Try it today</h2>
+    <p>Enable the experimental feature alongside your existing setup &mdash; zero risk to your v1 rules &mdash; and see the difference for yourself.</p>
+    <a class="cta-btn" href="https://github.com/elastic/roadmap/issues/314">Learn more on the Elastic roadmap &rarr;</a>
+  </div>
+
+</div>
+
+</body>
+</html>
