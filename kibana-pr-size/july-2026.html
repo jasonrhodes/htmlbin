@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kibana PR size — July 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0c0e10;
+    --bg-elev: #14181c;
+    --ink: #e8ebe6;
+    --muted: #8b938a;
+    --dim: #5a6358;
+    --line: #252b28;
+    --accent: #d4a35a;
+    --accent-dim: rgba(212, 163, 90, 0.15);
+    --cool: #7eb8a8;
+    --warn: #e07a5f;
+    --ok: #8fbc8f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Schibsted Grotesk", system-ui, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    overflow: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(212, 163, 90, 0.07), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(126, 184, 168, 0.05), transparent 45%);
+  }
+
+  .deck {
+    height: 100%;
+    width: 100%;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1.5rem, 5vw, 4.5rem) clamp(1.5rem, 8vw, 7rem);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+  }
+
+  h1 {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    max-width: 14ch;
+  }
+
+  h1 em, .fact em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .lede {
+    margin-top: 1.5rem;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--muted);
+    max-width: 38rem;
+    line-height: 1.55;
+  }
+
+  .fact {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    max-width: 18ch;
+  }
+
+  .fact .num {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 500;
+    font-style: normal;
+    color: var(--accent);
+    letter-spacing: -0.04em;
+  }
+
+  .explain {
+    margin-top: 1.75rem;
+    max-width: 36rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .explain strong { color: var(--ink); font-weight: 600; }
+
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+    max-width: 42rem;
+  }
+
+  .stat {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 1.1rem 1.2rem;
+  }
+
+  .stat .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.45rem;
+  }
+
+  .stat .value {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .stat .sub {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .stat.accent { border-color: rgba(212, 163, 90, 0.35); background: var(--accent-dim); }
+  .stat.accent .value { color: var(--accent); }
+
+  table.bins {
+    width: 100%;
+    max-width: 48rem;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  table.bins th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 500;
+    text-align: right;
+    padding: 0.5rem 0.65rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.bins th:first-child { text-align: left; }
+
+  table.bins td {
+    font-family: "IBM Plex Mono", monospace;
+    text-align: right;
+    padding: 0.55rem 0.65rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+  }
+
+  table.bins td:first-child { text-align: left; color: var(--muted); }
+
+  table.bins tr.hot td:nth-child(4),
+  table.bins tr.hot td:nth-child(5) { color: var(--warn); }
+
+  .bars {
+    margin-top: 1.75rem;
+    max-width: 40rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr 3.5rem;
+    gap: 0.75rem;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+
+  .bar-row .name {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .bar-track {
+    height: 8px;
+    background: var(--line);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 1px;
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .slide.active .bar-fill { transform: scaleX(1); }
+
+  .bar-row .val {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem;
+    text-align: right;
+    color: var(--ink);
+  }
+
+  .rho {
+    display: inline-block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.95rem;
+    padding: 0.2rem 0.55rem;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-radius: 2px;
+    margin: 0 0.15rem;
+  }
+
+  .footnote {
+    margin-top: 2rem;
+    font-size: 0.8rem;
+    color: var(--dim);
+    max-width: 36rem;
+    line-height: 1.5;
+  }
+
+  .nav {
+    position: fixed;
+    bottom: 1.25rem;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 clamp(1rem, 4vw, 3rem);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .nav button {
+    pointer-events: auto;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.55rem 0.9rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .nav button:hover { color: var(--ink); border-color: var(--muted); }
+  .nav button:disabled { opacity: 0.3; cursor: default; }
+
+  .progress {
+    pointer-events: auto;
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+  }
+
+  .progress button {
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    background: var(--line);
+    cursor: pointer;
+  }
+
+  .progress button.on { background: var(--accent); }
+
+  .counter {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem;
+    color: var(--dim);
+    position: fixed;
+    top: 1.25rem;
+    right: clamp(1rem, 4vw, 3rem);
+    letter-spacing: 0.06em;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 2px;
+    margin-right: 0.4rem;
+  }
+
+  .tag.cool { color: var(--cool); border-color: rgba(126,184,168,0.35); }
+  .tag.warn { color: var(--warn); border-color: rgba(224,122,95,0.35); }
+
+  ul.takeaways {
+    margin-top: 1.5rem;
+    list-style: none;
+    max-width: 38rem;
+  }
+
+  ul.takeaways li {
+    position: relative;
+    padding: 0.85rem 0 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    line-height: 1.5;
+    font-size: 1.02rem;
+  }
+
+  ul.takeaways li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 1.25rem;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+
+  ul.takeaways li strong { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 640px) {
+    .slide { padding-bottom: 5rem; }
+    table.bins { font-size: 0.72rem; }
+    table.bins th, table.bins td { padding: 0.4rem 0.3rem; }
+    .progress { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="counter"><span id="cur">1</span> / <span id="total">15</span></div>
+
+  <div class="deck" id="deck">
+
+    <!-- 1 -->
+    <section class="slide active" data-i="0">
+      <p class="eyebrow">elastic/kibana · July 2026</p>
+      <h1>Are our PRs <em>too big</em>?</h1>
+      <p class="lede">A short look at size, review engagement, and time-to-merge across 3,414 merged PRs — plus path-based cohorts for alerting_v2 and Nightshift.</p>
+      <p class="footnote">Use ← → or click next. Share this URL — one self-contained page.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" data-i="1">
+      <p class="eyebrow">What we measured</p>
+      <h1 class="fact" style="max-width:22ch; font-size: clamp(1.8rem, 4vw, 2.8rem);">Four signals per merged PR</h1>
+      <div class="pair">
+        <div class="stat">
+          <div class="label">Size</div>
+          <div class="value" style="font-size:1.1rem">additions</div>
+          <div class="sub">+ net (add − del)</div>
+        </div>
+        <div class="stat">
+          <div class="label">Engagement</div>
+          <div class="value" style="font-size:1.1rem">comments</div>
+          <div class="sub">conversation + review</div>
+        </div>
+        <div class="stat">
+          <div class="label">Speed</div>
+          <div class="value" style="font-size:1.1rem">ready → merge</div>
+          <div class="sub">hours (or createdAt)</div>
+        </div>
+        <div class="stat">
+          <div class="label">Cohorts</div>
+          <div class="value" style="font-size:1.1rem">by path</div>
+          <div class="sub">nightshift / alerting_v2</div>
+        </div>
+      </div>
+      <p class="explain">Closed-unmerged PRs excluded. Data from the github-stats ES cluster, with file paths from GitHub for cohort tags.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide" data-i="2">
+      <p class="eyebrow">Headline · all kibana</p>
+      <p class="fact">Median additions:<br /><span class="num">96.5</span> lines</p>
+      <p class="explain">That sounds tiny. Half of all merged PRs add fewer than 100 lines. But the <strong>mean is 491</strong> — a fat right tail is pulling the average up. <strong>Median</strong> = typical PR. <strong>Mean</strong> = what the repo “feels like” when big PRs dominate memory.</p>
+      <div class="pair">
+        <div class="stat">
+          <div class="label">Median</div>
+          <div class="value">96.5</div>
+          <div class="sub">typical PR</div>
+        </div>
+        <div class="stat accent">
+          <div class="label">Mean</div>
+          <div class="value">491</div>
+          <div class="sub">skewed by giants</div>
+        </div>
+        <div class="stat">
+          <div class="label">p90</div>
+          <div class="value">1,031</div>
+          <div class="sub">1 in 10 ≥ this</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide" data-i="3">
+      <p class="eyebrow">Why the median is so low</p>
+      <p class="fact">One third of merges are <em>bots</em></p>
+      <p class="explain"><strong>1,139 / 3,414</strong> PRs look bot-authored — mostly <code style="color:var(--cool)">kibanamachine</code> (1,095 alone, median +48). Another ~39% of all PRs are in the 1–50 line band (backports, config, tiny fixes). The “typical human feature PR” is hiding under that mass.</p>
+      <div class="pair">
+        <div class="stat">
+          <div class="label">Bot-ish share</div>
+          <div class="value">33%</div>
+          <div class="sub">of July merges</div>
+        </div>
+        <div class="stat">
+          <div class="label">≤50 additions</div>
+          <div class="value">39%</div>
+          <div class="sub">of all PRs</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide" data-i="4">
+      <p class="eyebrow">Human-only · n = 2,275</p>
+      <p class="fact">Median climbs to <span class="num">142</span></p>
+      <p class="explain">Strip bots and the typical PR is still modest — but the mean jumps to <strong>612</strong>, and p90 to <strong>1,367</strong>. So “are PRs out of control?” depends which lens you use: the median human PR is fine; the tail is where pain lives.</p>
+      <div class="pair">
+        <div class="stat">
+          <div class="label">Median +</div>
+          <div class="value">142</div>
+          <div class="sub">vs 96.5 all</div>
+        </div>
+        <div class="stat accent">
+          <div class="label">Mean +</div>
+          <div class="value">612</div>
+          <div class="sub">vs 491 all</div>
+        </div>
+        <div class="stat">
+          <div class="label">≥1,000 adds</div>
+          <div class="value">13.5%</div>
+          <div class="sub">of human PRs</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide" data-i="5">
+      <p class="eyebrow">Distribution · additions</p>
+      <p class="fact" style="max-width:20ch; font-size:clamp(1.8rem,4vw,2.6rem);">Most PRs are small.<br />A few are huge.</p>
+      <div class="bars" aria-label="Share of PRs by additions bin">
+        <div class="bar-row"><span class="name">0–49</span><div class="bar-track"><div class="bar-fill" style="transform:scaleX(0); --w:1; width:100%" data-w="0.389"></div></div><span class="val">39%</span></div>
+        <div class="bar-row"><span class="name">50–99</span><div class="bar-track"><div class="bar-fill" data-w="0.116" style="width:29.8%"></div></div><span class="val">12%</span></div>
+        <div class="bar-row"><span class="name">100–249</span><div class="bar-track"><div class="bar-fill" data-w="0.171" style="width:44%"></div></div><span class="val">17%</span></div>
+        <div class="bar-row"><span class="name">250–499</span><div class="bar-track"><div class="bar-fill" data-w="0.122" style="width:31.4%"></div></div><span class="val">12%</span></div>
+        <div class="bar-row"><span class="name">500–999</span><div class="bar-track"><div class="bar-fill" data-w="0.096" style="width:24.7%"></div></div><span class="val">10%</span></div>
+        <div class="bar-row"><span class="name">1000–2499</span><div class="bar-track"><div class="bar-fill" data-w="0.070" style="width:18%"></div></div><span class="val">7%</span></div>
+        <div class="bar-row"><span class="name">2500+</span><div class="bar-track"><div class="bar-fill" data-w="0.033" style="width:8.5%"></div></div><span class="val">3%</span></div>
+      </div>
+      <p class="footnote">Bar lengths relative to the largest bin (0–49 = 39%).</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide" data-i="6">
+      <p class="eyebrow">Cohort · path contains alerting_v2 / alerting-v2</p>
+      <p class="fact"><span class="num">152</span> PRs · median <span class="num">344.5</span></p>
+      <p class="explain">Still not “monster PR” territory at the median — but ~<strong>3.5×</strong> the all-kibana median, and <strong>21%</strong> add ≥1,000 lines (vs 10% repo-wide). Mean <strong>656</strong> shows the same skew pattern inside the cohort.</p>
+      <div class="pair">
+        <div class="stat">
+          <div class="label">Median +</div>
+          <div class="value">344.5</div>
+        </div>
+        <div class="stat accent">
+          <div class="label">Mean +</div>
+          <div class="value">656</div>
+        </div>
+        <div class="stat">
+          <div class="label">Med comments</div>
+          <div class="value">8</div>
+          <div class="sub">mean 12.7</div>
+        </div>
+        <div class="stat">
+          <div class="label">Med ready→merge</div>
+          <div class="value">26h</div>
+          <div class="sub">mean 73h</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide" data-i="7">
+      <p class="eyebrow">Cohort · path contains nightshift</p>
+      <p class="fact"><span class="tag warn">n = 9</span> Treat as directional</p>
+      <p class="explain">Path-tagged Nightshift PRs are large — median <strong>1,416</strong> additions, mean <strong>2,355</strong>, median 28 comments, median ~46h to merge. With only nine PRs, this is a signal to watch, not a verdict.</p>
+      <div class="pair">
+        <div class="stat accent">
+          <div class="label">Median +</div>
+          <div class="value">1,416</div>
+        </div>
+        <div class="stat">
+          <div class="label">Mean +</div>
+          <div class="value">2,355</div>
+        </div>
+        <div class="stat">
+          <div class="label">Med files</div>
+          <div class="value">42</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide" data-i="8">
+      <p class="eyebrow">Hypothesis</p>
+      <p class="fact">Bigger PRs get <em>less</em> review per line</p>
+      <p class="explain">Absolute comment count still rises with size — but <strong>comments per 100 lines added</strong> collapses. Reviewers don’t scale linearly with diff size. That’s the engagement-density problem.</p>
+      <p class="explain" style="margin-top:1rem">Spearman rank correlation, comments/100add vs additions: <span class="rho">ρ ≈ −0.76</span> (strong negative).</p>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide" data-i="9">
+      <p class="eyebrow">Engagement density by size</p>
+      <p class="fact" style="font-size:clamp(1.6rem,3.5vw,2.2rem); max-width:24ch;">Comments rise. Comments <em>per line</em> fall.</p>
+      <table class="bins">
+        <thead>
+          <tr>
+            <th>Additions</th>
+            <th>n</th>
+            <th>Med cmt</th>
+            <th>Mean cmt</th>
+            <th>Med /100+</th>
+            <th>Med TTM</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>0–49</td><td>1329</td><td>3</td><td>4.3</td><td>33.3</td><td>2h</td></tr>
+          <tr><td>50–99</td><td>395</td><td>3</td><td>5.6</td><td>4.2</td><td>5h</td></tr>
+          <tr><td>100–249</td><td>590</td><td>5</td><td>7.1</td><td>3.1</td><td>15h</td></tr>
+          <tr><td>250–499</td><td>414</td><td>7</td><td>10.6</td><td>2.1</td><td>20h</td></tr>
+          <tr><td>500–999</td><td>331</td><td>9</td><td>13.6</td><td>1.4</td><td>23h</td></tr>
+          <tr class="hot"><td>1000–2499</td><td>241</td><td>19</td><td>23.9</td><td>1.4</td><td>54h</td></tr>
+          <tr class="hot"><td>2500+</td><td>114</td><td>30</td><td>41.2</td><td>0.76</td><td>78h</td></tr>
+        </tbody>
+      </table>
+      <p class="footnote">/100+ = comments per 100 lines added. TTM = hours ready-for-review → merge.</p>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide" data-i="10">
+      <p class="eyebrow">Time to merge</p>
+      <p class="fact">Size raises TTM — <em>not</em> linearly</p>
+      <p class="explain">Additions ↔ ready→merge: <span class="rho">ρ ≈ 0.35</span> (moderate). Median TTM crawls from ~2h (tiny) to ~23h (500–999), then <strong>steps up</strong> past 1,000 lines (54h → 78h). Means are much higher than medians — a few stuck PRs dominate.</p>
+      <div class="pair">
+        <div class="stat">
+          <div class="label">All · med TTM</div>
+          <div class="value">8.6h</div>
+          <div class="sub">mean 61h</div>
+        </div>
+        <div class="stat">
+          <div class="label">Human · med TTM</div>
+          <div class="value">23h</div>
+          <div class="sub">mean 83h</div>
+        </div>
+        <div class="stat accent">
+          <div class="label">≥2500 · med TTM</div>
+          <div class="value">78h</div>
+          <div class="sub">mean 129h</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide" data-i="11">
+      <p class="eyebrow">What actually predicts merge time</p>
+      <p class="fact">Discussion beats diff size</p>
+      <p class="explain">Comments ↔ ready→merge: <span class="rho">ρ ≈ 0.75</span> — much stronger than size alone. Big quiet PRs can still merge relatively fast; heavily discussed PRs (of any size) sit longer. Size matters; <strong>review friction</strong> matters more.</p>
+      <div class="pair">
+        <div class="stat">
+          <div class="label">Size → TTM</div>
+          <div class="value">ρ 0.35</div>
+        </div>
+        <div class="stat accent">
+          <div class="label">Comments → TTM</div>
+          <div class="value">ρ 0.75</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 -->
+    <section class="slide" data-i="12">
+      <p class="eyebrow">Quiet giants</p>
+      <p class="fact"><span class="num">14%</span> of ≥1k-add PRs have ≤2 comments</p>
+      <p class="explain">Among 355 PRs with ≥1,000 additions: median 23 comments, but <strong>21% have zero review comments</strong> and 14% have ≤2 comments total. Those are the “large and quiet” merges — highest risk that size outran scrutiny.</p>
+    </section>
+
+    <!-- 14 -->
+    <section class="slide" data-i="13">
+      <p class="eyebrow">Takeaways</p>
+      <ul class="takeaways">
+        <li><strong>Always show mean and median.</strong> Median says “typical”; mean says “burden of the tail.”</li>
+        <li><strong>Exclude bots</strong> before judging team habits — they crush the all-repo median.</li>
+        <li><strong>alerting_v2 is bigger than baseline</strong> (~3.5× median adds) but not absurd at the median; watch the ≥1k share (21%).</li>
+        <li><strong>Review density falls as PRs grow</strong> — the real “out of control” signal.</li>
+        <li><strong>TTM tracks discussion more than lines</strong> — split PRs help size; process helps friction.</li>
+      </ul>
+    </section>
+
+    <!-- 15 -->
+    <section class="slide" data-i="14">
+      <p class="eyebrow">Methods · footnotes</p>
+      <p class="fact" style="font-size:clamp(1.6rem,3.5vw,2.4rem); max-width:22ch;">How to read this</p>
+      <ul class="takeaways">
+        <li><strong>Window:</strong> merged 2026-07-01 → 2026-07-31 in elastic/kibana (n=3,414).</li>
+        <li><strong>Comments:</strong> issue comments on PRs + review comments (created events).</li>
+        <li><strong>Ready→merge:</strong> first ready_for_review, else createdAt, to mergedAt.</li>
+        <li><strong>Cohorts:</strong> any changed path containing <em>nightshift</em> or <em>alerting_v2</em> / <em>alerting-v2</em>.</li>
+        <li><strong>ρ:</strong> Spearman rank correlation (−1 to +1). Source: github-stats ES + GH GraphQL for paths.</li>
+      </ul>
+      <p class="footnote">Internal analysis · Actionable Obs / RnA · July 2026</p>
+    </section>
+
+  </div>
+
+  <nav class="nav">
+    <button type="button" id="prev" disabled>← Prev</button>
+    <div class="progress" id="dots"></div>
+    <button type="button" id="next">Next →</button>
+  </nav>
+
+<script>
+(function () {
+  const slides = [...document.querySelectorAll(".slide")];
+  const total = slides.length;
+  document.getElementById("total").textContent = total;
+
+  const dots = document.getElementById("dots");
+  slides.forEach((_, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", "Go to slide " + (i + 1));
+    b.addEventListener("click", () => go(i));
+    dots.appendChild(b);
+  });
+
+  let i = 0;
+
+  function go(n) {
+    i = Math.max(0, Math.min(total - 1, n));
+    slides.forEach((s, j) => s.classList.toggle("active", j === i));
+    [...dots.children].forEach((d, j) => d.classList.toggle("on", j === i));
+    document.getElementById("cur").textContent = i + 1;
+    document.getElementById("prev").disabled = i === 0;
+    document.getElementById("next").disabled = i === total - 1;
+
+    // animate bars on distribution slide
+    const active = slides[i];
+    active.querySelectorAll(".bar-fill").forEach((el) => {
+      const w = el.getAttribute("data-w");
+      if (w) {
+        el.style.width = (parseFloat(w) / 0.389 * 100) + "%";
+      }
+    });
+  }
+
+  document.getElementById("prev").addEventListener("click", () => go(i - 1));
+  document.getElementById("next").addEventListener("click", () => go(i + 1));
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+      e.preventDefault();
+      go(i + 1);
+    } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+      e.preventDefault();
+      go(i - 1);
+    } else if (e.key === "Home") go(0);
+    else if (e.key === "End") go(total - 1);
+  });
+
+  let touchX = null;
+  document.addEventListener("touchstart", (e) => { touchX = e.changedTouches[0].screenX; }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (touchX == null) return;
+    const dx = e.changedTouches[0].screenX - touchX;
+    if (Math.abs(dx) > 50) go(i + (dx < 0 ? 1 : -1));
+    touchX = null;
+  }, { passive: true });
+
+  go(0);
+})();
+</script>
+</body>
+</html>
