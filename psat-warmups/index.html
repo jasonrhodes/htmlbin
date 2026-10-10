@@ -655,7 +655,7 @@ function home(){
   const total = UNITS.reduce((n,u)=>n+flagsOf(u).length, 0);
   const tiles = UNITS.map(u=>{
     const done = store.done[u.id], started = store.started[u.id] || store.pos[u.id] > 0 || flagsOf(u).length > 0;
-    const state = done ? 'Done ✓' : started ? 'In progress' : 'Start';
+    const state = done ? 'Done ✓' : started ? 'Continue' : 'Start';
     return `<button class="sec" id="sec-${u.id}" data-u="${u.id}"><span class="name">${u.name}</span><span class="sub">${u.sub}</span><span class="state${done?' done':''}">${state}</span></button>`;
   }).join('');
   show(`<h1>PSAT <span class="mark">Warm-ups</span></h1>
