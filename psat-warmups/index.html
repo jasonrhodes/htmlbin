@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PSAT Warm-ups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: one narrow column, one screen at a time — home → section intro → single warm-up card → finish line. */
+:root{
+  --paper:#F4F6FB; --card:#FFFFFF; --ink:#18203A; --muted:#58607C; --line:#D8DDEB;
+  --accent:#2F4FCB; --accent-ink:#FFFFFF; --accent-soft:#E6EBFB;
+  --pencil:#F4C542; --pencil-soft:#FDF3D2;
+  --good:#1E7F4F; --good-soft:#E3F3EA; --bad:#B83A33; --bad-soft:#FBE7E5;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-ui:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-q:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10142A; --card:#1A1F3A; --ink:#E9ECF8; --muted:#A3AAC6; --line:#2E3557;
+    --accent:#8EA3FF; --accent-ink:#0F1430; --accent-soft:#252D58;
+    --pencil:#F4C542; --pencil-soft:#3A3320;
+    --good:#5CCB92; --good-soft:#173A2A; --bad:#FF8A80; --bad-soft:#40201F;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10142A; --card:#1A1F3A; --ink:#E9ECF8; --muted:#A3AAC6; --line:#2E3557;
+  --accent:#8EA3FF; --accent-ink:#0F1430; --accent-soft:#252D58;
+  --pencil:#F4C542; --pencil-soft:#3A3320;
+  --good:#5CCB92; --good-soft:#173A2A; --bad:#FF8A80; --bad-soft:#40201F;
+}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:17px;line-height:1.55;padding-inline:16px;padding-block:24px 64px}
+main{max-width:640px;margin:0 auto}
+h1,h2{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(30px,7vw,42px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:clamp(22px,5vw,27px);font-weight:600}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--pencil);outline-offset:2px}
+.screen{display:flex;flex-direction:column;gap:20px;animation:rise .35s ease both}
+@keyframes rise{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.screen{animation:none}}
+.lede{color:var(--muted);font-size:18px;max-width:52ch}
+.mark{background:linear-gradient(transparent 58%,var(--pencil) 58%,var(--pencil) 88%,transparent 88%);padding-inline:2px}
+
+/* Home */
+.sections{display:flex;flex-direction:column;gap:12px}
+.sec{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;transition:border-color .15s,transform .15s}
+.sec:hover{border-color:var(--accent);transform:translateY(-1px)}
+.sec .name{font-family:var(--f-display);font-weight:600;font-size:21px}
+.sec .sub{color:var(--muted);font-size:15px;grid-column:1}
+.sec .state{grid-row:1/3;grid-column:2;font-size:14px;font-weight:700;padding:6px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.sec .state.done{background:var(--good-soft);color:var(--good)}
+.foot{color:var(--muted);font-size:14px}
+
+/* Top bar inside a section */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.back{background:none;border:none;color:var(--accent);font-weight:700;padding:6px 0}
+.chip{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+/* Card */
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.spot{color:var(--muted)}
+.qbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 20px;display:flex;flex-direction:column;gap:18px}
+.qtext{font-family:var(--f-q);font-size:19px;line-height:1.6}
+.qtext p+p{margin-top:10px}
+.fig{display:flex;justify-content:center;overflow-x:auto}
+.fig svg{max-width:100%;height:auto;color:var(--ink)}
+table.tv{border-collapse:collapse;font-family:var(--f-q);font-size:18px;margin:4px auto}
+table.tv td{border:1.5px solid var(--ink);padding:8px 16px;text-align:center;min-width:56px}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{display:flex;align-items:center;gap:14px;text-align:left;background:transparent;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;min-height:52px;font-family:var(--f-q);font-size:18px;transition:border-color .15s,background .15s}
+.choice:hover{border-color:var(--accent)}
+.choice .let{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;font-family:var(--f-ui);font-weight:700;font-size:15px}
+.choice.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.choice.wrong .let{border-color:var(--bad);color:var(--bad)}
+.choice.right{border-color:var(--good);background:var(--good-soft)}
+.choice.right .let{background:var(--good);border-color:var(--good);color:var(--card)}
+.grid{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grid input{font:inherit;font-family:var(--f-q);font-size:20px;width:min(220px,100%);padding:10px 14px;border:1.5px solid var(--muted);border-radius:10px;background:var(--card);color:var(--ink)}
+.grid .tip{flex-basis:100%;font-size:14px;color:var(--muted)}
+.fb{border-radius:10px;padding:12px 14px;font-size:16px}
+.fb.bad{background:var(--bad-soft);color:var(--ink);border-left:4px solid var(--bad)}
+.fb.good{background:var(--good-soft);color:var(--ink);border-left:4px solid var(--good)}
+
+.btn{border:none;border-radius:999px;padding:12px 22px;font-weight:700;min-height:48px}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:var(--accent-soft);color:var(--accent)}
+.btn.link{background:none;color:var(--muted);padding-inline:6px;font-weight:400;text-decoration:underline;text-underline-offset:3px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+.hints{display:flex;flex-direction:column;gap:10px}
+.hint{background:var(--pencil-soft);border-radius:10px;padding:12px 14px;animation:rise .3s ease both}
+.hint b{font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.prompt{font-family:var(--f-display);font-weight:600;font-size:19px;color:var(--accent)}
+#hintlist:empty{display:none}
+.after{display:flex;flex-direction:column;gap:10px;border-top:1px dashed var(--line);padding-top:16px}
+.after p b{font-family:var(--f-display);font-weight:600}
+
+.finish{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px 20px;display:flex;flex-direction:column;gap:16px}
+.big{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,6vw,34px);line-height:1.15}
+mjx-container{font-size:105% !important}
+</style>
+</head>
+<body>
+
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']] },
+  svg: { fontCache: 'global' },
+  startup: { typeset: true }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
+
+<main id="app" aria-live="polite"></main>
+
+<script>
+const R = String.raw;
+
+/* ---------- small figure helpers ---------- */
+function dotplot(title, start, counts){
+  const w = 250, step = 34, x0 = 24, base = 150;
+  let s = `<svg viewBox="0 0 ${w} 200" width="${w}" role="img" aria-label="${title} dot plot"><text x="${w/2}" y="20" text-anchor="middle" font-size="16" fill="currentColor" font-family="Source Serif 4, Georgia, serif">${title}</text>`;
+  s += `<line x1="10" y1="${base+8}" x2="${w-10}" y2="${base+8}" stroke="currentColor" stroke-width="1.5"/>`;
+  counts.forEach((c,i)=>{
+    const x = x0 + i*step + 16;
+    s += `<line x1="${x}" y1="${base+3}" x2="${x}" y2="${base+13}" stroke="currentColor" stroke-width="1.5"/>`;
+    s += `<text x="${x}" y="${base+32}" text-anchor="middle" font-size="15" fill="currentColor" font-family="Source Serif 4, Georgia, serif">${start+i}</text>`;
+    for(let k=0;k<c;k++) s += `<circle cx="${x}" cy="${base-6-k*16}" r="5.5" fill="currentColor"/>`;
+  });
+  return s + `</svg>`;
+}
+function scatter(){
+  const pts = [[5,29.5],[12,26.5],[20,27],[28,24],[35,23.5],[45,21],[55,19.5]];
+  const X = v => 50 + v*4, Y = v => 210 - v*5.5;
+  let s = `<svg viewBox="0 0 330 270" width="330" role="img" aria-label="Scatterplot of temperature versus distance from the coast"><g font-family="Source Serif 4, Georgia, serif" font-size="13" fill="currentColor">`;
+  for(let x=0;x<=60;x+=10){ s += `<line x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(35)}" stroke="currentColor" stroke-opacity=".18"/>`; s += `<text x="${X(x)}" y="${Y(0)+18}" text-anchor="middle">${x}</text>`; }
+  for(let y=0;y<=35;y+=5){ s += `<line x1="${X(0)}" y1="${Y(y)}" x2="${X(60)}" y2="${Y(y)}" stroke="currentColor" stroke-opacity=".18"/>`; s += `<text x="${X(0)-8}" y="${Y(y)+4}" text-anchor="end">${y}</text>`; }
+  s += `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(60)}" y2="${Y(0)}" stroke="currentColor" stroke-width="1.5"/><line x1="${X(0)}" y1="${Y(0)}" x2="${X(0)}" y2="${Y(35)}" stroke="currentColor" stroke-width="1.5"/>`;
+  pts.forEach(([x,y])=> s += `<circle cx="${X(x)}" cy="${Y(y)}" r="5" fill="currentColor"/>`);
+  s += `<text x="${X(30)}" y="262" text-anchor="middle">Distance from coast (km)</text>`;
+  s += `<text transform="translate(14 ${Y(17.5)}) rotate(-90)" text-anchor="middle">Avg. July temp (°C)</text>`;
+  return s + `</g></svg>`;
+}
+const FIG_SIMILAR = `<svg viewBox="0 0 400 175" width="400" role="img" aria-label="Right triangle ABC and right triangle DEF, flipped">
+<g fill="none" stroke="currentColor" stroke-width="2">
+<polygon points="30,140 30,68 150,140"/><polyline points="30,128 42,128 42,140"/>
+<polygon points="370,140 370,32 190,140"/><polyline points="370,128 358,128 358,140"/></g>
+<g fill="currentColor" font-family="Source Serif 4, Georgia, serif" font-style="italic" font-size="17">
+<text x="22" y="62">A</text><text x="16" y="158">B</text><text x="152" y="158">C</text>
+<text x="374" y="28">D</text><text x="374" y="158">E</text><text x="176" y="158">F</text></g>
+<g fill="currentColor" font-family="Source Serif 4, Georgia, serif" font-size="16">
+<text x="8" y="109">6</text><text x="84" y="164">10</text><text x="380" y="92">9</text><text x="276" y="164">?</text></g></svg>`;
+const FIG_CONGRUENT = `<svg viewBox="0 0 260 225" width="260" role="img" aria-label="Triangles PQR and QST sharing base line QS">
+<g fill="none" stroke="currentColor" stroke-width="2">
+<line x1="40" y1="30" x2="40" y2="190"/><line x1="40" y1="190" x2="200" y2="190"/>
+<line x1="40" y1="30" x2="100" y2="190"/><line x1="200" y1="190" x2="200" y2="130"/><line x1="40" y1="190" x2="200" y2="130"/>
+<polyline points="40,178 52,178 52,190"/><polyline points="200,178 188,178 188,190"/></g>
+<g fill="currentColor" font-family="Source Serif 4, Georgia, serif" font-style="italic" font-size="17">
+<text x="34" y="22">P</text><text x="24" y="210">Q</text><text x="96" y="212">R</text><text x="204" y="210">S</text><text x="206" y="126">T</text></g>
+<g fill="currentColor" font-family="Source Serif 4, Georgia, serif" font-size="16"><text x="16" y="114">40</text><text x="208" y="166">15</text></g></svg>`;
+
+/* ---------- content ---------- */
+const UNITS = [
+{
+  id:'am', name:'Advanced Math', qs:'1–10',
+  sub:'Quadratics and exponential functions',
+  intro:'Two kinds of functions from Algebra I and II: <b>parabolas</b> (x²) and <b>exponentials</b> (growth or decay by a percent). Each warm-up walks through one type of question you just saw, step by step, with different numbers.',
+  cards:[
+  { title:'Which equation fits the table?',
+    spot:'A table of x and f(x), and four equations to choose from.',
+    q: R`<table class="tv"><tr><td>\(x\)</td><td>3</td><td>9</td><td>10</td></tr><tr><td>\(f(x)\)</td><td>\(-4\)</td><td>\(-4\)</td><td>3</td></tr></table><p>For the quadratic function \(f\), the table shows three values of \(x\) and \(f(x)\). Which equation defines \(f\)?</p>`,
+    choices:[
+      {t:R`\(f(x)=(x-3)(x-9)-4\)`, ok:1},
+      {t:R`\(f(x)=(x-3)(x-9)+4\)`, why:R`Plug in \(x=3\): both factors become 0 and you're left with \(+4\). The table says \(-4\).`},
+      {t:R`\(f(x)=(x+4)(x-10)+3\)`, why:R`Plug in \(x=3\): \((7)(-7)+3=-46\), not \(-4\). Numbers from the table don't go straight into the parentheses.`},
+      {t:R`\(f(x)=(x-4)(x-3)+9\)`, why:R`Plug in \(x=3\): you get \(9\), not \(-4\).`}],
+    hints:[
+      R`Two x-values give the <b>same</b> output (\(-4\)). A parabola is symmetric, so those are "twins."`,
+      R`With twins at \(x=3\) and \(x=9\), the function can be written \((x-3)(x-9)+k\).`,
+      R`At \(x=3\) both factors are 0, so \(f(3)=k\). That means \(k=-4\). Check \(x=10\): \((7)(1)-4=3\). ✓`],
+    move:R`Twin outputs mean you can write \((x-a)(x-b)+k\). Or skip the trick and plug one table point into every choice.`,
+    trap:'A choice can pass one point and fail another. Check a second point before you commit.'},
+
+  { title:'Same idea, different table',
+    spot:'The table uses x = −1, 0 and 1.',
+    q: R`<table class="tv"><tr><td>\(x\)</td><td>\(-1\)</td><td>0</td><td>1</td></tr><tr><td>\(f(x)\)</td><td>4</td><td>3</td><td>8</td></tr></table><p>For the quadratic function \(f\), which equation defines \(f\)?</p>`,
+    choices:[
+      {t:R`\(f(x)=2x^2+3x+3\)`, why:R`This one works for \(x=0\) and \(x=1\). Now try \(x=-1\): \(2-3+3=2\), not 4.`},
+      {t:R`\(f(x)=x^2+4x+3\)`, why:R`Works for \(x=1\), but \(x=-1\) gives \(1-4+3=0\), not 4.`},
+      {t:R`\(f(x)=3x^2+2x+3\)`, ok:1},
+      {t:R`\(f(x)=5x^2+3\)`, why:R`Try \(x=-1\): \(5+3=8\), not 4.`}],
+    hints:[
+      R`When \(x=0\), every \(x\) term vanishes, so \(f(0)\) is the constant. That's 3, and every choice has it.`,
+      R`Every choice also gives 8 when \(x=1\). So the deciding point is \(x=-1\).`,
+      R`Plug \(x=-1\) into each choice and find the one that gives 4.`],
+    move:R`\(f(0)\) is always the constant term. Then use the other points to eliminate choices.`,
+    trap:'All four choices here pass two of the points. Only the third point separates them.'},
+
+  { title:'Area word problem → quadratic',
+    spot:'A shape\'s area, plus "one side is __ more than the other."',
+    q: R`<p>The area of a triangle is 60 square inches. The base of the triangle is 7 inches longer than its height. What is the height, in inches?</p>`,
+    choices:[
+      {t:R`\(5\)`, why:R`That's what you get if you forget the \(\tfrac12\) in the triangle area formula.`},
+      {t:R`\(8\)`, ok:1},
+      {t:R`\(12\)`, why:R`Check it: \(\tfrac12 \cdot 12 \cdot 19 = 114\), not 60.`},
+      {t:R`\(15\)`, why:'That\'s the <b>base</b> (height + 7). Reread what the question asks for.'}],
+    hints:[
+      R`Let \(h\) = the height. Then the base is \(h+7\).`,
+      R`Triangle area is \(\tfrac12 \cdot \text{base} \cdot \text{height}\), so \(\tfrac12 h(h+7)=60\). Multiply both sides by 2: \(h(h+7)=120\).`,
+      R`\(h^2+7h-120=0\). Find two numbers that multiply to \(-120\) and add to \(7\).`],
+    move:'Name the smaller unknown, write the other one in terms of it, then plug into the formula and factor.',
+    trap:'Forgetting the ½ in triangle area is the #1 mistake. Also make sure you answer for the height and not the base.'},
+
+  { title:'Where a line meets a parabola',
+    spot:'Two equations that both start with "y =", one with x².',
+    q: R`<p style="text-align:center">\(y=3x\)<br>\(y=x^2-10\)</p><p>A solution to the system is \((x,y)\), where \(x<0\). What is the value of \(x\)?</p>`,
+    grid:{answer:-2, wrong:{'5':R`\(x=5\) is a real solution, but the question says \(x<0\).`, '-5':'Check your factoring: the factors should multiply to −10 and add to −3.'}},
+    hints:[
+      R`Both equal \(y\), so set them equal: \(3x=x^2-10\).`,
+      R`Move everything to one side: \(x^2-3x-10=0\).`,
+      R`Factor: \((x-5)(x+2)=0\). Now use the condition in the question.`],
+    move:'Set the two right sides equal, get 0 on one side, factor.',
+    trap:'You\'ll usually get two answers. The question includes a condition (like x > 0) to pick one, so reread it.'},
+
+  { title:'Sum of the solutions',
+    spot:'"What is the sum of the solutions?"',
+    q: R`<p style="text-align:center">\(2x^2-6x-20=0\)</p><p>What is the sum of the solutions to the given equation?</p>`,
+    grid:{answer:3, wrong:{'6':R`Close: divide by \(a\). Here \(a=2\).`, '-3':'Watch the sign: the sum is the <b>opposite</b> of b, over a.', '-10':R`That's the product \(\tfrac{c}{a}\), not the sum.`}},
+    hints:[
+      R`For \(ax^2+bx+c=0\), the sum of the solutions is \(-\tfrac{b}{a}\).`,
+      R`Here \(a=2\) and \(b=-6\).`,
+      R`\(-\tfrac{-6}{2}\) = ? (You can check by factoring: \(2(x-5)(x+2)\).)`],
+    move:R`Sum of solutions \(=-\tfrac{b}{a}\). Product of solutions \(=\tfrac{c}{a}\). No solving needed.`,
+    trap:'The sign trips people up. The sum is the opposite of b.'},
+
+  { title:'Percent change → exponential',
+    spot:'"Decreases by __% for every increase of 1 in x."',
+    q: R`<p>For the function \(g\), the value of \(g(x)\) decreases by 20% for every increase in \(x\) by 1. If \(g(0)=50\), which equation defines \(g\)?</p>`,
+    choices:[
+      {t:R`\(g(x)=0.8(50)^x\)`, why:'The starting value goes <b>in front</b>, and the multiplier goes inside the parentheses.'},
+      {t:R`\(g(x)=50(1.2)^x\)`, why:'1.2 means a 20% <b>increase</b>.'},
+      {t:R`\(g(x)=50(0.8)^x\)`, ok:1},
+      {t:R`\(g(x)=50(0.2)^x\)`, why:'Multiplying by 0.2 keeps only 20%. That\'s an 80% decrease.'}],
+    hints:[
+      R`An exponential looks like \(\text{start}\cdot(\text{multiplier})^x\). The start is \(g(0)\).`,
+      R`Losing 20% means 80% is left. As a decimal, the multiplier is \(1-0.20\).`],
+    move:R`Up r% means multiply by \((1+r)\). Down r% means multiply by \((1-r)\). The start value goes in front.`,
+    trap:'Two traps: swapping the start value and the multiplier, and using 1.2 for a decrease.'},
+
+  { title:'How long to double?',
+    spot:'A formula with a 2 raised to t over a number.',
+    q: R`<p>The function \(f(t)=500(2)^{\frac{t}{35}}\) gives the number of cells in a sample \(t\) minutes after it was first observed. How many minutes does it take for the number of cells to double?</p>`,
+    grid:{answer:35, wrong:{'500':'500 is the starting number of cells, not a time.', '2':'2 is the multiplier ("doubles"). The question asks how many minutes.'}},
+    hints:[
+      R`The amount doubles each time the exponent goes up by 1.`,
+      R`The exponent is \(\tfrac{t}{35}\). How much must \(t\) increase for \(\tfrac{t}{35}\) to go up by 1?`],
+    move:R`In \(a\cdot 2^{t/k}\), it doubles every \(k\). Half-life works the same way with \((\tfrac12)^{t/k}\).`,
+    trap:'The big number in front is the starting amount. It\'s there to distract you.'},
+
+  { title:'Find the constant in the exponent',
+    spot:'"P = C(2)^(rt) … what is r?"',
+    q: R`<p>A scientist measures 3,000 bacteria. 6 hours later there are 6,000. Assuming exponential growth, \(P=C(2)^{rt}\) gives the number of bacteria \(t\) hours after the first measurement, where \(C\) and \(r\) are constants. What is \(r\)?</p>`,
+    choices:[
+      {t:R`\(\dfrac{1}{3000}\)`, why:'3,000 belongs to C, the starting amount. r is about time.'},
+      {t:R`\(\dfrac{1}{6}\)`, ok:1},
+      {t:R`\(6\)`, why:R`If \(r=6\), then at \(t=6\) the exponent is 36, and \(2^{36}\) is enormous. The population only doubled.`},
+      {t:R`\(3000\)`, why:'That\'s C, the starting amount.'}],
+    hints:[
+      R`At \(t=0\), \(2^0=1\), so \(P=C\). That makes \(C=3000\).`,
+      R`After 6 hours it <b>doubled</b>. So \(2^{6r}\) must equal \(2^1\).`,
+      R`That means \(6r=1\).`],
+    move:'Use the starting point to find C, then match the exponent to how many times it doubled.',
+    trap:'Don\'t confuse the constants. C is the amount and r is the rate.'},
+
+  { title:'What does f(6) ≈ 54 mean?',
+    spot:'"Which is the best interpretation of f(__) ≈ __?"',
+    q: R`<p>Maya bought a baseball card. The function \(v(x)=40(1.05)^x\), where \(0\le x\le 12\), gives the card's predicted value, in dollars, \(x\) years after she bought it. What is the best interpretation of "\(v(6)\) is approximately 54"?</p>`,
+    choices:[
+      {t:'When the predicted value is about $54, it is 6% greater than the year before.', why:'The growth rate is 5% (from 1.05). The 6 is the <b>input</b>, a number of years.'},
+      {t:'From the day Maya bought it to 6 years later, the predicted value increased by a total of about $54.', why:'v(6) is the <b>value</b> at year 6, not the change. The change would be 54 − 40.'},
+      {t:'54 years after Maya bought the card, its predicted value is about $6.', why:'This swaps the input and the output.'},
+      {t:'6 years after Maya bought the card, its predicted value is about $54.', ok:1}],
+    hints:[
+      R`Read \(v(\text{input}) = \text{output}\). The input \(x\) is years after purchase.`,
+      R`The output is the predicted value in dollars. Put both into one sentence.`],
+    move:'f(input) = output → "When [input thing] is ___, [output thing] is ___." Say the units out loud.',
+    trap:R`Even if the formula has something like \(\tfrac{t}{7}\) inside, the input is still \(t\).`}
+  ]
+},
+{
+  id:'pd', name:'Problem-Solving and Data Analysis', qs:'11–20',
+  sub:'Percents, ratios, statistics and graphs',
+  intro:'Everyday math, graphs and statistics: <b>percents</b>, <b>unit conversions</b>, <b>probability</b>, and what a <b>sample</b> tells you. Most of these are quick points once you know the move.',
+  cards:[
+  { title:'"__ is p% of __"',
+    spot:'A one-line percent question.',
+    q: R`<p>18 is \(p\%\) of 40. What is the value of \(p\)?</p>`,
+    grid:{answer:45, wrong:{'7.2':'That\'s 18% of 40. The question asks what percent 18 is of 40.'}},
+    hints:[ R`Translate word by word: "is" becomes =, and "of" becomes ×.`, R`\(18=\tfrac{p}{100}\cdot 40\)`, R`Multiply both sides by 100, then divide by 40.`],
+    move:R`"is" → =, "of" → ×, and \(p\%\) → \(\tfrac{p}{100}\).`,
+    trap:'Don\'t just multiply the two numbers. Set up the equation.'},
+
+  { title:'Percent increase as "k times"',
+    spot:'"Increased by __%. The new value is k times the old one."',
+    q: R`<p>The price of a bike increased by 12% from last year to this year. If this year's price is \(k\) times last year's price, what is \(k\)?</p>`,
+    choices:[
+      {t:R`\(0.12\)`, why:'That\'s only the increase. The new price is the old price <b>plus</b> 12% more.'},
+      {t:R`\(1.2\)`, why:'1.2 would be a 20% increase.'},
+      {t:R`\(1.12\)`, ok:1},
+      {t:R`\(12\)`, why:'That would make the price 12 times as big.'}],
+    hints:[ 'New price = 100% of the old price + 12% more.', R`\(100\% + 12\% = 112\%\). Write that as a decimal.`],
+    move:R`Up r% means \(\times(1+r)\). Down r% means \(\times(1-r)\).`,
+    trap:'Sanity check: if the price went up, k must be more than 1.'},
+
+  { title:'Unit conversion',
+    spot:'"How many ___ are equivalent to ___? (__ = 1 ___)"',
+    q: R`<p>How many <u>feet</u> are equivalent to 51 inches? (12 inches = 1 foot)</p>`,
+    grid:{answer:4.25, wrong:{'612':'You multiplied. Feet are bigger than inches, so you need <b>fewer</b> of them. Divide.'}},
+    tip:'Fractions like 17/4 are allowed on the PSAT.',
+    hints:[ R`Write it so the inches cancel: \(51\text{ in}\times\dfrac{1\text{ ft}}{12\text{ in}}\).`, R`That's \(\tfrac{51}{12}\). Simplify or divide.`],
+    move:'Write the units and make them cancel. The unit you want stays on top.',
+    trap:'Converting to a bigger unit gives a smaller number. If your answer went up, flip it.'},
+
+  { title:'Proportions with letters',
+    spot:'"The total mass of r objects is t. What is the mass of __r objects?"',
+    q: R`<p>The total weight, in pounds, of \(n\) identical boxes is \(w\). Which expression represents the total weight, in pounds, of \(30n\) of these boxes?</p>`,
+    choices:[
+      {t:R`\(30+w\)`, why:'30 times as many boxes doesn\'t add 30 pounds.'},
+      {t:R`\(\dfrac{w}{30}\)`, why:'More boxes should weigh <b>more</b>, not less.'},
+      {t:R`\(30w\)`, ok:1},
+      {t:R`\(30-w\)`, why:'More boxes can\'t make the total smaller.'}],
+    hints:[ 'Make up numbers. Say n = 2 boxes weigh w = 10 pounds.', R`Then \(30n = 60\) boxes. How much do 60 boxes weigh? Which choice gives that when \(w=10\)?`],
+    move:'30 times as many items means 30 times the total. If the letters are confusing, plug in easy numbers.',
+    trap:'Don\'t match the choice that "looks" like the question. Test it with numbers.'},
+
+  { title:'Ratios with variables',
+    spot:'Two fractions that share x/y, and you need another letter.',
+    q: R`<p>If \(\dfrac{a}{b}=3\) and \(\dfrac{15a}{kb}=5\), what is the value of \(k\)?</p>`,
+    grid:{answer:9, wrong:{'3':R`That's \(\tfrac{a}{b}\). Plug it into the second equation.`, '45':R`So far you have \(\tfrac{45}{k}=5\). One more step.`}},
+    hints:[ R`Rewrite the second equation: \(\dfrac{15}{k}\cdot\dfrac{a}{b}=5\).`, R`Replace \(\tfrac{a}{b}\) with 3: \(\dfrac{15\cdot 3}{k}=5\).`],
+    move:'Pull out the piece you already know, then substitute.',
+    trap:'You never need a and b separately. Treat a/b as one block.'},
+
+  { title:'Probability → a count',
+    spot:'Probabilities for some groups. How many are in the last group?',
+    q: R`<p>A camp has 400 campers. Each is in cabin group A, B or C. If a camper is chosen at random, the probability they're in group A is 0.30 and in group B is 0.45. How many campers are in group C?</p>`,
+    grid:{answer:100, wrong:{'0.25':'That\'s the probability for C. Turn it into a count of campers.', '300':'That\'s A and B combined.'}},
+    hints:[ 'All the probabilities add up to 1.', R`\(P(C)=1-0.30-0.45\)`, R`Count = probability × total.`],
+    move:'Probabilities add to 1. Count = probability × total.',
+    trap:'Read whether they want a probability or a number of people.'},
+
+  { title:'Margin of error from a range',
+    spot:'"…between __% and __%. What is the margin of error?"',
+    q: R`<p>A random sample of 100 students found that 56% like a new lunch option. Based on the sample, the school expects between 52% and 60% of all students would like it. What is the margin of error?</p>`,
+    choices:[
+      {t:'0%', why:'Any range of values means there is some margin of error.'},
+      {t:'4%', ok:1},
+      {t:'8%', why:'That\'s the whole width, 60 − 52. The margin goes in <b>each</b> direction from the estimate.'},
+      {t:'56%', why:'That\'s the estimate itself.'}],
+    hints:[ 'The range is estimate − margin to estimate + margin.', 'How far is 56 from 60? And from 52?'],
+    move:R`Margin of error \(=\dfrac{\text{high}-\text{low}}{2}\). The estimate sits in the middle.`,
+    trap:'The full width of the range is twice the margin.'},
+
+  { title:'Interpreting an estimate',
+    spot:'"Estimated mean ___ with a margin of error of ___. Best interpretation?"',
+    q: R`<p>A random sample of 300 bags of rice from a factory was weighed. Based on the sample, the mean weight of all bags is estimated to be 10.4 pounds, with a margin of error of 0.3 pounds. Which is the best interpretation?</p>`,
+    choices:[
+      {t:'Every bag from the factory weighs between 10.1 and 10.7 pounds.', why:'The estimate is about the <b>mean</b> of all bags, not each individual bag.'},
+      {t:'Plausible values for the mean weight of all bags are between 10.1 and 10.7 pounds.', ok:1},
+      {t:'Plausible values for the mean weight of all bags are less than 10.1 or more than 10.7 pounds.', why:'That\'s outside the range, the opposite of what a margin of error tells you.'},
+      {t:'The mean weight of all bags is exactly 10.4 pounds.', why:'A sample gives an estimate. That\'s why there\'s a margin of error.'}],
+    hints:[ R`Build the range: \(10.4-0.3\) to \(10.4+0.3\).`, 'Is the claim about each bag, or about the average of all bags?'],
+    move:'Estimate ± margin gives a range of plausible values for the population mean.',
+    trap:'Watch for choices that talk about individual items, or about values outside the range.'},
+
+  { title:'Comparing standard deviations',
+    spot:'Two dot plots, and "compare the standard deviations."',
+    fig: () => `<div class="row" style="justify-content:center">${dotplot('Set X',1,[1,3,4,2,1])}${dotplot('Set Y',11,[1,3,4,2,1])}</div>`,
+    q: R`<p>The dot plots show two data sets. Which statement best compares their standard deviations?</p>`,
+    choices:[
+      {t:'The standard deviation of Set X is smaller.', why:'Smaller numbers don\'t mean a smaller spread. Look at the shape.'},
+      {t:'The standard deviations are equal.', ok:1},
+      {t:'The standard deviation of Set X is larger.', why:'Compare the shapes. Is one more spread out than the other?'},
+      {t:'There is not enough information to compare them.', why:'You can compare the spread just by looking at the shapes.'}],
+    hints:[ 'Standard deviation measures <b>spread</b>: how far values typically sit from their own center. It doesn\'t care where the center is.', 'Compare the two shapes. Is one just the other one slid along the number line?'],
+    move:'Same shape, shifted over, means the same standard deviation. Bunched in the middle means a smaller SD; piled at the ends means a larger one.',
+    trap:'Don\'t let bigger numbers fool you. Adding 10 to every value moves the mean but not the spread.'},
+
+  { title:'Slope of a line of best fit',
+    spot:'A scatterplot and "closest to the slope of a line of best fit."',
+    fig: () => scatter(),
+    q: R`<p>The scatterplot shows average July temperature for 7 towns at different distances from the coast. Which is closest to the slope of a line of best fit?</p>`,
+    choices:[
+      {t:R`\(0.2\)`, why:'The points go <b>down</b> from left to right, so the slope is negative.'},
+      {t:R`\(-0.2\)`, ok:1},
+      {t:R`\(-2\)`, why:'That would drop 2 degrees per km, so 100 degrees over 50 km. Read the axis scales.'},
+      {t:R`\(-5\)`, why:'Too steep. Use the numbers on the axes, not the number of grid boxes.'}],
+    hints:[ 'Picture a line through the middle of the dots. Pick two points on that line, far apart.', 'Around x = 5 the line is near 29.5. Around x = 55 it\'s near 19.5.', R`Slope \(=\dfrac{\text{change in }y}{\text{change in }x}=\dfrac{19.5-29.5}{55-5}\)`],
+    move:'Rise over run, using the numbers on the axes.',
+    trap:'Count units, not grid boxes. The x-axis steps by 10.'}
+  ]
+},
+{
+  id:'gt', name:'Geometry and Trigonometry', qs:'21–30',
+  sub:'Volume, circles, and similar triangles',
+  intro:'Two big ideas: <b>running a volume or area formula backwards</b>, and <b>matching up similar or congruent triangles</b>. Every formula is on the PSAT reference sheet, so this is about setting it up, not memorizing.',
+  cards:[
+  { title:'Volume backwards: prism',
+    spot:'"Volume = Bh. What is the area of the base?"',
+    q: R`<p>A triangular prism has a height of 10 centimeters and a volume of 150 cm³. What is the area, in cm², of the base? (\(V=Bh\), where \(B\) is the area of the base.)</p>`,
+    grid:{answer:15, wrong:{'1500':'You multiplied. Volume = B × h, so B = volume ÷ h.'}},
+    hints:[ R`\(150=B\cdot 10\)`, 'Divide both sides by 10.'],
+    move:'Write the formula, plug in what you know, and solve for what\'s left.',
+    trap:'You don\'t need the triangle\'s dimensions. B is already the whole base area.'},
+
+  { title:'Square prism height',
+    spot:'"Edge of the square base is __, volume is __. Height?"',
+    q: R`<p>The base of a right square prism has edges of length 5 units. The volume of the prism is 400 cubic units. What is the height of the prism?</p>`,
+    choices:[
+      {t:R`\(80\)`, why:R`You divided by 5. The base is a square, so its area is \(5^2=25\).`},
+      {t:R`\(25\)`, why:'That\'s the area of the base, not the height.'},
+      {t:R`\(4\sqrt5\)`, why:'There\'s no square root step here. Volume = base area × height.'},
+      {t:R`\(16\)`, ok:1}],
+    hints:[ R`Volume = (area of base) × height. The base is a 5-by-5 square.`, R`\(25h=400\)`],
+    move:R`Square prism: \(V=s^2h\).`,
+    trap:'Square the edge to get the base area before you divide.'},
+
+  { title:'Cylinder radius',
+    spot:'"Cylinder with height __ and volume __π. Radius?"',
+    q: R`<p>A right circular cylinder has a height of 18 inches and a volume of \(450\pi\) cubic inches. What is the radius, in inches?</p>`,
+    grid:{answer:5, wrong:{'25':R`That's \(r^2\). One more step.`}},
+    hints:[ R`\(V=\pi r^2 h\), so \(\pi r^2(18)=450\pi\).`, R`Divide both sides by \(18\pi\): \(r^2=25\).`],
+    move:'Keep π as a symbol. It cancels on both sides.',
+    trap:R`Don't stop at \(r^2\). The question asks for \(r\).`},
+
+  { title:'Circumference → diameter',
+    spot:'"Circumference of __π. What is the diameter?"',
+    q: R`<p>A circle has a circumference of \(20\pi\) centimeters. What is the diameter, in centimeters?</p>`,
+    grid:{answer:20, wrong:{'10':'That\'s the radius. The question asks for the diameter.', '40':R`\(C=\pi d\), so you don't double anything.`}},
+    hints:[ R`\(C=\pi d\) (or \(2\pi r\)).`, R`\(\pi d=20\pi\)`],
+    move:R`\(C=\pi d=2\pi r\). Read whether they want \(r\) or \(d\).`,
+    trap:'Radius vs. diameter is the whole trap here.'},
+
+  { title:'Sphere with a fraction',
+    spot:'"A sphere has radius (fraction). Volume?"',
+    q: R`<p>A sphere has a radius of \(\tfrac{3}{2}\) feet. What is the volume, in cubic feet? \(\left(V=\tfrac43\pi r^3\right)\)</p>`,
+    choices:[
+      {t:R`\(2\pi\)`, why:R`That's \(\tfrac43\pi\cdot\tfrac32\). You didn't cube the radius.`},
+      {t:R`\(3\pi\)`, why:R`That's \(\tfrac43\pi\cdot\tfrac94\). You squared instead of cubed.`},
+      {t:R`\(\dfrac{27\pi}{8}\)`, why:R`That's \(\pi r^3\). You forgot the \(\tfrac43\).`},
+      {t:R`\(\dfrac{9\pi}{2}\)`, ok:1}],
+    hints:[ R`Cube the whole fraction: \(\left(\tfrac32\right)^3=\tfrac{27}{8}\).`, R`\(\tfrac43\cdot\tfrac{27}{8}=\tfrac{108}{24}\). Simplify.`],
+    move:R`\((\tfrac ab)^3=\tfrac{a^3}{b^3}\). Then multiply by \(\tfrac43\pi\).`,
+    trap:'The wrong choices are what you get from each common slip: squaring, not cubing, or dropping the 4/3.'},
+
+  { title:'Scale factor and area',
+    spot:'"Sides are __ times as long. Area is k times as big."',
+    q: R`<p>Square A has side lengths that are 9 times the side lengths of square B. The area of square A is \(k\) times the area of square B. What is \(k\)?</p>`,
+    choices:[
+      {t:R`\(9\)`, why:'That\'s how lengths scale. Area uses two lengths multiplied together.'},
+      {t:R`\(18\)`, why:'Area doesn\'t double the factor. It squares it.'},
+      {t:R`\(81\)`, ok:1},
+      {t:R`\(729\)`, why:R`That's \(9^3\), which is how <b>volume</b> scales.`}],
+    hints:[ 'Try it: B has side 1, so its area is 1.', R`A has side 9, so its area is \(9\times 9\). Compare that to B's area of 1.`],
+    move:R`Lengths × k, areas × \(k^2\), volumes × \(k^3\).`,
+    trap:'If you\'re unsure, test with a side of 1.'},
+
+  { title:'Pythagorean theorem with a radical',
+    spot:'"Diagonal is __√__, one side is __. Other side?"',
+    q: R`<p>The length of a rectangle's diagonal is \(2\sqrt{13}\), and the length of the shorter side is 4. What is the length of the longer side?</p>`,
+    choices:[
+      {t:R`\(6\)`, ok:1},
+      {t:R`\(\sqrt{10}\)`, why:R`\((2\sqrt{13})^2\) is \(4\cdot13=52\), not \(2\cdot 13\). Square both parts.`},
+      {t:R`\(36\)`, why:R`That's \(b^2\). Take the square root.`},
+      {t:R`\(\sqrt{68}\)`, why:'You added. The diagonal is the hypotenuse, so subtract.'}],
+    hints:[ 'The diagonal splits the rectangle into two right triangles, and it\'s the hypotenuse.', R`\(4^2+b^2=(2\sqrt{13})^2\)`, R`\((2\sqrt{13})^2=4\cdot 13=52\). So \(16+b^2=52\).`],
+    move:R`\(a^2+b^2=c^2\), with \(c\) the diagonal. Square a radical term by squaring both parts.`,
+    trap:R`\((2\sqrt{13})^2\) is 52, not 26.`},
+
+  { title:'Are the triangles similar?',
+    spot:'Angle measures for two triangles. Similar or not?',
+    q: R`<p>In triangle \(ABC\), \(\angle A=40^\circ\) and \(\angle B=75^\circ\). In triangle \(XYZ\), \(\angle X=40^\circ\) and \(\angle Z=65^\circ\). Which statement is true?</p>`,
+    choices:[
+      {t:'The triangles are similar.', ok:1},
+      {t:'The triangles are not similar.', why:'Find the missing angle in each triangle first.'},
+      {t:'You need the measure of angle Y to decide.', why:'You can calculate it: 180 − 40 − 65.'},
+      {t:'You need side lengths to decide.', why:'Angles alone are enough to show triangles are similar (AA).'}],
+    hints:[ 'The angles in a triangle add to 180°.', R`\(\angle C=180-40-75\) and \(\angle Y=180-40-65\). Compare all three pairs.`],
+    move:'Two matching angles means similar (AA). The third angle is forced, because they add to 180°.',
+    trap:'If a question asks "what else do you need?", check whether you can already work it out.'},
+
+  { title:'Similar triangles: match the sides',
+    spot:'"△___ is similar to △___. What is the length of ___?"',
+    fig: () => FIG_SIMILAR,
+    q: R`<p>Triangle \(ABC\) is similar to triangle \(DEF\). The figure is not drawn to scale. What is the length of \(\overline{EF}\)?</p>`,
+    choices:[
+      {t:R`\(\dfrac{54}{10}\)`, why:'You paired 6 with 10. Use the letter order: AB matches DE.'},
+      {t:R`\(\dfrac{60}{9}\)`, why:'The proportion is flipped. Write it as triangle 1 over triangle 2 on both sides.'},
+      {t:R`\(\dfrac{90}{6}\)`, ok:1},
+      {t:R`\(\dfrac{90}{10}\)`, why:'Check which side you divided by. AB = 6 is the side that matches DE.'}],
+    hints:[ R`Letter order is the map: \(A\leftrightarrow D\), \(B\leftrightarrow E\), \(C\leftrightarrow F\). The second triangle is flipped, so ignore how it looks.`, R`So \(AB\leftrightarrow DE\) and \(BC\leftrightarrow EF\).`, R`\(\dfrac{AB}{DE}=\dfrac{BC}{EF}\) gives \(\dfrac{6}{9}=\dfrac{10}{EF}\).`],
+    move:'Write the matching side pairs from the letter order before doing any math.',
+    trap:'Answer choices built from the wrong pairings are the whole trap. Trust the letters, not the picture.'},
+
+  { title:'Congruent triangles on a line',
+    spot:'"△___ is congruent to △___. What is the length of ___?"',
+    fig: () => FIG_CONGRUENT,
+    q: R`<p>In the figure, \(\triangle PQR\) is congruent to \(\triangle QST\). The figure is not drawn to scale. What is the length of \(\overline{RS}\)?</p>`,
+    choices:[
+      {t:R`\(15\)`, why:'That\'s QR. Look for the piece that\'s left over.'},
+      {t:R`\(25\)`, ok:1},
+      {t:R`\(40\)`, why:'That\'s all of QS. RS is only part of it.'},
+      {t:R`\(55\)`, why:'You added. RS is a piece of QS, so subtract.'}],
+    hints:[ R`Letter order: \(P\leftrightarrow Q\), \(Q\leftrightarrow S\), \(R\leftrightarrow T\).`, R`So \(PQ = QS\) and \(QR = ST\). Write 40 on QS and 15 on QR.`, R`\(RS = QS - QR\)`],
+    move:'Congruent means matching sides are equal. Mark them on the figure, then find the missing piece.',
+    trap:'"Not drawn to scale" means don\'t eyeball it. Only use what the letters tell you.'}
+  ]
+}];
+
+/* ---------- state ---------- */
+const KEY = 'psat-warmups-v1';
+let store = { done:{}, pos:{} };
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) store = Object.assign(store, s); } catch(e){}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
+
+const app = document.getElementById('app');
+function typeset(el){
+  const M = window.MathJax;
+  if (M && M.typesetPromise) M.startup.promise.then(()=>M.typesetPromise([el])).catch(()=>{});
+}
+function show(html){
+  app.innerHTML = `<section class="screen">${html}</section>`;
+  window.scrollTo({top:0});
+  typeset(app);
+}
+
+/* ---------- screens ---------- */
+function home(){
+  const tiles = UNITS.map(u=>{
+    const done = store.done[u.id], started = store.pos[u.id] > 0;
+    const state = done ? 'Done ✓' : started ? 'In progress' : 'Start';
+    return `<button class="sec" id="sec-${u.id}" data-u="${u.id}"><span class="name">${u.name}</span><span class="sub">${u.sub}</span><span class="state${done?' done':''}">${state}</span></button>`;
+  }).join('');
+  show(`<h1>PSAT <span class="mark">Warm-ups</span></h1>
+    <p class="lede">Pick a section. Watch how each type of question gets solved, then try that part of your Tailored Practice yourself. Start with whichever one feels easiest.</p>
+    <div class="sections">${tiles}</div>
+    <p class="foot">Based on PSAT Practice 1, Tailored Practice.</p>`);
+  app.querySelectorAll('.sec').forEach(b=>b.onclick=()=>intro(UNITS.find(u=>u.id===b.dataset.u)));
+}
+
+function topbar(u){
+  return `<div class="top"><button class="back" id="back">‹ Sections</button><span class="chip">${u.name}</span></div>`;
+}
+function wireBack(){ document.getElementById('back').onclick = home; }
+
+function intro(u){
+  const pos = store.pos[u.id] || 0;
+  const resume = pos > 0 && pos < u.cards.length;
+  show(`${topbar(u)}
+    <h1>${u.name}</h1>
+    <p class="lede">${u.intro}</p>
+    <div class="row">
+      <button class="btn primary" id="go">${resume ? 'Pick up where you left off' : 'Start the first warm-up'}</button>
+      ${resume ? '<button class="btn link" id="restart">Start over</button>' : ''}
+    </div>`);
+  wireBack();
+  document.getElementById('go').onclick = ()=> card(u, resume ? pos : 0);
+  const r = document.getElementById('restart'); if (r) r.onclick = ()=> card(u, 0);
+}
+
+function parseNum(s){
+  s = String(s).trim().replace(/,/g,'').replace(/−/g,'-');
+  const m = s.match(/^(-?\d*\.?\d+)\s*\/\s*(-?\d*\.?\d+)$/);
+  if (m) return Number(m[1]) / Number(m[2]);
+  return s === '' ? NaN : Number(s);
+}
+
+function card(u, i){
+  if (i >= u.cards.length) return finish(u);
+  store.pos[u.id] = i; save();
+  const c = u.cards[i];
+  const letters = 'ABCD';
+  const body = c.choices
+    ? `<div class="choices">${c.choices.map((ch,k)=>`<button class="choice" id="ch-${k}" data-k="${k}"><span class="let">${letters[k]}</span><span>${ch.t}</span></button>`).join('')}</div>`
+    : `<div class="grid"><input id="gridin" inputmode="decimal" autocomplete="off" aria-label="Your answer" placeholder="Your answer"><button class="btn ghost" id="check">Check</button>${c.tip?`<span class="tip">${c.tip}</span>`:''}</div>`;
+  show(`${topbar(u)}
+    <p class="eyebrow">${i === 0 ? 'First warm-up' : 'Warm-up'}</p>
+    <h2>${c.title}</h2>
+    <p class="spot">You'll recognize it: ${c.spot}</p>
+    <div class="qbox">
+      ${c.fig ? `<div class="fig">${c.fig()}</div>` : ''}
+      <div class="qtext">${c.q}</div>
+      <div id="hintlist" class="hints"></div>
+      <div id="walkwrap"><button class="btn primary" id="hintbtn">Walk me through it</button></div>
+      <p class="prompt" id="prompt" hidden>Your turn: which answer does that lead to?</p>
+      ${body}
+      <div id="fb" hidden></div>
+    </div>
+    <div class="after" id="after" hidden>
+      <p><b>The move:</b> ${c.move}</p>
+      <p><b>Watch out:</b> ${c.trap}</p>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="next" hidden>${i === u.cards.length-1 ? 'Finish' : 'Next warm-up'}</button>
+      <button class="btn link" id="skip">Skip this one</button>
+    </div>`);
+  wireBack();
+
+  const fb = document.getElementById('fb');
+  const say = (cls, html)=>{ fb.className = 'fb ' + cls; fb.innerHTML = html; fb.hidden = false; typeset(fb); };
+  let solved = false, shown = 0;
+  const hb = document.getElementById('hintbtn'), hl = document.getElementById('hintlist');
+  const step = ()=>{
+    if (shown >= c.hints.length) return;
+    const d = document.createElement('div'); d.className = 'hint';
+    d.innerHTML = `<b>Step ${shown+1}</b><br>${c.hints[shown]}`;
+    hl.appendChild(d); typeset(d); shown++;
+    hb.textContent = 'Next step';
+    if (shown >= c.hints.length){
+      document.getElementById('walkwrap').hidden = true;
+      if (!solved) document.getElementById('prompt').hidden = false;
+    }
+  };
+  hb.onclick = step;
+  const win = ()=>{
+    if (solved) return; solved = true;
+    while (shown < c.hints.length) step();
+    document.getElementById('prompt').hidden = true;
+    say('good', '<b>Yes!</b> That\'s it.');
+    document.getElementById('after').hidden = false; typeset(document.getElementById('after'));
+    document.getElementById('next').hidden = false;
+    document.getElementById('skip').hidden = true;
+    document.getElementById('next').focus({preventScroll:true});
+  };
+
+  if (c.choices){
+    app.querySelectorAll('.choice').forEach(btn=>btn.onclick=()=>{
+      if (solved) return;
+      const ch = c.choices[+btn.dataset.k];
+      if (ch.ok){ btn.classList.add('right'); win(); }
+      else { btn.classList.add('wrong'); say('bad', `<b>Not this one.</b> ${ch.why} Try another.`); }
+    });
+  } else {
+    const inp = document.getElementById('gridin');
+    const check = ()=>{
+      if (solved) return;
+      const raw = inp.value.trim(); const v = parseNum(raw);
+      if (isNaN(v)){ say('bad', 'Type a number. Fractions like 3/4 work too.'); return; }
+      if (Math.abs(v - c.grid.answer) < 1e-6){ win(); return; }
+      const key = Object.keys(c.grid.wrong||{}).find(k=>Math.abs(parseNum(k)-v)<1e-6);
+      say('bad', `<b>Not quite.</b> ${key ? c.grid.wrong[key] : 'Try a hint.'}`);
+    };
+    document.getElementById('check').onclick = check;
+    inp.addEventListener('keydown', e=>{ if (e.key === 'Enter') check(); });
+  }
+
+  document.getElementById('next').onclick = ()=> card(u, i+1);
+  document.getElementById('skip').onclick = ()=> card(u, i+1);
+}
+
+function finish(u){
+  store.pos[u.id] = u.cards.length; save();
+  show(`${topbar(u)}
+    <div class="finish">
+      <p class="eyebrow">Warm-up done</p>
+      <p class="big">Now open Tailored Practice and do questions ${u.qs}.</p>
+      <p>Those questions use the same moves you just watched. If one feels shaky, come back and redo that warm-up.</p>
+      <div class="row">
+        <button class="btn primary" id="did">I did questions ${u.qs}</button>
+        <button class="btn link" id="again">Go through the warm-ups again</button>
+      </div>
+    </div>`);
+  wireBack();
+  document.getElementById('did').onclick = ()=>{ store.done[u.id] = true; save(); home(); };
+  document.getElementById('again').onclick = ()=> card(u, 0);
+}
+
+home();
+</script>
+</body>
+</html>
