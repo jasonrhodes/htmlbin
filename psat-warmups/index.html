@@ -195,7 +195,7 @@ const FIG_CONGRUENT = `<svg viewBox="0 0 260 225" width="260" role="img" aria-la
 /* ---------- content ---------- */
 const UNITS = [
 {
-  id:'am', name:'Advanced Math', qs:'1–10',
+  id:'am', name:'Advanced Math', tp:'Advanced Math',
   sub:'Quadratics and exponential functions',
   intro:'Two kinds of functions from Algebra I and II: <b>parabolas</b> (x²) and <b>exponentials</b> (growth or decay by a percent). Each warm-up walks through one type of question you just saw, step by step, with different numbers.',
   cards:[
@@ -321,7 +321,7 @@ const UNITS = [
   ]
 },
 {
-  id:'pd', name:'Problem-Solving and Data Analysis', qs:'11–20',
+  id:'pd', name:'Problem-Solving and Data Analysis', tp:'Problem Solving & Data Analysis',
   sub:'Percents, ratios, statistics and graphs',
   intro:'Everyday math, graphs and statistics: <b>percents</b>, <b>unit conversions</b>, <b>probability</b>, and what a <b>sample</b> tells you. Most of these are quick points once you know the move.',
   cards:[
@@ -434,7 +434,7 @@ const UNITS = [
   ]
 },
 {
-  id:'gt', name:'Geometry and Trigonometry', qs:'21–30',
+  id:'gt', name:'Geometry and Trigonometry', tp:'Geometry & Trigonometry',
   sub:'Volume, circles, and similar triangles',
   intro:'Two big ideas: <b>running a volume or area formula backwards</b>, and <b>matching up similar or congruent triangles</b>. Most formulas you need are on the PSAT reference sheet or given in the question, so this is about setting them up, not memorizing.',
   cards:[
@@ -625,7 +625,7 @@ function toggleFlag(u,i){
 }
 function shareText(units){
   const parts = units.filter(u=>flagsOf(u).length).map(u =>
-    u.name + '\n' + flagsOf(u).map(i => `• ${u.cards[i].title} (Tailored Practice ${META[u.id][i][0]})`).join('\n'));
+    u.name + '\n' + flagsOf(u).map(i => `• ${u.cards[i].title}`).join('\n'));
   return 'PSAT warm-ups: still confusing\n\n' + parts.join('\n\n');
 }
 async function shareList(units, statusEl){
@@ -802,7 +802,7 @@ function finish(u){
   const items = f.map(i=>{
     const [q, k] = META[u.id][i];
     const link = k ? `<a href="${KHAN[k][1]}" target="_blank" rel="noopener">Khan Academy: ${KHAN[k][0]} ↗</a>` : '';
-    return `<li><span class="ct">${u.cards[i].title}</span><span class="cm">Tailored Practice ${q}</span><span class="ca">${link}<button class="btn link look" data-i="${i}">Look again</button></span></li>`;
+    return `<li><span class="ct">${u.cards[i].title}</span><span class="ca">${link}<button class="btn link look" data-i="${i}">Look again</button></span></li>`;
   }).join('');
   const confusion = f.length
     ? `<div class="clist">
@@ -814,10 +814,11 @@ function finish(u){
   show(`${topbar(u)}
     <div class="finish">
       <p class="eyebrow">Warm-up done</p>
-      <p class="big">Now open Tailored Practice and do questions ${u.qs}.</p>
+      <p class="big">Now open Tailored Practice and do the ${u.tp} questions.</p>
+      <p>On the start screen, check <b>${u.tp}</b> and uncheck everything else.</p>
       <p>Those questions use the same moves you just watched.</p>
       <div class="row">
-        <button class="btn primary" id="did">I did questions ${u.qs}</button>
+        <button class="btn primary" id="did">I did the ${u.tp} practice</button>
         <button class="btn link" id="again">Go through the warm-ups again</button>
       </div>
     </div>
