@@ -194,13 +194,13 @@ const UNITS = [
       {t:R`\(f(x)=(x-4)(x-3)+9\)`, why:R`Plug in \(x=3\): you get \(9\), not \(-4\).`}],
     hints:[
       R`Two x-values give the <b>same</b> output (\(-4\)). A parabola is symmetric, so those are "twins."`,
-      R`With twins at \(x=3\) and \(x=9\), the function can be written \((x-3)(x-9)+k\).`,
-      R`At \(x=3\) both factors are 0, so \(f(3)=k\). That means \(k=-4\). Check \(x=10\): \((7)(1)-4=3\). ✓`],
-    move:R`Twin outputs mean you can write \((x-a)(x-b)+k\). Or skip the trick and plug one table point into every choice.`,
+      R`With twins at \(x=3\) and \(x=9\), the function can be written \(a(x-3)(x-9)+k\). Every choice here has \(a=1\), so use \((x-3)(x-9)+k\).`,
+      R`At \(x=3\) both factors are 0, so \(f(3)=k\). What does the table say \(f(3)\) is? Use that, then check your choice at \(x=10\).`],
+    move:R`Twin outputs at \(x=p\) and \(x=q\) mean \(f(x)=a(x-p)(x-q)+k\). Or skip the trick and plug one table point into every choice.`,
     trap:'A choice can pass one point and fail another. Check a second point before you commit.'},
 
   { title:'Same idea, different table',
-    spot:'The table uses x = −1, 0 and 1.',
+    spot:'A table of x and f(x) that includes x = 0.',
     q: R`<table class="tv"><tr><td>\(x\)</td><td>\(-1\)</td><td>0</td><td>1</td></tr><tr><td>\(f(x)\)</td><td>4</td><td>3</td><td>8</td></tr></table><p>For the quadratic function \(f\), which equation defines \(f\)?</p>`,
     choices:[
       {t:R`\(f(x)=2x^2+3x+3\)`, why:R`This one works for \(x=0\) and \(x=1\). Now try \(x=-1\): \(2-3+3=2\), not 4.`},
@@ -232,7 +232,7 @@ const UNITS = [
   { title:'Where a line meets a parabola',
     spot:'Two equations that both start with "y =", one with x².',
     q: R`<p style="text-align:center">\(y=3x\)<br>\(y=x^2-10\)</p><p>A solution to the system is \((x,y)\), where \(x<0\). What is the value of \(x\)?</p>`,
-    grid:{answer:-2, wrong:{'5':R`\(x=5\) is a real solution, but the question says \(x<0\).`, '-5':'Check your factoring: the factors should multiply to −10 and add to −3.'}},
+    grid:{answer:-2, wrong:{'5':R`\(x=5\) is a real solution, but the question says \(x<0\).`, '-5':'Check your factoring: the two numbers in the factors should multiply to −10 and add to −3.'}},
     hints:[
       R`Both equal \(y\), so set them equal: \(3x=x^2-10\).`,
       R`Move everything to one side: \(x^2-3x-10=0\).`,
@@ -248,8 +248,8 @@ const UNITS = [
       R`For \(ax^2+bx+c=0\), the sum of the solutions is \(-\tfrac{b}{a}\).`,
       R`Here \(a=2\) and \(b=-6\).`,
       R`\(-\tfrac{-6}{2}\) = ? (You can check by factoring: \(2(x-5)(x+2)\).)`],
-    move:R`Sum of solutions \(=-\tfrac{b}{a}\). Product of solutions \(=\tfrac{c}{a}\). No solving needed.`,
-    trap:'The sign trips people up. The sum is the opposite of b.'},
+    move:R`Sum of solutions \(=-\tfrac{b}{a}\). Product of solutions \(=\tfrac{c}{a}\). No solving needed (this works when the equation has two solutions).`,
+    trap:R`The sign trips people up. The sum is the opposite of b, divided by a: \(-\tfrac{b}{a}\).`},
 
   { title:'Percent change → exponential',
     spot:'"Decreases by __% for every increase of 1 in x."',
@@ -262,7 +262,7 @@ const UNITS = [
     hints:[
       R`An exponential looks like \(\text{start}\cdot(\text{multiplier})^x\). The start is \(g(0)\).`,
       R`Losing 20% means 80% is left. As a decimal, the multiplier is \(1-0.20\).`],
-    move:R`Up r% means multiply by \((1+r)\). Down r% means multiply by \((1-r)\). The start value goes in front.`,
+    move:R`Up r% means multiply by \(1+\tfrac{r}{100}\) (up 12% → ×1.12). Down r% means multiply by \(1-\tfrac{r}{100}\). The start value goes in front.`,
     trap:'Two traps: swapping the start value and the multiplier, and using 1.2 for a decrease.'},
 
   { title:'How long to double?',
@@ -288,9 +288,9 @@ const UNITS = [
       R`After 6 hours it <b>doubled</b>. So \(2^{6r}\) must equal \(2^1\).`,
       R`That means \(6r=1\).`],
     move:'Use the starting point to find C, then match the exponent to how many times it doubled.',
-    trap:'Don\'t confuse the constants. C is the amount and r is the rate.'},
+    trap:'Don\'t confuse the constants. C is the starting amount, and r is how many times it doubles per hour.'},
 
-  { title:'What does f(6) ≈ 54 mean?',
+  { title:'What does v(6) ≈ 54 mean?',
     spot:'"Which is the best interpretation of f(__) ≈ __?"',
     q: R`<p>Maya bought a baseball card. The function \(v(x)=40(1.05)^x\), where \(0\le x\le 12\), gives the card's predicted value, in dollars, \(x\) years after she bought it. What is the best interpretation of "\(v(6)\) is approximately 54"?</p>`,
     choices:[
@@ -327,14 +327,14 @@ const UNITS = [
       {t:R`\(1.12\)`, ok:1},
       {t:R`\(12\)`, why:'That would make the price 12 times as big.'}],
     hints:[ 'New price = 100% of the old price + 12% more.', R`\(100\% + 12\% = 112\%\). Write that as a decimal.`],
-    move:R`Up r% means \(\times(1+r)\). Down r% means \(\times(1-r)\).`,
+    move:R`Up r% means \(\times\left(1+\tfrac{r}{100}\right)\). Down r% means \(\times\left(1-\tfrac{r}{100}\right)\).`,
     trap:'Sanity check: if the price went up, k must be more than 1.'},
 
   { title:'Unit conversion',
     spot:'"How many ___ are equivalent to ___? (__ = 1 ___)"',
     q: R`<p>How many <u>feet</u> are equivalent to 51 inches? (12 inches = 1 foot)</p>`,
     grid:{answer:4.25, wrong:{'612':'You multiplied. Feet are bigger than inches, so you need <b>fewer</b> of them. Divide.'}},
-    tip:'Fractions like 17/4 are allowed on the PSAT.',
+    tip:'Fractions like 7/2 are allowed on the PSAT.',
     hints:[ R`Write it so the inches cancel: \(51\text{ in}\times\dfrac{1\text{ ft}}{12\text{ in}}\).`, R`That's \(\tfrac{51}{12}\). Simplify or divide.`],
     move:'Write the units and make them cancel. The unit you want stays on top.',
     trap:'Converting to a bigger unit gives a smaller number. If your answer went up, flip it.'},
@@ -369,7 +369,7 @@ const UNITS = [
 
   { title:'Margin of error from a range',
     spot:'"…between __% and __%. What is the margin of error?"',
-    q: R`<p>A random sample of 100 students found that 56% like a new lunch option. Based on the sample, the school expects between 52% and 60% of all students would like it. What is the margin of error?</p>`,
+    q: R`<p>A random sample of 600 students found that 56% like a new lunch option. Based on the sample, the school expects between 52% and 60% of all students would like it. What is the margin of error?</p>`,
     choices:[
       {t:'0%', why:'Any range of values means there is some margin of error.'},
       {t:'4%', ok:1},
@@ -412,16 +412,16 @@ const UNITS = [
       {t:R`\(0.2\)`, why:'The points go <b>down</b> from left to right, so the slope is negative.'},
       {t:R`\(-0.2\)`, ok:1},
       {t:R`\(-2\)`, why:'That would drop 2 degrees per km, so 100 degrees over 50 km. Read the axis scales.'},
-      {t:R`\(-5\)`, why:'Too steep. Use the numbers on the axes, not the number of grid boxes.'}],
-    hints:[ 'Picture a line through the middle of the dots. Pick two points on that line, far apart.', 'Around x = 5 the line is near 29.5. Around x = 55 it\'s near 19.5.', R`Slope \(=\dfrac{\text{change in }y}{\text{change in }x}=\dfrac{19.5-29.5}{55-5}\)`],
+      {t:R`\(-5\)`, why:R`That's run over rise (\(50\div(-10)\)). Slope is rise over run: change in y over change in x.`}],
+    hints:[ 'Picture a line through the middle of the dots. Pick two points on that line, far apart.', 'Around x = 5 the line is near 29. Around x = 55 it\'s near 19.', R`Slope \(=\dfrac{\text{change in }y}{\text{change in }x}=\dfrac{19-29}{55-5}\)`],
     move:'Rise over run, using the numbers on the axes.',
-    trap:'Count units, not grid boxes. The x-axis steps by 10.'}
+    trap:'Rise over run, not run over rise. And read the numbers on the axes, not the grid boxes.'}
   ]
 },
 {
   id:'gt', name:'Geometry and Trigonometry', qs:'21–30',
   sub:'Volume, circles, and similar triangles',
-  intro:'Two big ideas: <b>running a volume or area formula backwards</b>, and <b>matching up similar or congruent triangles</b>. Every formula is on the PSAT reference sheet, so this is about setting it up, not memorizing.',
+  intro:'Two big ideas: <b>running a volume or area formula backwards</b>, and <b>matching up similar or congruent triangles</b>. Most formulas you need are on the PSAT reference sheet or given in the question, so this is about setting them up, not memorizing.',
   cards:[
   { title:'Volume backwards: prism',
     spot:'"Volume = Bh. What is the area of the base?"',
@@ -512,7 +512,7 @@ const UNITS = [
     fig: () => FIG_SIMILAR,
     q: R`<p>Triangle \(ABC\) is similar to triangle \(DEF\). The figure is not drawn to scale. What is the length of \(\overline{EF}\)?</p>`,
     choices:[
-      {t:R`\(\dfrac{54}{10}\)`, why:'You paired 6 with 10. Use the letter order: AB matches DE.'},
+      {t:R`\(\dfrac{54}{10}\)`, why:'This matches BC = 10 with DE = 9. By the letter order, DE matches AB = 6.'},
       {t:R`\(\dfrac{60}{9}\)`, why:'The proportion is flipped. Write it as triangle 1 over triangle 2 on both sides.'},
       {t:R`\(\dfrac{90}{6}\)`, ok:1},
       {t:R`\(\dfrac{90}{10}\)`, why:'Check which side you divided by. AB = 6 is the side that matches DE.'}],
