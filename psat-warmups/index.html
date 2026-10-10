@@ -661,7 +661,7 @@ function card(u, i, fromList){
   const letters = 'ABCD';
   const body = c.choices
     ? `<div class="choices">${c.choices.map((ch,k)=>`<button class="choice" id="ch-${k}" data-k="${k}"><span class="let">${letters[k]}</span><span>${ch.t}</span></button>`).join('')}</div>`
-    : `<div class="grid"><input id="gridin" inputmode="decimal" autocomplete="off" aria-label="Your answer" placeholder="Your answer"><button class="btn ghost" id="check">Check</button>${c.tip?`<span class="tip">${c.tip}</span>`:''}</div>`;
+    : `<div class="grid"><input id="gridin" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="Your answer" placeholder="Your answer"><button class="btn ghost" id="check">Check</button>${c.tip?`<span class="tip">${c.tip}</span>`:''}</div>`;
   show(`${topbar(u)}
     <p class="eyebrow">${i === 0 ? 'First warm-up' : 'Warm-up'}</p>
     <h2>${c.title}</h2>
