@@ -615,6 +615,7 @@ const KEY = 'psat-warmups-v1';
 let store = { done:{}, pos:{}, flags:{} };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) store = Object.assign(store, s); } catch(e){}
 if (!store.flags) store.flags = {};
+if (!store.started) store.started = {};
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
 const flagsOf = u => (store.flags[u.id] || []).filter(i => i < u.cards.length).sort((a,b)=>a-b);
 const isFlagged = (u,i) => flagsOf(u).includes(i);
@@ -653,7 +654,7 @@ function home(){
   delete store.view; save();
   const total = UNITS.reduce((n,u)=>n+flagsOf(u).length, 0);
   const tiles = UNITS.map(u=>{
-    const done = store.done[u.id], started = store.pos[u.id] > 0;
+    const done = store.done[u.id], started = store.started[u.id] || store.pos[u.id] > 0 || flagsOf(u).length > 0;
     const state = done ? 'Done ✓' : started ? 'In progress' : 'Start';
     return `<button class="sec" id="sec-${u.id}" data-u="${u.id}"><span class="name">${u.name}</span><span class="sub">${u.sub}</span><span class="state${done?' done':''}">${state}</span></button>`;
   }).join('');
@@ -699,6 +700,7 @@ function parseNum(s){
 function card(u, i, fromList){
   if (i >= u.cards.length) return finish(u);
   if (!fromList) store.pos[u.id] = i;
+  store.started[u.id] = true;
   store.view = { u:u.id, i, fromList:!!fromList }; save();
   const c = u.cards[i];
   const letters = 'ABCD';
