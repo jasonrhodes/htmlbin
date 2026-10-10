@@ -113,6 +113,21 @@ table.tv td{border:1.5px solid var(--ink);padding:8px 16px;text-align:center;min
 .after{display:flex;flex-direction:column;gap:10px;border-top:1px dashed var(--line);padding-top:16px}
 .after p b{font-family:var(--f-display);font-weight:600}
 
+.flag{background:none;border:1.5px dashed var(--line);border-radius:999px;padding:8px 16px;font-size:15px;color:var(--muted);min-height:44px}
+.flag:hover{border-color:var(--pencil)}
+.flag[aria-pressed="true"]{background:var(--pencil-soft);border-style:solid;border-color:var(--pencil);color:var(--ink);font-weight:700}
+.clist{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px}
+.clist ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.clist li{display:flex;flex-direction:column;gap:2px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.clist li:last-child{border-bottom:none;padding-bottom:0}
+.clist .ct{font-weight:700}
+.clist .cm{font-size:14px;color:var(--muted)}
+.clist .ca{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:15px}
+.clist a{color:var(--accent);font-weight:700}
+.clist .look{min-height:0;padding:4px 0;font-size:15px}
+.sharebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:var(--muted)}
+.status{font-size:14px;color:var(--muted);flex-basis:100%}
+.status textarea{display:block;width:100%;margin-top:6px;font:inherit;font-size:14px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
 .finish{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px 20px;display:flex;flex-direction:column;gap:16px}
 .big{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,6vw,34px);line-height:1.15}
 mjx-container{font-size:105% !important}
@@ -535,11 +550,53 @@ const UNITS = [
   ]
 }];
 
+/* Per card, in order: the matching Tailored Practice question(s), and a Khan Academy page when one fits. */
+const KA = 'https://www.khanacademy.org/test-prep/v2-sat-math/x0fcc98a58ba3bea7:';
+const KHAN = {
+  qeWord: ['Quadratic and exponential word problems', KA+'advanced-math-easier/x0fcc98a58ba3bea7:quadratic-and-exponential-word-problems-easier/a/v2-sat-lesson-quadratic-and-exponential-word-problems'],
+  linQuad: ['Linear and quadratic systems', KA+'advanced-math-easier/x0fcc98a58ba3bea7:linear-and-quadratic-systems-easier/a/v2-sat-lesson-linear-and-quadratic-systems'],
+  fnNotation: ['Function notation (video)', KA+'advanced-math-easier/x0fcc98a58ba3bea7:nonlinear-functions-easier/v/sat-math-p13-easier'],
+  percent: ['Percentages', KA+'problem-solving-and-data-analysis-easier/x0fcc98a58ba3bea7:percentages-easier/a/v2-sat-lesson-percentages'],
+  ratios: ['Ratios, rates, and proportions', KA+'problem-solving-and-data-analysis-harder/x0fcc98a58ba3bea7:ratios-rates-and-proportions-harder/a/v2-sat-lesson-ratios-rates-and-proportions'],
+  moe: ['Margin of error (video)', 'https://www.khanacademy.org/math/statistics-probability/confidence-intervals-one-sample/estimating-population-proportion/v/margin-of-error-2'],
+  sd: ['Visually assessing standard deviation (video)', 'https://www.khanacademy.org/math/algebra-1-illustrative-math/x6418b49dfbc9d0c9:one-variable-statistics-part2/x6418b49dfbc9d0c9:standard-deviation/v/visual-standard-deviation'],
+  scatter: ['Scatterplots', KA+'problem-solving-and-data-analysis-medium/x0fcc98a58ba3bea7:scatterplots-medium/a/v2-sat-lesson-scatterplots'],
+  volume: ['Area and volume', 'https://www.khanacademy.org/test-prep/get-ready-for-sat-prep-math/x9eb58585c728c6ea:get-ready-geometry-and-trigonometry/x9eb58585c728c6ea:get-ready-area-and-volume'],
+  rightTri: ['Right triangles and the Pythagorean theorem', KA+'geometry-and-trigonometry-easier/x0fcc98a58ba3bea7:right-triangle-trigonometry-easier/a/v2-sat-lesson-right-triangle-trigonometry'],
+  simCong: ['Congruence and similarity (video)', KA+'geometry-and-trigonometry-medium/x0fcc98a58ba3bea7:congruence-similarity-and-angle-relationships-medium/v/sat-math-s6-easier']
+};
+const META = {
+  am: [['Q1',null],['Q7',null],['Q3','qeWord'],['Q5','linQuad'],['Q10',null],['Q4','qeWord'],['Q6','qeWord'],['Q9','qeWord'],['Q2 and Q8','fnNotation']],
+  pd: [['Q14','percent'],['Q20','percent'],['Q15','ratios'],['Q16','ratios'],['Q13','ratios'],['Q18',null],['Q11','moe'],['Q17','moe'],['Q12','sd'],['Q19','scatter']],
+  gt: [['Q21','volume'],['Q24','volume'],['Q25','volume'],['Q27',null],['Q28','volume'],['Q26',null],['Q23','rightTri'],['Q22','simCong'],['Q29','simCong'],['Q30','simCong']]
+};
+
 /* ---------- state ---------- */
 const KEY = 'psat-warmups-v1';
-let store = { done:{}, pos:{} };
+let store = { done:{}, pos:{}, flags:{} };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) store = Object.assign(store, s); } catch(e){}
+if (!store.flags) store.flags = {};
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
+const flagsOf = u => (store.flags[u.id] || []).filter(i => i < u.cards.length).sort((a,b)=>a-b);
+const isFlagged = (u,i) => flagsOf(u).includes(i);
+function toggleFlag(u,i){
+  const f = flagsOf(u);
+  store.flags[u.id] = f.includes(i) ? f.filter(x=>x!==i) : f.concat(i);
+  save();
+}
+function shareText(units){
+  const parts = units.filter(u=>flagsOf(u).length).map(u =>
+    u.name + '\n' + flagsOf(u).map(i => `• ${u.cards[i].title} (Tailored Practice ${META[u.id][i][0]})`).join('\n'));
+  return 'PSAT warm-ups: still confusing\n\n' + parts.join('\n\n');
+}
+async function shareList(units, statusEl){
+  const text = shareText(units);
+  try {
+    if (navigator.share){ await navigator.share({ title:'PSAT: still confusing', text }); statusEl.textContent = 'Shared.'; return; }
+  } catch(e){ if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); statusEl.textContent = 'Copied. Paste it into a text or email.'; return; } catch(e){}
+  statusEl.innerHTML = `Copy this and send it:<textarea id="sharetext" readonly rows="6">${text}</textarea>`;
+}
 
 const app = document.getElementById('app');
 function typeset(el){
@@ -554,6 +611,7 @@ function show(html){
 
 /* ---------- screens ---------- */
 function home(){
+  const total = UNITS.reduce((n,u)=>n+flagsOf(u).length, 0);
   const tiles = UNITS.map(u=>{
     const done = store.done[u.id], started = store.pos[u.id] > 0;
     const state = done ? 'Done ✓' : started ? 'In progress' : 'Start';
@@ -562,8 +620,11 @@ function home(){
   show(`<h1>PSAT <span class="mark">Warm-ups</span></h1>
     <p class="lede">Pick a section. Watch how each type of question gets solved, then try that part of your Tailored Practice yourself. Start with whichever one feels easiest.</p>
     <div class="sections">${tiles}</div>
+    ${total ? `<div class="sharebar"><span>${total} marked as still confusing</span><button class="btn ghost" id="shareall">Share confusion list</button><span class="status" id="sharestatus" aria-live="polite"></span></div>` : ''}
     <p class="foot">Based on PSAT Practice 1, Tailored Practice.</p>`);
   app.querySelectorAll('.sec').forEach(b=>b.onclick=()=>intro(UNITS.find(u=>u.id===b.dataset.u)));
+  const sa = document.getElementById('shareall');
+  if (sa) sa.onclick = ()=> shareList(UNITS, document.getElementById('sharestatus'));
 }
 
 function topbar(u){
@@ -593,9 +654,9 @@ function parseNum(s){
   return s === '' ? NaN : Number(s);
 }
 
-function card(u, i){
+function card(u, i, fromList){
   if (i >= u.cards.length) return finish(u);
-  store.pos[u.id] = i; save();
+  if (!fromList){ store.pos[u.id] = i; save(); }
   const c = u.cards[i];
   const letters = 'ABCD';
   const body = c.choices
@@ -619,9 +680,10 @@ function card(u, i){
       <p><b>Watch out:</b> ${c.trap}</p>
     </div>
     <div class="row">
-      <button class="btn primary" id="next" hidden>${i === u.cards.length-1 ? 'Finish' : 'Next warm-up'}</button>
-      <button class="btn link" id="skip">Skip this one</button>
-    </div>`);
+      <button class="btn primary" id="next" hidden>${fromList ? 'Back to the list' : i === u.cards.length-1 ? 'Finish' : 'Next warm-up'}</button>
+      <button class="btn link" id="skip">${fromList ? 'Back to the list' : 'Skip this one'}</button>
+    </div>
+    <div><button class="flag" id="flag" aria-pressed="false"></button></div>`);
   wireBack();
 
   const fb = document.getElementById('fb');
@@ -672,25 +734,48 @@ function card(u, i){
     inp.addEventListener('keydown', e=>{ if (e.key === 'Enter') check(); });
   }
 
-  document.getElementById('next').onclick = ()=> card(u, i+1);
-  document.getElementById('skip').onclick = ()=> card(u, i+1);
+  const fl = document.getElementById('flag');
+  const paint = ()=>{ const on = isFlagged(u,i); fl.setAttribute('aria-pressed', on); fl.textContent = on ? 'Marked as still confusing ✓ (tap to undo)' : 'Mark as still confusing'; };
+  fl.onclick = ()=>{ toggleFlag(u,i); paint(); };
+  paint();
+
+  const go = ()=> fromList ? finish(u) : card(u, i+1);
+  document.getElementById('next').onclick = go;
+  document.getElementById('skip').onclick = go;
 }
 
 function finish(u){
   store.pos[u.id] = u.cards.length; save();
+  const f = flagsOf(u);
+  const items = f.map(i=>{
+    const [q, k] = META[u.id][i];
+    const link = k ? `<a href="${KHAN[k][1]}" target="_blank" rel="noopener">Khan Academy: ${KHAN[k][0]} ↗</a>` : '';
+    return `<li><span class="ct">${u.cards[i].title}</span><span class="cm">Tailored Practice ${q}</span><span class="ca">${link}<button class="btn link look" data-i="${i}">Look again</button></span></li>`;
+  }).join('');
+  const confusion = f.length
+    ? `<div class="clist">
+        <p class="eyebrow">Still confusing (${f.length})</p>
+        <ul>${items}</ul>
+        <div class="row"><button class="btn ghost" id="share">Share confusion list</button><span class="status" id="sharestatus" aria-live="polite"></span></div>
+      </div>`
+    : '';
   show(`${topbar(u)}
     <div class="finish">
       <p class="eyebrow">Warm-up done</p>
       <p class="big">Now open Tailored Practice and do questions ${u.qs}.</p>
-      <p>Those questions use the same moves you just watched. If one feels shaky, come back and redo that warm-up.</p>
+      <p>Those questions use the same moves you just watched.</p>
       <div class="row">
         <button class="btn primary" id="did">I did questions ${u.qs}</button>
         <button class="btn link" id="again">Go through the warm-ups again</button>
       </div>
-    </div>`);
+    </div>
+    ${confusion}`);
   wireBack();
   document.getElementById('did').onclick = ()=>{ store.done[u.id] = true; save(); home(); };
   document.getElementById('again').onclick = ()=> card(u, 0);
+  app.querySelectorAll('.look').forEach(b=> b.onclick = ()=> card(u, +b.dataset.i, true));
+  const sh = document.getElementById('share');
+  if (sh) sh.onclick = ()=> shareList([u], document.getElementById('sharestatus'));
 }
 
 home();
