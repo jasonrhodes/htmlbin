@@ -571,6 +571,45 @@ const META = {
   gt: [['Q21','volume'],['Q24','volume'],['Q25','volume'],['Q27',null],['Q28','volume'],['Q26',null],['Q23','rightTri'],['Q22','simCong'],['Q29','simCong'],['Q30','simCong']]
 };
 
+/* Per card, in order: a short "why this is the answer" shown on reveal or when he gets it right. */
+const EXPLAIN = {
+  am: [
+    R`The twins at \(x=3\) and \(x=9\) give \((x-3)(x-9)+k\). Plugging in \(x=3\) zeroes out the factors, leaving \(k=-4\). Check \(x=10\): \((7)(1)-4=3\). ✓`,
+    R`\(f(0)=3\) gives the constant. Adding \(f(1)+f(-1)\) cancels the \(x\) terms: \(8+4=2a+6\), so \(a=3\). Subtracting gives \(8-4=2b\), so \(b=2\).`,
+    R`\(\tfrac12 h(h+7)=60\) becomes \(h^2+7h-120=0\), which factors to \((h+15)(h-8)=0\). A height can't be negative, so \(h=8\) (and the base is 15).`,
+    R`\(3x=x^2-10\) becomes \(x^2-3x-10=0\), so \((x-5)(x+2)=0\). The solutions are \(5\) and \(-2\), and the question wants \(x<0\), so \(x=-2\).`,
+    R`Sum \(=-\tfrac{b}{a}=-\tfrac{-6}{2}=3\). Check: \(2x^2-6x-20=2(x-5)(x+2)\), so the solutions are 5 and \(-2\), and \(5+(-2)=3\).`,
+    R`It starts at \(g(0)=50\). Losing 20% each step leaves 80%, so it's multiplied by 0.8 every time \(x\) goes up by 1: \(g(x)=50(0.8)^x\).`,
+    R`The exponent \(\tfrac{t}{35}\) goes up by 1 every time \(t\) goes up by 35, and each +1 in the exponent multiplies by 2. So it doubles every 35 minutes.`,
+    R`At \(t=0\), \(P=C=3000\). It doubled in 6 hours, so \(2^{6r}=2^1\). That means \(6r=1\), so \(r=\tfrac16\).`,
+    R`\(v(6)\approx 54\) puts 6 in for \(x\) (years) and gets about 54 out (dollars). So 6 years after Maya bought it, the card's predicted value is about $54.`
+  ],
+  pd: [
+    R`\(18=\tfrac{p}{100}\cdot 40\), so \(1800=40p\) and \(p=45\). Check: 45% of 40 is 18.`,
+    R`The new price is 100% of the old price plus 12% more, which is 112%. As a decimal, that's \(k=1.12\).`,
+    R`\(51\div 12=4.25\) feet (or \(\tfrac{17}{4}\)). Feet are the bigger unit, so the number gets smaller.`,
+    R`\(30n\) is 30 times as many boxes, so it weighs 30 times as much: \(30w\). Check with numbers: if 2 boxes weigh 10 lb, then 60 boxes weigh 300 lb, which is \(30\times 10\).`,
+    R`\(\dfrac{15a}{kb}=\dfrac{15}{k}\cdot\dfrac{a}{b}=\dfrac{15}{k}\cdot 3=\dfrac{45}{k}\). Setting \(\tfrac{45}{k}=5\) gives \(k=9\).`,
+    R`\(P(C)=1-0.30-0.45=0.25\), and \(0.25\times 400=100\) campers.`,
+    R`The estimate, 56%, sits exactly in the middle of 52% and 60%. It's 4 points from each end, so the margin of error is 4%.`,
+    R`\(10.4\pm 0.3\) runs from 10.1 to 10.7. The estimate is about the <b>mean</b> weight of all bags, not each individual bag.`,
+    R`Set Y is Set X with 10 added to every value. That slides the dots to the right but doesn't change how spread out they are, so the standard deviations are equal.`,
+    R`The line drops from about 29 at \(x=5\) to about 19 at \(x=55\). That's a change of \(-10\) over 50, so the slope is \(\tfrac{-10}{50}=-0.2\).`
+  ],
+  gt: [
+    R`\(V=Bh\), so \(150=B\cdot 10\) and \(B=15\) cm².`,
+    R`The base is a 5-by-5 square, so its area is 25. Then \(25h=400\), so \(h=16\).`,
+    R`\(\pi r^2(18)=450\pi\). Divide both sides by \(18\pi\) to get \(r^2=25\), so \(r=5\).`,
+    R`\(C=\pi d\), so \(\pi d=20\pi\) and \(d=20\).`,
+    R`\(\left(\tfrac32\right)^3=\tfrac{27}{8}\), and \(\tfrac43\cdot\tfrac{27}{8}\pi=\tfrac{108}{24}\pi=\tfrac{9\pi}{2}\).`,
+    R`Area uses two lengths multiplied together, so it scales by \(9\times 9=81\).`,
+    R`\(4^2+b^2=(2\sqrt{13})^2\), so \(16+b^2=52\). Then \(b^2=36\), so \(b=6\).`,
+    R`\(\angle C=180-40-75=65^\circ\) and \(\angle Y=180-40-65=75^\circ\). Both triangles have angles of 40°, 65° and 75°, so they're similar (AA).`,
+    R`By the letter order, \(AB\leftrightarrow DE\) and \(BC\leftrightarrow EF\), so \(\tfrac{6}{9}=\tfrac{10}{EF}\). Cross-multiply: \(6\cdot EF=90\), so \(EF=\tfrac{90}{6}=15\).`,
+    R`By the letter order, \(PQ\leftrightarrow QS\), so \(QS=40\), and \(QR\leftrightarrow ST\), so \(QR=15\). R sits between Q and S, so \(RS=40-15=25\).`
+  ]
+};
+
 /* ---------- state ---------- */
 const KEY = 'psat-warmups-v1';
 let store = { done:{}, pos:{}, flags:{} };
@@ -671,8 +710,9 @@ function card(u, i, fromList){
       <div class="qtext">${c.q}</div>
       <div id="hintlist" class="hints"></div>
       <div id="walkwrap"><button class="btn primary" id="hintbtn">Walk me through it</button></div>
-      <p class="prompt" id="prompt" hidden>Your turn: which answer does that lead to?</p>
+      <p class="prompt" id="prompt" hidden>Your turn: which answer does that lead to? Or just reveal it.</p>
       ${body}
+      <div id="revealwrap"><button class="btn ghost" id="reveal">Reveal the answer</button></div>
       <div id="fb" hidden></div>
     </div>
     <div class="after" id="after" hidden>
@@ -702,11 +742,22 @@ function card(u, i, fromList){
     }
   };
   hb.onclick = step;
-  const win = ()=>{
+  const okIdx = c.choices ? c.choices.findIndex(ch=>ch.ok) : -1;
+  const label = c.choices ? `choice ${letters[okIdx]}` : String(c.grid.answer).replace('-', '−');
+  const win = (revealed)=>{
     if (solved) return; solved = true;
     while (shown < c.hints.length) step();
     document.getElementById('prompt').hidden = true;
-    say('good', '<b>Yes!</b> That\'s it.');
+    document.getElementById('walkwrap').hidden = true;
+    document.getElementById('revealwrap').hidden = true;
+    if (c.choices){
+      app.querySelectorAll('.choice').forEach(b=>b.classList.remove('wrong'));
+      document.getElementById('ch-'+okIdx).classList.add('right');
+    } else {
+      const inp = document.getElementById('gridin'); inp.value = label; inp.readOnly = true;
+    }
+    const why = EXPLAIN[u.id][i];
+    say('good', revealed ? `<b>The answer is ${label}.</b> ${why}` : `<b>Yes, ${label}.</b> ${why}`);
     document.getElementById('after').hidden = false; typeset(document.getElementById('after'));
     document.getElementById('next').hidden = false;
     document.getElementById('skip').hidden = true;
@@ -717,8 +768,8 @@ function card(u, i, fromList){
     app.querySelectorAll('.choice').forEach(btn=>btn.onclick=()=>{
       if (solved) return;
       const ch = c.choices[+btn.dataset.k];
-      if (ch.ok){ btn.classList.add('right'); win(); }
-      else { btn.classList.add('wrong'); say('bad', `<b>Not this one.</b> ${ch.why} Try another.`); }
+      if (ch.ok){ win(false); }
+      else { btn.classList.add('wrong'); say('bad', `<b>Not this one.</b> ${ch.why} Try another, or reveal the answer.`); }
     });
   } else {
     const inp = document.getElementById('gridin');
@@ -726,9 +777,9 @@ function card(u, i, fromList){
       if (solved) return;
       const raw = inp.value.trim(); const v = parseNum(raw);
       if (isNaN(v)){ say('bad', 'Type a number. Fractions like 3/4 work too.'); return; }
-      if (Math.abs(v - c.grid.answer) < 1e-6){ win(); return; }
+      if (Math.abs(v - c.grid.answer) < 1e-6){ win(false); return; }
       const key = Object.keys(c.grid.wrong||{}).find(k=>Math.abs(parseNum(k)-v)<1e-6);
-      say('bad', `<b>Not quite.</b> ${key ? c.grid.wrong[key] : 'Try a hint.'}`);
+      say('bad', `<b>Not quite.</b> ${key ? c.grid.wrong[key] : 'Walk through the steps, or reveal the answer.'}`);
     };
     document.getElementById('check').onclick = check;
     inp.addEventListener('keydown', e=>{ if (e.key === 'Enter') check(); });
@@ -739,6 +790,7 @@ function card(u, i, fromList){
   fl.onclick = ()=>{ toggleFlag(u,i); paint(); };
   paint();
 
+  document.getElementById('reveal').onclick = ()=> win(true);
   const go = ()=> fromList ? finish(u) : card(u, i+1);
   document.getElementById('next').onclick = go;
   document.getElementById('skip').onclick = go;
